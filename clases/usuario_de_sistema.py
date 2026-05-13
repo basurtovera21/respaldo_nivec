@@ -1,3 +1,4 @@
+#Clase abstracta
 class UsuarioDeSistema:
     def __init__(self, tipo_de_identificacion, identificacion, nombres, apellidos, correo, contrasena, fecha_de_nacimiento, sexo, etnia, porcentaje_de_discapacidad, celular, direccion, estado, **kwargs):
         self._tipo_de_identificacion = tipo_de_identificacion
