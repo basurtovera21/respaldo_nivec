@@ -1,8 +1,18 @@
+<<<<<<< Updated upstream:clases/usuario_academico.py
 from usuario_de_sistema import UsuarioDeSistema
 
 
 class UsuarioAcademico(UsuarioDeSistema):
     def __init__(self, tipo_de_identificacion, identificacion, nombres, apellidos, correo, contrasena, fecha_de_nacimiento, sexo, etnia, porcentaje_de_discapacidad, celular, direccion, estado, codigo_academico, **kwargs):
+=======
+#Herencia
+from clases.usuarios.usuario_de_sistema import UsuarioDeSistema
+
+
+class UsuarioAcademico(UsuarioDeSistema):
+    def __init__(self, tipo_de_identificacion, identificacion: str, nombres: str, apellidos: str, correo_institucional: str, contrasena: str, fecha_de_nacimiento, sexo: str, etnia: str, porcentaje_de_discapacidad: float, celular: str, direccion: str, identificador_institucional: str, **kwargs):
+        #Argumentos con nombre
+>>>>>>> Stashed changes:clases/usuarios/usuario_academico.py
         super().__init__(
             tipo_de_identificacion = tipo_de_identificacion,
             identificacion = identificacion,
@@ -19,13 +29,34 @@ class UsuarioAcademico(UsuarioDeSistema):
             estado = estado,
             **kwargs
         )
+<<<<<<< Updated upstream:clases/usuario_academico.py
         self.codigo_academico = codigo_academico
+=======
+        self.identificador_institucional = identificador_institucional
+>>>>>>> Stashed changes:clases/usuarios/usuario_academico.py
         
         
+    def iniciar_sesion(self):
+        print(f"[Usuario Académico] Sesión iniciada: {self.nombres} {self.apellidos}")
+        
+    def cerrar_sesion(self):
+        pass   
+    
     def visualizar_horario(self):
         pass
+<<<<<<< Updated upstream:clases/usuario_academico.py
     def visualizar_unidades_curriculares(self):
         pass
     def visualizar_paralelo(self):
+=======
+    
+    def visualizar_planificacion(self):
+        pass
+    
+    def visualizar_resumen_asistencia(self):
+        pass
+    
+    def obtener_registro_institucional(self):
+>>>>>>> Stashed changes:clases/usuarios/usuario_academico.py
         pass
     
