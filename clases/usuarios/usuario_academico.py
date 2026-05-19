@@ -1,10 +1,3 @@
-<<<<<<< Updated upstream:clases/usuario_academico.py
-from usuario_de_sistema import UsuarioDeSistema
-
-
-class UsuarioAcademico(UsuarioDeSistema):
-    def __init__(self, tipo_de_identificacion, identificacion, nombres, apellidos, correo, contrasena, fecha_de_nacimiento, sexo, etnia, porcentaje_de_discapacidad, celular, direccion, estado, codigo_academico, **kwargs):
-=======
 #Herencia
 from clases.usuarios.usuario_de_sistema import UsuarioDeSistema
 
@@ -12,13 +5,12 @@ from clases.usuarios.usuario_de_sistema import UsuarioDeSistema
 class UsuarioAcademico(UsuarioDeSistema):
     def __init__(self, tipo_de_identificacion, identificacion: str, nombres: str, apellidos: str, correo_institucional: str, contrasena: str, fecha_de_nacimiento, sexo: str, etnia: str, porcentaje_de_discapacidad: float, celular: str, direccion: str, identificador_institucional: str, **kwargs):
         #Argumentos con nombre
->>>>>>> Stashed changes:clases/usuarios/usuario_academico.py
         super().__init__(
             tipo_de_identificacion = tipo_de_identificacion,
             identificacion = identificacion,
             nombres = nombres,
             apellidos = apellidos,
-            correo = correo,
+            correo_institucional = correo_institucional,
             contrasena = contrasena,
             fecha_de_nacimiento = fecha_de_nacimiento,
             sexo = sexo,
@@ -26,15 +18,10 @@ class UsuarioAcademico(UsuarioDeSistema):
             porcentaje_de_discapacidad = porcentaje_de_discapacidad,
             celular = celular,
             direccion = direccion,
-            estado = estado,
-            **kwargs
+            **kwargs #Recibir argumentos adicionales
         )
-<<<<<<< Updated upstream:clases/usuario_academico.py
-        self.codigo_academico = codigo_academico
-=======
         self.identificador_institucional = identificador_institucional
->>>>>>> Stashed changes:clases/usuarios/usuario_academico.py
-        
+       
         
     def iniciar_sesion(self):
         print(f"[Usuario Académico] Sesión iniciada: {self.nombres} {self.apellidos}")
@@ -44,11 +31,6 @@ class UsuarioAcademico(UsuarioDeSistema):
     
     def visualizar_horario(self):
         pass
-<<<<<<< Updated upstream:clases/usuario_academico.py
-    def visualizar_unidades_curriculares(self):
-        pass
-    def visualizar_paralelo(self):
-=======
     
     def visualizar_planificacion(self):
         pass
@@ -57,6 +39,4 @@ class UsuarioAcademico(UsuarioDeSistema):
         pass
     
     def obtener_registro_institucional(self):
->>>>>>> Stashed changes:clases/usuarios/usuario_academico.py
         pass
-    
