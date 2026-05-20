@@ -1,4 +1,3 @@
-#Tony
 from datetime import date
 
 from clases.enums.estado_de_cohorte import EstadoDeCohorte

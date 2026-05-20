@@ -1,7 +1,4 @@
-#Tony
 from datetime import time
-
-#Enums
 from clases.enums.dia_de_semana import DiaDeSemana
 from clases.enums.modalidad import Modalidad
 from clases.enums.tipo_de_sesion import TipoDeSesion

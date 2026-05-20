@@ -1,5 +1,3 @@
-#Tony
-#Enums
 from clases.enums.jornada import Jornada
 from clases.enums.modalidad import Modalidad
 
