@@ -1,4 +1,3 @@
-#Vinicio
 from datetime import date
 
 from clases.usuarios.estudiante import Estudiante
