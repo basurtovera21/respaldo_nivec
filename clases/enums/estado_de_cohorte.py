@@ -1,4 +1,5 @@
 #Tonyfrom enum import Enum
+from enum import Enum
 
 class EstadoDeCohorte(Enum):
     ABIERTA = "Abierta"
