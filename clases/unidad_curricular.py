@@ -1,4 +1,3 @@
-#Vinicio
 #Enum
 from clases.enums.tipo_de_componente import TipoDeComponente
 
