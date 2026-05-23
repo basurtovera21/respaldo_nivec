@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 class Universidad:
     def __init__(
         self,
@@ -17,4 +15,3 @@ class Universidad:
 
     def recuperar_informacion_institucional(self):  # Retorna dict
         pass
->>>>>>> Stashed changes

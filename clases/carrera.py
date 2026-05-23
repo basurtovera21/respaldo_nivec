@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 from datetime import date
 
 # Enum
@@ -29,4 +27,3 @@ class Carrera:
             return True
         else:
             return False
->>>>>>> Stashed changes

@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 from datetime import date
 
 # Enums
@@ -43,4 +41,3 @@ class PeriodoDeNivelacion:
         self,
     ):  # (primera + segunda matrícula + exoneración) Retorna int
         pass
->>>>>>> Stashed changes

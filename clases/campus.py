@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 class Campus:
     def __init__(
         self,
@@ -17,4 +15,3 @@ class Campus:
 
     def verificar_disponibilidad_de_infraestructura(self):  # Retorna bool
         pass
->>>>>>> Stashed changes
