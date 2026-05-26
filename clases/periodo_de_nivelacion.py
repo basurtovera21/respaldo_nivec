@@ -25,6 +25,7 @@ class PeriodoDeNivelacion:
         self.numero_periodo = numero_periodo  # (1 o 2)
         self._estado = EstadoDePeriodo.PLANIFICACION
 
+
     def iniciar_periodo(self):
         pass
 
@@ -37,7 +38,5 @@ class PeriodoDeNivelacion:
         semanas_totales = total_días // 7
         return semanas_totales
 
-    def calcular_total_cupos_ofertados(
-        self,
-    ):  # (primera + segunda matrícula + exoneración) Retorna int
+    def calcular_total_cupos_ofertados(self):  # (primera + segunda matrícula + exoneración) Retorna int
         pass

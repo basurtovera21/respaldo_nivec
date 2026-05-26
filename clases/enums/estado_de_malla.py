@@ -1,4 +1,6 @@
+#Malla curricular
 from enum import Enum
+
 
 class EstadoDeMalla(Enum):
     DISENO = "Diseño"

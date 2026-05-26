@@ -17,5 +17,6 @@ class ConsolidadoAcademico:
 
     def registrar_consolidado_academico(self): #self, ruta_archivo: str
         pass
+    
     def verificar_aceptacion_cupo(self): # self, identificacion: str Retorna bool 
         pass

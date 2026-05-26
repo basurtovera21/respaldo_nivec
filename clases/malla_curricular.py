@@ -1,3 +1,4 @@
+#Enums
 from clases.enums.estado_de_malla import EstadoDeMalla
 from clases.enums.modalidad import Modalidad
 

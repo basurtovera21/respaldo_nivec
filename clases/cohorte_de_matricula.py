@@ -1,5 +1,6 @@
 from datetime import date
 
+#Enums
 from clases.enums.estado_de_cohorte import EstadoDeCohorte
 from clases.enums.tipo_de_cohorte import TipoDeCohorte
 
@@ -21,7 +22,7 @@ class CohorteDeMatricula:
         
 
     def registrar_estudiante_matriculado(self, estudiante: Estudiante):
-        self._estudiantes_matriculados.append(estudiante)
-        # Lógica para actualizar totales según el tipo de matrícula del estudiante
+        pass
+    
     def calcular_total_matriculados(self): #Retorna int
         return (self._total_primera_matricula + self._total_segunda_matricula + self._total_exonerados)

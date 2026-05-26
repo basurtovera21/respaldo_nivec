@@ -1,3 +1,4 @@
+#Enums
 from clases.enums.jornada import Jornada
 from clases.enums.modalidad import Modalidad
 
@@ -27,7 +28,9 @@ class Paralelo:
             
     def vincular_estudiante(self): #self, estudiante: Estudiante
         pass  
+    
     def desvincular_estudiante(self): #self, estudiante: Estudiante
         pass
+    
     def vincular_docente(self): #self, docente: Docente
         pass

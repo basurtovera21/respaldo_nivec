@@ -1,4 +1,6 @@
+#Horario
 from enum import Enum
+
 
 class DiaDeSemana(Enum):
     LUNES = "Lunes"

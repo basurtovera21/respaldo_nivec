@@ -13,5 +13,6 @@ class Universidad:
         self.direccion_matriz = direccion_matriz
         self.identificador_visual = identificador_visual  # (ruta de archivo)
 
+
     def recuperar_informacion_institucional(self):  # Retorna dict
         pass

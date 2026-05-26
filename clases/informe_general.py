@@ -67,5 +67,6 @@ class InformeGeneral(IInformeInstitucional): #Interfaz
             
     def procesar_retiros_y_anulaciones(self):
         pass
+    
     def estimar_tasas_de_aprobacion(self): #Retorna dict
         pass

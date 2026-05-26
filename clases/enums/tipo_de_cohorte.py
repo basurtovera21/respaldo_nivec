@@ -1,5 +1,8 @@
+#Cohorte de matrícula
 from enum import Enum
 
+
 class TipoDeCohorte(Enum):
-    ORDINARIA = "Ordinaria"
-    EXTRAORDINARIA = "Extraordinaria"
+    PRIMERA_MATRICULA = "Primera matrícula"
+    SEGUNDA_MATRICULA = "Segunda matrícula"
+    EXONERACION = "Exoneración"

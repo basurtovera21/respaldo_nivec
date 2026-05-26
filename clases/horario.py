@@ -1,10 +1,13 @@
 from datetime import time
+
+#Enums
 from clases.enums.dia_de_semana import DiaDeSemana
 from clases.enums.modalidad import Modalidad
 from clases.enums.tipo_de_sesion import TipoDeSesion
 
 #Usuario
 from clases.usuarios.docente import Docente
+
 
 class Horario:
     def __init__(self, dia_semana: DiaDeSemana, hora_inicio: time, hora_fin: time, espacio_de_imparticion: str, modalidad: Modalidad, numero_semana: int, tipo_de_sesion: TipoDeSesion, docente_responsable: Docente):
@@ -20,6 +23,7 @@ class Horario:
 
     def obtener_resumen_de_sesion(self): #Retorna dict
         pass
+    
     def determinar_duracion_horas(self): #Retorna float
       inicio = self.hora_inicio.hour + self.hora_inicio.minute/60
       fin = self.hora_fin.hour + self.hora_fin.minute/60
