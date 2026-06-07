@@ -2,7 +2,8 @@
 from clases.enums.estado_de_malla import EstadoDeMalla
 from clases.enums.modalidad import Modalidad
 
-from clases.unidad_curricular import UnidadCurricular
+#Interfaz
+from clases.interfaces.i_unidad_evaluable import IUnidadEvaluable
 
 
 class MallaCurricular:
@@ -12,43 +13,48 @@ class MallaCurricular:
         self.area_de_conocimiento = area_de_conocimiento
         self.duracion_semanas = duracion_semanas
         self.version_de_malla = version_de_malla
-        self.modalidad = modalidad
+        self.modalidad = modalidad #Instancia
         self._estado = EstadoDeMalla.DISENO
         self._total_horas_nivelacion = 0.0
         self._unidades_curriculares = [] #Lista unidades curriculares
         
 
     def agregar_unidad_curricular(self, *args): #Sobrecarga
+        unidad_agregada = True
         for entrada in args:
             if isinstance(entrada, list):
                 #Lista como argumento único
                 for unidad in entrada:
-                    self._agregar_una(unidad)
+                    if not self._agregar_una_unidad_curricular(unidad):
+                        unidad_agregada = False
+                        
             else:
-                self._agregar_una(entrada)
+                if not self._agregar_una_unidad_curricular(entrada):
+                    unidad_agregada = False
+        
+        return unidad_agregada
                 
-    def _agregar_una(self, unidad_curricular):
-        from clases.enums.estado_de_malla import EstadoDeMalla
-        from clases.unidad_curricular import UnidadCurricular
-
+                
+    def _agregar_una_unidad_curricular(self, unidad_curricular: IUnidadEvaluable):
         if self._estado not in (EstadoDeMalla.DISENO, EstadoDeMalla.ACTIVA):
-            print(f"[Malla curricular] No se puede modificar (estado actual '{self._estado.value})'")
-            return
-        
-        if not isinstance(unidad_curricular, UnidadCurricular):
-            print(f"[Malla curricular] Entrada no válida (se esperaba UnidadCurricular).")
-            return
-        
-        codigos_de_mallas_existentes = [unidad.codigo_de_unidad for unidad in self._unidades_curriculares]
-        if unidad_curricular.codigo_de_unidad in codigos_de_mallas_existentes:
-            print(f"[Malla curricular] La unidad ya ha sido registrada: {unidad_curricular.codigo_de_unidad}")
-            return
-        
+            return False
+
+        if not isinstance(unidad_curricular, IUnidadEvaluable):
+            return False
+
+        for unidad in self._unidades_curriculares:
+            if unidad.codigo_de_unidad == unidad_curricular.codigo_de_unidad:
+                return False
+
         self._unidades_curriculares.append(unidad_curricular)
-        
         self._total_horas_nivelacion = self.calcular_total_horas_nivelacion()
-        
-        print(f"[Malla curricular] Unidad registrada: {unidad_curricular.nombre}")
+        return True
+       
             
     def calcular_total_horas_nivelacion(self):
-        return sum(unidad.horas_totales for unidad in self._unidades_curriculares)
+        calculo_total_horas_nivelacion = 0.0
+
+        for unidad in self._unidades_curriculares:
+            calculo_total_horas_nivelacion += unidad.obtener_horas_totales()
+
+        return calculo_total_horas_nivelacion

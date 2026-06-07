@@ -26,27 +26,43 @@ class Estudiante(UsuarioAcademico):
             **kwargs
         )
         self.numero_de_matricula = numero_de_matricula
-        self.jornada = jornada #Instancia
-        self.registro_de_cupo = registro_de_cupo #Instancia
+        self.jornada = jornada #Instancia de Enum
+        self.registro_de_cupo = registro_de_cupo #Instancia de Enum
         self.carrera_registrada = carrera_registrada
         self.campus_registrado = campus_registrado
-        self._estado_de_matricula = estado_de_matricula #Instancia
+        self._estado_de_matricula = estado_de_matricula #Instancia de Enum
      
      
     def iniciar_sesion(self): #Sobreescritura
-        if self._estado_de_matricula.value in ("Retirado", "Anulado"):
-            print(f"[Estudiante] Acceso denegado: {self.nombres} {self.apellidos} (matrícula {self._estado_de_matricula.value.lower()}).")
-        else:
-            print(f"[Estudiante] Sesión iniciada: {self.nombres} {self.apellidos} ({self._estado_de_matricula.value})")
+        if self._estado_de_matricula in (EstadoDeMatricula.RETIRADO, EstadoDeMatricula.ANULADO):
+            return False
+        return True
     
-    def formalizar_matricula(self): #Aspirante de la MTN en Estudiante
-        pass
     
+    def formalizar_matricula(self): #ASPIRANTE a MATRICULADO
+        if self._estado_de_matricula == EstadoDeMatricula.ASPIRANTE:
+            self._estado_de_matricula = EstadoDeMatricula.MATRICULADO
+            return True
+        return False
+            
+            
+    def anular_matricula(self):
+        self._estado_de_matricula = EstadoDeMatricula.ANULADO
+            
+            
     def obtener_carrera(self):
-        return self._carrera_registrada
+        return self.carrera_registrada
     
-    def obtener_registro_de_unidades_curriculares(self):
-        pass
     
-    def solicitar_retiro(self): #self, motivo
-        pass
+    def solicitar_retiro(self): #A RETIRADO si está MATRICULADO
+        if self._estado_de_matricula == EstadoDeMatricula.MATRICULADO:
+            self._estado_de_matricula = EstadoDeMatricula.RETIRADO
+            return True
+        return False
+    
+    
+    def aprobar_retiro(self):
+        if self._estado_de_matricula == EstadoDeMatricula.MATRICULADO:
+            self._estado_de_matricula = EstadoDeMatricula.RETIRADO
+            return True
+        return False

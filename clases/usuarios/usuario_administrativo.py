@@ -24,19 +24,7 @@ class UsuarioAdministrativo(UsuarioDeSistema):
         )
         self.identificador_administrativo = identificador_administrativo
         self.perfil_administrativo = perfil_administrativo #Instancia
-        
+   
         
     def iniciar_sesion(self): #Sobreescritura
-        print(f"[Usuario Administrativo] Sesión iniciada: {self.nombres} {self.apellidos} ({self.perfil_administrativo.value})")
-        
-    def cerrar_sesion(self):
-        pass  
-    
-    def establecer_periodo_academico(self):
-        pass
-    
-    def definir_unidad_curricular(self):
-        pass
-    
-    def estructurar_malla_curricular(self):
-        pass
+        return True
