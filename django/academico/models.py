@@ -59,7 +59,9 @@ class Carrera(models.Model):
     codigo_de_carrera = models.CharField(max_length=50, unique=True, verbose_name="Código de carrera")
     nombre = models.CharField(max_length=200, verbose_name="Nombre")
     modalidad = models.CharField(max_length=50, choices=cambiar_enum_a_choices(Modalidad), verbose_name="Modalidad")
-    campo_de_conocimiento = models.CharField(max_length=200, verbose_name="Campo de conocimiento")
+    
+    facultad = models.CharField(max_length=200, verbose_name="Facultad")
+    
     vigencia_sniese = models.DateField(verbose_name="Vigencia SNIESE")
 
     class Meta:
@@ -70,7 +72,6 @@ class Carrera(models.Model):
         return self.nombre
 
     def esta_activa(self):
-        #Hacia poo/
         from poo.clases.carrera import Carrera as CarreraBase
         from poo.clases.enums.modalidad import Modalidad as ModalidadBase
         
@@ -78,7 +79,7 @@ class Carrera(models.Model):
             codigo_de_carrera=self.codigo_de_carrera,
             nombre=self.nombre,
             modalidad=ModalidadBase(self.modalidad),
-            campo_de_conocimiento=self.campo_de_conocimiento,
+            facultad=self.facultad,
             vigencia_sniese=self.vigencia_sniese
         )
         return carrera.esta_activa()

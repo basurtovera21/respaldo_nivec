@@ -25,9 +25,8 @@ class FormularioUniversidad(BaseModelForm): # Ahora hereda de BaseModelForm
 class FormularioCampus(forms.ModelForm):
     class Meta:
         model = Campus
-        fields = ("universidad", "codigo_de_campus", "nombre", "direccion_fisica", "provincia", "infraestructura_compartida")
+        fields = ("codigo_de_campus", "nombre", "direccion_fisica", "provincia", "infraestructura_compartida")
         labels = {
-            "universidad": "Universidad registrada",
             "codigo_de_campus": "Código de campus",
             "nombre": "Nombre",
             "direccion_fisica": "Dirección física",
@@ -39,16 +38,26 @@ class FormularioCampus(forms.ModelForm):
 class FormularioCarrera(forms.ModelForm):
     class Meta:
         model = Carrera
-        fields = ("campus", "codigo_de_carrera", "nombre", "modalidad", "campo_de_conocimiento", "vigencia_sniese")
+        fields = (
+            "campus", 
+            "codigo_de_carrera", 
+            "nombre", 
+            "modalidad", 
+            "facultad",
+            "vigencia_sniese"
+        )
         labels = {
             "campus": "Campus registrado",
             "codigo_de_carrera": "Código de carrera",
             "nombre": "Nombre",
             "modalidad": "Modalidad",
-            "campo_de_conocimiento": "Campo de conocimiento",
+            "facultad": "Facultad",
             "vigencia_sniese": "Vigencia SNIESE",
         }
-        widgets = {"vigencia_sniese": forms.DateInput(attrs={"type": "date"})} #Fecha
+        widgets = {
+            "vigencia_sniese": forms.DateInput(attrs={"type": "date"}),
+            "campus": forms.Select(attrs={"class": "form-control"}),
+        }
 
 
 class FormularioMallaCurricular(forms.ModelForm):

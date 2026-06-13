@@ -4,13 +4,13 @@
 
 {% block contenido %}
 <div class="tarjeta">
-    <h2>{{ titulo }}</h2>
+    <h2 style="font-weight: bold;">{{ titulo }}</h2>
     <form method="post" enctype="multipart/form-data" style="max-width: 500px;">
         {% csrf_token %}
         
         {% for field in formulario %}
             <div class="campo">
-                {{ field.label_tag }}
+                <label for="{{ field.id_for_label }}" style="font-weight: bold;">{{ field.label }}</label>
                 {{ field }}
                 {% if field.help_text %}
                     <div class="ayuda">{{ field.help_text }}</div>

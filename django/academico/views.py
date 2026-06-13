@@ -27,7 +27,6 @@ def detalle_universidad(request):
         "universidad": universidad
     })
 
-
 @login_required
 def registrar_universidad(request):
     if request.user.perfil_administrativo.universidad:
@@ -54,31 +53,83 @@ def registrar_universidad(request):
 
 @login_required
 def listar_campus(request):
-    campus = Campus.objects.all().select_related("universidad")
-    return render(request, "entidades/listar_campus.html", {"campus": campus})
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("registrar_universidad")
 
+    campus = Campus.objects.filter(universidad=universidad_usuario)
+    
+    return render(request, "entidades/listar_campus.html", {"campus": campus})
 
 @login_required
 def registrar_campus(request):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("registrar_universidad")
+
     if request.method == "POST":
         formulario = FormularioCampus(request.POST)
         if formulario.is_valid():
-            formulario.save()
-            messages.success(request, "Campus registrado correctamente.")
+            nuevo_campus = formulario.save(commit=False)
+            nuevo_campus.universidad = universidad_usuario
+            nuevo_campus.save()
+            messages.success(request, "El campus ha sido registrado correctamente.")
             return redirect("listar_campus")
     else:
         formulario = FormularioCampus()
+        
     return render(request, "entidades/formulario_campus.html", {
         "formulario": formulario,
         "titulo": "Registrar campus",
+        "boton_texto": "Registrar"
     })
+
+@login_required
+def modificar_campus(request, campus_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("registrar_universidad")
+
+    campus = get_object_or_404(Campus, id=campus_id, universidad=universidad_usuario)
+
+    if request.method == "POST":
+        formulario = FormularioCampus(request.POST, instance=campus)
+        if formulario.is_valid():
+            formulario.save()
+            messages.success(request, "El campus ha sido modificado correctamente.")
+            return redirect("listar_campus")
+    else:
+        formulario = FormularioCampus(instance=campus)
+        
+    return render(request, "entidades/formulario_campus.html", {
+        "formulario": formulario,
+        "titulo": "Modificar campus",
+        "boton_texto": "Modificar"
+    })
+
+@login_required
+def eliminar_campus(request, campus_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("registrar_universidad")
+
+    campus = get_object_or_404(Campus, id=campus_id, universidad=universidad_usuario)
+    campus.delete()
+    
+    messages.success(request, "El campus ha sido eliminado correctamente.")
+    return redirect("listar_campus")
 
 
 @login_required
 def listar_carreras(request):
-    carreras = Carrera.objects.all().select_related("campus")
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    carreras = Carrera.objects.filter(campus__universidad=universidad_usuario).select_related("campus")
     return render(request, "entidades/listar_carreras.html", {"carreras": carreras})
-
 
 @login_required
 def registrar_carrera(request):
@@ -86,14 +137,43 @@ def registrar_carrera(request):
         formulario = FormularioCarrera(request.POST)
         if formulario.is_valid():
             formulario.save()
-            messages.success(request, "Carrera registrada correctamente.")
+            messages.success(request, "La carrera ha sido registrada correctamente.")
             return redirect("listar_carreras")
     else:
         formulario = FormularioCarrera()
+        formulario.fields['campus'].queryset = Campus.objects.filter(universidad=request.user.perfil_administrativo.universidad)
+        
     return render(request, "entidades/formulario_carrera.html", {
         "formulario": formulario,
         "titulo": "Registrar carrera",
+        "boton_texto": "Registrar"
     })
+
+@login_required
+def modificar_carrera(request, carrera_id):
+    carrera = get_object_or_404(Carrera, id=carrera_id, campus__universidad=request.user.perfil_administrativo.universidad)
+    if request.method == "POST":
+        formulario = FormularioCarrera(request.POST, instance=carrera)
+        if formulario.is_valid():
+            formulario.save()
+            messages.success(request, "La carrera ha sido modificada correctamente.")
+            return redirect("listar_carreras")
+    else:
+        formulario = FormularioCarrera(instance=carrera)
+        formulario.fields['campus'].queryset = Campus.objects.filter(universidad=request.user.perfil_administrativo.universidad)
+
+    return render(request, "entidades/formulario_carrera.html", {
+        "formulario": formulario,
+        "titulo": "Modificar carrera",
+        "boton_texto": "Modificar"
+    })
+
+@login_required
+def eliminar_carrera(request, carrera_id):
+    carrera = get_object_or_404(Carrera, id=carrera_id, campus__universidad=request.user.perfil_administrativo.universidad)
+    carrera.delete()
+    messages.success(request, "La carrera ha sido eliminada correctamente.")
+    return redirect("listar_carreras")
 
 
 #Estructura académica

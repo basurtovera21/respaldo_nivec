@@ -4,15 +4,15 @@
 {% block contenido %}
 <div style="max-width: 380px; margin: 60px auto;">
     <div class="tarjeta">
-        <h2 style="text-align:center; margin-bottom:20px;">NIVEC</h2>
+        <h2 style="text-align:center; margin-bottom:20px; font-weight: bold;">NIVEC</h2>
         <form method="post">
             {% csrf_token %}
             <div class="campo">
-                <label>Correo institucional</label>
+                <label style="font-weight: bold;">Correo institucional</label>
                 <input type="email" name="correo_institucional" required autofocus>
             </div>
             <div class="campo">
-                <label>Contraseña</label>
+                <label style="font-weight: bold;">Contraseña</label>
                 <input type="password" name="contrasena" required>
             </div>
             <button type="submit" class="boton boton-primario" style="width:100%; margin-top:8px;">

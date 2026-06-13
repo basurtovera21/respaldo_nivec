@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block titulo %}Carreras - NIVEC{% endblock %}
+
+{% block contenido %}
+<style>
+    .tarjeta table th, .tarjeta table td {
+        padding: 12px 24px; 
+    }
+</style>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Carreras</h2>
+    <a href="{% url 'registrar_carrera' %}" class="boton boton-primario">Registrar carrera</a>
+</div>
+
+<div class="tarjeta" style="padding: 0; overflow: hidden;">
+    <table>
+        <thead>
+            <tr>
+                <th style="font-weight: bold; text-align: left; color: #515154">Código de carrera</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Campus registrado</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Nombre</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Modalidad</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Facultad</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Vigencia SNIESE</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in carreras %}
+            <tr>
+                <td style="font-family: monospace; font-weight: bold; text-align: left;">{{ c.codigo_de_carrera }}</td>
+                <td style="font-weight: bold; text-align: left;">{{ c.campus.nombre }}</td>
+                <td style="font-weight: bold; text-align: left;">{{ c.nombre }}</td>
+                <td style="text-align: left;">{{ c.get_modalidad_display }}</td>
+                <td style="text-align: left;">{{ c.facultad }}</td>
+                <td style="text-align: left;">{{ c.vigencia_sniese }}</td>
+                <td style="text-align: left;">
+                    <a href="{% url 'modificar_carrera' c.id %}" style="color: #0071e3; font-weight: 500; font-size: 13px; text-decoration: none; margin-right: 15px;">Modificar</a>
+                    
+                    <a href="{% url 'eliminar_carrera' c.id %}" 
+                       onclick="return confirm('Confirmar acción');"
+                       style="color: #c81e1e; font-weight: 500; font-size: 13px; text-decoration: none;">Eliminar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center; color: #86868b; padding: 30px;">
+                    No existen registros actualmente
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top: 15px;">
+    <a href="{% url 'panel_principal' %}" class="boton boton-secundario">Volver</a>
+</div>
+{% endblock %}

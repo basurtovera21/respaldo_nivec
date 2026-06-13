@@ -2,13 +2,21 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Entidades base
-    path("universidad/detalle/", views.detalle_universidad, name="detalle_universidad"), # Cambiado para ver el registro único
+    #Universidad
+    path("universidad/detalle/", views.detalle_universidad, name="detalle_universidad"),
     path("universidades/registrar/", views.registrar_universidad, name="registrar_universidad"),
+    
+    #Campus
     path("campus/", views.listar_campus, name="listar_campus"),
     path("campus/registrar/", views.registrar_campus, name="registrar_campus"),
+    path("campus/editar/<int:campus_id>/", views.modificar_campus, name="modificar_campus"),
+    path("campus/eliminar/<int:campus_id>/", views.eliminar_campus, name="eliminar_campus"),
+
+    #Carreras
     path("carreras/", views.listar_carreras, name="listar_carreras"),
     path("carreras/registrar/", views.registrar_carrera, name="registrar_carrera"),
+    path("carreras/editar/<int:carrera_id>/", views.modificar_carrera, name="modificar_carrera"),
+    path("carreras/eliminar/<int:carrera_id>/", views.eliminar_carrera, name="eliminar_carrera"),
 
     # Estructura académica
     path("mallas/", views.listar_mallas, name="listar_mallas"),
