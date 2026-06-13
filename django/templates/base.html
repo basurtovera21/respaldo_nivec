@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block titulo %}NIVEC{% endblock %}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            font-size: 14px; 
+            background: #f5f5f7; 
+            color: #1d1d1f; 
+        }
+
+        nav { 
+            background: #1d1d1f; 
+            color: white; 
+            padding: 14px 24px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        nav .marca { font-weight: 600; font-size: 16px; letter-spacing: -0.01em; color: white; text-decoration: none; }
+        nav a { color: #86868b; text-decoration: none; margin-left: 16px; font-size: 13px; }
+        nav a:hover { color: white; }
+
+        .contenedor { max-width: 1000px; margin: 32px auto; padding: 0 16px; }
+
+        .tarjeta { 
+            background: white; 
+            border-radius: 8px; 
+            padding: 24px; 
+            margin-bottom: 20px; 
+            border: 1px solid #e5e5ea; 
+        }
+        .tarjeta h2 { 
+            margin-bottom: 16px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            color: #1d1d1f;
+        }
+
+        .mensajes { margin-bottom: 16px; }
+        .mensaje { 
+            padding: 12px 14px; 
+            border-radius: 8px; 
+            margin-bottom: 8px; 
+            font-size: 13px; 
+        }
+        .mensaje.exito  { background: #e8f5e9; color: #2e7d32; border: 1px solid rgba(46,125,50,0.1); }
+        .mensaje.error  { background: #fdf2f2; color: #c81e1e; border: 1px solid rgba(200,30,30,0.1); }
+        .mensaje.aviso  { background: #fef9ec; color: #b45309; border: 1px solid rgba(180,83,9,0.1); }
+
+        .campo { margin-bottom: 14px; }
+        .campo label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px; color: #515154; }
+        .campo input, .campo select, .campo textarea {
+            width: 100%; 
+            padding: 10px 12px; 
+            border: 1px solid #d2d2d7;
+            border-radius: 8px; 
+            font-size: 13px;
+            background: white;
+            color: #1d1d1f;
+            outline: none;
+            font-family: inherit;
+        }
+        .campo input:focus, .campo select:focus, .campo textarea:focus {
+            border-color: #0071e3; /* Sutil indicador azul de foco */
+        }
+        .campo .ayuda { font-size: 11px; color: #86868b; margin-top: 3px; }
+        .campo .error-campo { font-size: 11px; color: #c81e1e; margin-top: 3px; }
+
+        .boton { 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 13px; 
+            font-weight: 500;
+            text-decoration: none; 
+            display: inline-block; 
+        }
+        .boton-primario { background: #1d1d1f; color: white; }
+        .boton-primario:hover { background: #323236; }
+        .boton-secundario { background: #e8e8ed; color: #1d1d1f; }
+        .boton-secundario:hover { background: #dcextendeddce0; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { color: #86868b; font-weight: 600; padding: 12px; text-align: left; border-bottom: 1px solid #e5e5ea; }
+        td { padding: 12px; border-bottom: 1px solid #f5f5f7; color: #1d1d1f; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #fafafa; }
+
+        .acciones { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+
+{% if user.is_authenticated %}
+{% block navbar %}
+<nav>
+    <a href="{% url 'panel_principal' %}" class="marca">NIVEC</a>
+    <div>
+        <span style="font-size:13px; color:#86868b; margin-right: 8px;">{{ user.nombres }} {{ user.apellidos }}</span>
+        <a href="{% url 'cerrar_sesion' %}">Cerrar sesión</a>
+    </div>
+</nav>
+{% endblock %}
+{% endif %}
+
+<div class="contenedor">
+    {% if messages %}
+    <div class="mensajes">
+        {% for mensaje in messages %}
+        <div class="mensaje
+            {% if mensaje.tags == 'success' %}exito
+            {% elif mensaje.tags == 'error' %}error
+            {% else %}aviso{% endif %}">
+            {{ mensaje }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% block contenido %}{% endblock %}
+</div>
+
+</body>
+</html>

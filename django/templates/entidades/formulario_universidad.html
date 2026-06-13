@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block titulo %}Universidad - NIVEC{% endblock %}
+
+{% block contenido %}
+<div class="tarjeta">
+    <h2>{{ titulo }}</h2>
+    <form method="post" enctype="multipart/form-data" style="max-width: 500px;">
+        {% csrf_token %}
+        
+        {% for field in formulario %}
+            <div class="campo">
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}
+                    <div class="ayuda">{{ field.help_text }}</div>
+                {% endif %}
+                {% if field.errors %}
+                    <div class="error-campo">{{ field.errors }}</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <div style="margin-top: 25px; display: flex; gap: 15px;">
+            <button type="submit" class="boton boton-primario">Registrar</button>
+            <a href="{% url 'panel_principal' %}" class="boton boton-secundario">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

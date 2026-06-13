@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block titulo %}Director DAN - NIVEC{% endblock %}
+
+{% block contenido %}
+    <h2 style="margin-bottom: 20px;">Dirección de admisión y nivelación</h2>
+
+    <div class="tarjeta">
+        <h2 style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Configuración institucional</h2>
+        <p style="color:#86868b; margin-bottom: 16px; font-size: 13px;">Parámetros base</p>
+        <div class="acciones">
+            <a href="{% if user.perfil_administrativo.universidad %}{% url 'detalle_universidad' %}{% else %}{% url 'registrar_universidad' %}{% endif %}" class="boton boton-secundario">Universidad</a>
+            <a href="{% url 'panel_principal' %}" class="boton boton-secundario">Campus</a>
+            <a href="{% url 'panel_principal' %}" class="boton boton-secundario">Carreras</a>
+            <a href="{% url 'panel_principal' %}" class="boton boton-secundario">Periodos de nivelación</a>
+        </div>
+    </div>
+
+    <div class="tarjeta">
+        <h2 style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Usuarios de sistema</h2>
+        <p style="color:#86868b; margin-bottom: 16px; font-size: 13px;">Perfiles institucionales</p>
+        <div class="acciones">
+            <a href="{% url 'panel_principal' %}" class="boton boton-secundario">Administrativos</a>
+            <a href="{% url 'panel_principal' %}" class="boton boton-secundario">Coordinadores de unidades académicas</a>
+            <a href="{% url 'panel_principal' %}" class="boton boton-secundario">Docentes</a>
+            <a href="{% url 'panel_principal' %}" class="boton boton-secundario">Estudiantes</a>
+        </div>
+    </div>
+
+    <div class="tarjeta">
+        <h2 style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Informes</h2>
+        <p style="color:#86868b; margin-bottom: 16px; font-size: 13px;"></p>
+        <div class="acciones">
+            <a href="#" class="boton boton-secundario">Informes particulares</a>
+            <a href="#" class="boton boton-secundario">Informes generales</a>
+        </div>
+    </div>
+
+    <div class="tarjeta">
+        <h2 style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Incidencias académicas</h2>
+        <p style="color:#86868b; margin-bottom: 16px; font-size: 13px;"></p>
+        <div class="acciones">
+            <a href="{% url 'panel_principal' %}" class="boton boton-secundario">Registro de incidencias</a>
+        </div>
+    </div>
+
+    <div class="tarjeta">
+        <h2 style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">Evaluación de desempeño docente</h2>
+        <p style="color:#86868b; margin-bottom: 16px; font-size: 13px;"></p>
+        <div class="acciones">
+            <a href="#" class="boton boton-secundario">Registro de evaluaciones</a>
+        </div>
+    </div>
+
+    <footer style="margin-top: 40px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="font-size: 18px; font-weight: 600; color: #86868b; margin: 0;">
+            {{ user.perfil_administrativo.universidad.nombre|default:"Nombre de institución" }}
+        </h2>
+        
+        {% if user.perfil_administrativo.universidad.identificador_visual %}
+            <img src="{{ user.perfil_administrativo.universidad.identificador_visual.url }}" alt="Logo de {{ user.perfil_administrativo.universidad.abreviatura }}" style="max-width: 100px; max-height: 50px; object-fit: contain; border-radius: 4px;">
+        {% else %}
+            <div style="width: 100px; height: 50px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #86868b; border: 1px dashed #ccc; border-radius: 4px; font-size: 12px;">
+                Identificador visual
+            </div>
+        {% endif %}
+    </footer>
+{% endblock %}

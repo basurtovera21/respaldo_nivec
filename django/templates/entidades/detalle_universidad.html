@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block titulo %}Universidad - NIVEC{% endblock %}
+
+{% block contenido %}
+<div class="tarjeta" style="max-width: 600px;">
+    <h2>Información institucional</h2>
+    
+    <div class="campo">
+        <label>Nombre de la institución</label>
+        <div>{{ universidad.nombre }}</div>
+    </div>
+
+    <div class="campo">
+        <label>Abreviatura</label>
+        <div>{{ universidad.abreviatura }}</div>
+    </div>
+
+    <div class="campo">
+        <label>Código SNIESE</label>
+        <div style="font-family: monospace;">{{ universidad.codigo_sniese }}</div>
+    </div>
+
+    <div class="campo">
+        <label>Dirección de matriz</label>
+        <div>{{ universidad.direccion_matriz }}</div>
+    </div>
+
+    <div class="campo">
+        <label>Identificador visual (logo)</label>
+        {% if universidad.identificador_visual %}
+            <div>
+                <img src="{{ universidad.identificador_visual.url }}" alt="Logo de {{ universidad.abreviatura }}" style="max-width: 150px; max-height: 75px; border-radius: 4px; border: 1px solid #d2d2d7; padding: 4px; background: white;">
+            </div>
+        {% else %}
+            <div class="ayuda">No se ha registrado el identificador visual.</div>
+        {% endif %}
+    </div>
+
+    <div class="acciones" style="margin-top: 10px; margin-bottom: 0;">
+        <a href="{% url 'panel_principal' %}" class="boton boton-secundario">Volver</a>
+    </div>
+</div>
+{% endblock %}
