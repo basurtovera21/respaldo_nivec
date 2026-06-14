@@ -12,7 +12,7 @@ from poo.clases.enums.tipo_de_componente import TipoDeComponente
 from poo.clases.enums.dia_de_semana import DiaDeSemana
 from poo.clases.enums.tipo_de_sesion import TipoDeSesion
 
-from poo.clases.periodo_de_nivelacion import PeriodoDeNivelacion as PeriodoDeNivelacionPOO
+from poo.clases.periodo_de_nivelacion import PeriodoDeNivelacion as PeriodoDeNivelacionBase
 from poo.clases.evaluacion_academica import EvaluacionAcademica as EvaluacionAcademica
 from poo.clases.informe_general import InformeGeneral as InformeGeneralPOO
 from poo.clases.servicios.procesador_de_informe import ProcesadorDeInforme
@@ -27,6 +27,19 @@ from usuarios.models import PerfilEstudiante
 
 
 #PeriodoDeNivelacion
+#Constructor
+def _construir_periodo_de_nivelacion(periodo_de_nivelacion: PeriodoDeNivelacion):
+    return PeriodoDeNivelacionBase(
+        codigo_periodo = periodo_de_nivelacion.codigo_periodo,
+        anio = periodo_de_nivelacion.anio,
+        periodo = periodo_de_nivelacion.periodo,
+        fecha_inicio = periodo_de_nivelacion.fecha_inicio,
+        fecha_fin = periodo_de_nivelacion.fecha_fin,
+        modalidad = Modalidad(periodo_de_nivelacion.modalidad),
+        numero_periodo = periodo_de_nivelacion.numero_periodo,
+        estado = EstadoDePeriodo(periodo_de_nivelacion.estado)
+    )
+    
 def servicio_iniciar_periodo_de_nivelacion(periodo_de_nivelacion: PeriodoDeNivelacion):
     periodo = _construir_periodo_de_nivelacion(periodo_de_nivelacion)
     puede_iniciar = periodo.iniciar_periodo_de_nivelacion()
@@ -35,8 +48,7 @@ def servicio_iniciar_periodo_de_nivelacion(periodo_de_nivelacion: PeriodoDeNivel
         periodo_de_nivelacion.save()
     return puede_iniciar
 
-
-def servicio_finalizar_periodo(periodo_de_nivelacion: PeriodoDeNivelacion):
+def servicio_finalizar_periodo_de_nivelacion(periodo_de_nivelacion: PeriodoDeNivelacion):
     periodo = _construir_periodo_de_nivelacion(periodo_de_nivelacion)
     puede_finalizar = periodo.finalizar_periodo_de_nivelacion()
     if puede_finalizar:
@@ -299,16 +311,3 @@ def servicio_clonar_malla_curricular(id_malla_curricular_bd: int, nuevo_id: str,
     )
     
     return nueva_malla_curricular_db
-
-
-#Constructor
-def _construir_periodo_de_nivelacion(periodo_de_nivelacion: PeriodoDeNivelacion):
-    return PeriodoDeNivelacionPOO(
-        codigo_periodo = periodo_de_nivelacion.codigo_periodo,
-        anio = periodo_de_nivelacion.anio,
-        periodo = periodo_de_nivelacion.periodo,
-        fecha_inicio = periodo_de_nivelacion.fecha_inicio,
-        fecha_fin = periodo_de_nivelacion.fecha_fin,
-        modalidad = Modalidad(periodo_de_nivelacion.modalidad),
-        numero_periodo = periodo_de_nivelacion.numero_periodo
-    )

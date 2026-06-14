@@ -112,26 +112,34 @@ class FormularioUnidadCurricular(forms.ModelForm):
 class FormularioPeriodoDeNivelacion(forms.ModelForm):
     class Meta:
         model = PeriodoDeNivelacion
-        fields = ("universidad", "codigo_periodo", "anio", "periodo", "fecha_inicio", "fecha_fin", "modalidad", "numero_periodo", "estado")
+        fields = (
+            "universidad", "codigo_periodo", "anio", "periodo", 
+            "fecha_inicio", "fecha_fin", "modalidad", "numero_periodo", "estado"
+        )
         labels = {
             "universidad": "Universidad registrada",
-            "codigo_periodo": "Código de periodo de nivelación",
+            "codigo_periodo": "Código de periodo",
             "anio": "Año",
             "periodo": "Periodo",
             "fecha_inicio": "Fecha de inicio",
             "fecha_fin": "Fecha de finalización",
             "modalidad": "Modalidad",
-            "numero_periodo": "Número de periodo de nivelación",
+            "numero_periodo": "Número de periodo",
             "estado": "Estado",
         }
-        widgets = {"fecha_inicio": forms.DateInput(attrs={"type": "date"}), "fecha_fin": forms.DateInput(attrs={"type": "date"})}
+        widgets = {
+            "fecha_inicio": forms.DateInput(attrs={"type": "date"}), 
+            "fecha_fin": forms.DateInput(attrs={"type": "date"})
+        }
 
     def clean(self):
         registros = super().clean()
         fecha_de_inicio = registros.get("fecha_inicio")
         fecha_de_finalizacion = registros.get("fecha_fin")
+        
         if fecha_de_inicio and fecha_de_finalizacion and fecha_de_finalizacion <= fecha_de_inicio:
-            raise forms.ValidationError("La fecha de finalización debe de ser posterior a la fecha de inicio.")
+            raise forms.ValidationError("La fecha de finalización debe ser posterior a la fecha de inicio.")
+            
         return registros
     
     

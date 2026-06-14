@@ -59,9 +59,7 @@ class Carrera(models.Model):
     codigo_de_carrera = models.CharField(max_length=50, unique=True, verbose_name="Código de carrera")
     nombre = models.CharField(max_length=200, verbose_name="Nombre")
     modalidad = models.CharField(max_length=50, choices=cambiar_enum_a_choices(Modalidad), verbose_name="Modalidad")
-    
     facultad = models.CharField(max_length=200, verbose_name="Facultad")
-    
     vigencia_sniese = models.DateField(verbose_name="Vigencia SNIESE")
 
     class Meta:

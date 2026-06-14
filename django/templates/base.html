@@ -66,7 +66,7 @@
             font-family: inherit;
         }
         .campo input:focus, .campo select:focus, .campo textarea:focus {
-            border-color: #0071e3; /* Sutil indicador azul de foco */
+            border-color: #0071e3; 
         }
         .campo .ayuda { font-size: 11px; color: #86868b; margin-top: 3px; }
         .campo .error-campo { font-size: 11px; color: #c81e1e; margin-top: 3px; }
@@ -121,6 +121,16 @@
             {% elif mensaje.tags == 'error' %}error
             {% else %}aviso{% endif %}">
             {{ mensaje }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if formulario.non_field_errors %}
+    <div class="mensajes">
+        {% for error in formulario.non_field_errors %}
+        <div class="mensaje error">
+            {{ error }}
         </div>
         {% endfor %}
     </div>

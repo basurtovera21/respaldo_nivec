@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block titulo %}Periodos de nivelación - NIVEC{% endblock %}
+
+{% block contenido %}
+<style>
+    .campo { margin-bottom: 15px; }
+    .campo label { display: block; font-weight: bold; margin-bottom: 4px; color: #515154; font-size: 13px; }
+    .campo input, .campo select { 
+        width: 100%; 
+        padding: 8px; 
+        border: 1px solid #d2d2d7; 
+        border-radius: 4px; 
+        font-size: 13px; 
+    }
+    .ayuda { font-size: 12px; color: #86868b; margin-top: 4px; }
+    .error-campo { color: #c81e1e; font-size: 12px; margin-top: 4px; }
+    
+    .boton-accion-estado {
+        display: inline-block;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
+        border-radius: 4px;
+        text-align: center;
+    }
+    .estado-iniciar { background-color: #e3f2fd; color: #0071e3; border: 1px solid #0071e3; }
+    .estado-finalizar { background-color: #ffebee; color: #c81e1e; border: 1px solid #c81e1e; }
+</style>
+
+<div class="tarjeta">
+    <h2 style="font-weight: bold; margin-bottom: 20px;">{{ titulo }}</h2>
+    
+    {% if periodo %}
+        <div style="background-color: #f5f5f7; padding: 15px; border-radius: 6px; max-width: 500px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <span style="font-size: 12px; font-weight: bold; color: #515154; display: block;">Estado actual:</span>
+                <strong style="font-size: 14px; color: #1d1d1f;">{{ periodo.get_estado_display }}</strong>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                {% if periodo.estado == 'Planificación' or periodo.estado == 'PLANIFICACION' %}
+                    <a href="{% url 'iniciar_periodo' periodo.id %}" class="boton-accion-estado estado-iniciar">Iniciar Periodo</a>
+                {% elif periodo.estado == 'En curso' or periodo.estado == 'EN_CURSO' or periodo.estado == 'Evaluación' or periodo.estado == 'EVALUACION' %}
+                    <a href="{% url 'finalizar_periodo' periodo.id %}" onclick="return confirm('Confirmar acción');" class="boton-accion-estado estado-finalizar">Finalizar Periodo</a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+    <form method="post" style="max-width: 500px;">
+        {% csrf_token %}
+        
+        {% for field in formulario %}
+            <div class="campo">
+                <label for="{{ field.id_for_label }}" style="font-weight: bold;">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                    <div class="ayuda">{{ field.help_text }}</div>
+                {% endif %}
+                {% if field.errors %}
+                    <div class="error-campo">{{ field.errors }}</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <div style="margin-top: 25px; display: flex; gap: 15px;">
+            <button type="submit" class="boton boton-primario">{{ boton_texto }}</button>
+            <a href="{% url 'listar_periodos' %}" class="boton boton-secundario">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

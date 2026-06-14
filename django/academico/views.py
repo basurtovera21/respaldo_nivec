@@ -48,6 +48,29 @@ def registrar_universidad(request):
     return render(request, "entidades/formulario_universidad.html", {
         "formulario": formulario_universidad,
         "titulo": "Registrar universidad",
+        "boton_texto": "Registrar"
+    })
+
+@login_required
+def modificar_universidad(request):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("registrar_universidad")
+
+    if request.method == "POST":
+        formulario = FormularioUniversidad(request.POST, request.FILES, instance=universidad_usuario)
+        if formulario.is_valid():
+            formulario.save()
+            messages.success(request, "La universidad ha sido modificada correctamente.")
+            return redirect("detalle_universidad")
+    else:
+        formulario = FormularioUniversidad(instance=universidad_usuario)
+        
+    return render(request, "entidades/formulario_universidad.html", {
+        "formulario": formulario,
+        "titulo": "Modificar universidad",
+        "boton_texto": "Modificar"
     })
 
 
@@ -128,11 +151,30 @@ def eliminar_campus(request, campus_id):
 @login_required
 def listar_carreras(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("registrar_universidad")
+
+    if not Campus.objects.filter(universidad=universidad_usuario).exists():
+        messages.info(request, "No hay registros de campus actualmente.")
+        return redirect("registrar_campus")
+
     carreras = Carrera.objects.filter(campus__universidad=universidad_usuario).select_related("campus")
     return render(request, "entidades/listar_carreras.html", {"carreras": carreras})
 
 @login_required
 def registrar_carrera(request):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("registrar_universidad")
+
+    campus_existente = Campus.objects.filter(universidad=universidad_usuario)
+    
+    if not campus_existente.exists():
+        messages.warning(request, "No hay registros de campus actualmente.")
+        return redirect("registrar_campus")
+
     if request.method == "POST":
         formulario = FormularioCarrera(request.POST)
         if formulario.is_valid():
@@ -141,7 +183,7 @@ def registrar_carrera(request):
             return redirect("listar_carreras")
     else:
         formulario = FormularioCarrera()
-        formulario.fields['campus'].queryset = Campus.objects.filter(universidad=request.user.perfil_administrativo.universidad)
+        formulario.fields['campus'].queryset = campus_existente
         
     return render(request, "entidades/formulario_carrera.html", {
         "formulario": formulario,
@@ -151,7 +193,13 @@ def registrar_carrera(request):
 
 @login_required
 def modificar_carrera(request, carrera_id):
-    carrera = get_object_or_404(Carrera, id=carrera_id, campus__universidad=request.user.perfil_administrativo.universidad)
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("registrar_universidad")
+
+    carrera = get_object_or_404(Carrera, id=carrera_id, campus__universidad=universidad_usuario)
+
     if request.method == "POST":
         formulario = FormularioCarrera(request.POST, instance=carrera)
         if formulario.is_valid():
@@ -160,7 +208,7 @@ def modificar_carrera(request, carrera_id):
             return redirect("listar_carreras")
     else:
         formulario = FormularioCarrera(instance=carrera)
-        formulario.fields['campus'].queryset = Campus.objects.filter(universidad=request.user.perfil_administrativo.universidad)
+        formulario.fields['campus'].queryset = Campus.objects.filter(universidad=universidad_usuario)
 
     return render(request, "entidades/formulario_carrera.html", {
         "formulario": formulario,
@@ -170,8 +218,14 @@ def modificar_carrera(request, carrera_id):
 
 @login_required
 def eliminar_carrera(request, carrera_id):
-    carrera = get_object_or_404(Carrera, id=carrera_id, campus__universidad=request.user.perfil_administrativo.universidad)
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("registrar_universidad")
+
+    carrera = get_object_or_404(Carrera, id=carrera_id, campus__universidad=universidad_usuario)
     carrera.delete()
+    
     messages.success(request, "La carrera ha sido eliminada correctamente.")
     return redirect("listar_carreras")
 
@@ -223,45 +277,98 @@ def registrar_unidad(request):
 
 @login_required
 def listar_periodos(request):
-    periodos = PeriodoDeNivelacion.objects.all().order_by("-anio")
-    return render(request, "academico/listar_periodos.html", {"periodos": periodos})
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("registrar_universidad")
 
+    periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario).order_by("-anio", "-numero_periodo")
+    
+    return render(request, "academico/listar_periodos.html", {"periodos": periodos})
 
 @login_required
 def registrar_periodo(request):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("registrar_universidad")
+
     if request.method == "POST":
         formulario = FormularioPeriodoDeNivelacion(request.POST)
         if formulario.is_valid():
             formulario.save()
-            messages.success(request, "Periodo de nivelación registrado correctamente.")
+            messages.success(request, "El periodo de nivelación ha sido registrado correctamente.")
             return redirect("listar_periodos")
     else:
         formulario = FormularioPeriodoDeNivelacion()
+        formulario.fields['universidad'].queryset = Universidad.objects.filter(id=universidad_usuario.id)
+        
     return render(request, "academico/formulario_periodo.html", {
         "formulario": formulario,
         "titulo": "Registrar periodo de nivelación",
+        "boton_texto": "Registrar"
     })
 
+@login_required
+def modificar_periodo(request, periodo_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("registrar_universidad")
+
+    periodo = get_object_or_404(PeriodoDeNivelacion, id=periodo_id, universidad=universidad_usuario)
+
+    if request.method == "POST":
+        formulario = FormularioPeriodoDeNivelacion(request.POST, instance=periodo)
+        if formulario.is_valid():
+            formulario.save()
+            messages.success(request, "El periodo de nivelación ha sido modificado correctamente.")
+            return redirect("listar_periodos")
+    else:
+        formulario = FormularioPeriodoDeNivelacion(instance=periodo)
+        formulario.fields['universidad'].queryset = Universidad.objects.filter(id=universidad_usuario.id)
+        
+    return render(request, "academico/formulario_periodo.html", {
+        "formulario": formulario,
+        "titulo": "Modificar periodo de nivelación",
+        "boton_texto": "Modificar",
+        "periodo": periodo
+    })
+
+@login_required
+def eliminar_periodo(request, periodo_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("registrar_universidad")
+
+    periodo = get_object_or_404(PeriodoDeNivelacion, id=periodo_id, universidad=universidad_usuario)
+    periodo.delete()
+    messages.success(request, "El periodo de nivelación ha sido eliminado correctamente.")
+    return redirect("listar_periodos")
 
 @login_required
 def iniciar_periodo(request, periodo_id):
-    periodo = get_object_or_404(PeriodoDeNivelacion, pk=periodo_id)
-    resultado = services.servicio_iniciar_periodo(periodo)
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    periodo = get_object_or_404(PeriodoDeNivelacion, pk=periodo_id, universidad=universidad_usuario)
+    resultado = services.servicio_iniciar_periodo_de_nivelacion(periodo)
     if resultado:
-        messages.success(request, f"Periodo iniciado: {periodo.periodo}.")
+        messages.success(request, f"El periodo de nivelación {periodo.periodo} ha iniciado.")
     else:
-        messages.error(request, "No se pudo iniciar el periodo.")
+        messages.error(request, "No se ha podido iniciar el periodo de nivelación.")
+        
     return redirect("listar_periodos")
-
 
 @login_required
 def finalizar_periodo(request, periodo_id):
-    periodo = get_object_or_404(PeriodoDeNivelacion, pk=periodo_id)
-    resultado = services.servicio_finalizar_periodo(periodo)
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    periodo = get_object_or_404(PeriodoDeNivelacion, pk=periodo_id, universidad=universidad_usuario)
+    resultado = services.servicio_finalizar_periodo_de_nivelacion(periodo)
     if resultado:
-        messages.success(request, f"Periodo cerrado: {periodo.periodo}.")
+        messages.success(request, f"El periodo de nivelación {periodo.periodo} ha finalizado.")
     else:
-        messages.error(request, "No se pudo cerrar el periodo.")
+        messages.error(request, "No se ha podido finalizar el periodo de nivelación.")
+        
     return redirect("listar_periodos")
 
 
@@ -490,10 +597,10 @@ def emitir_informe(request, informe_id):
     informe = get_object_or_404(InformeGeneral, pk=informe_id)
     from poo.clases.informe_general import InformeGeneral as InformeGeneralPOO
     from poo.clases.enums.tipo_de_informe import TipoDeInforme
-    from poo.clases.periodo_de_nivelacion import PeriodoDeNivelacion as PeriodoDeNivelacionPOO
+    from poo.clases.periodo_de_nivelacion import PeriodoDeNivelacion as PeriodoDeNivelacionBase
     from poo.clases.enums.modalidad import Modalidad
 
-    periodo_poo = PeriodoDeNivelacionPOO(
+    periodo_poo = PeriodoDeNivelacionBase(
         codigo_periodo = informe.periodo_academico.codigo_periodo,
         anio = informe.periodo_academico.anio,
         periodo = informe.periodo_academico.periodo,

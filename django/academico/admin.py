@@ -58,11 +58,10 @@ class CampusAdmin(admin.ModelAdmin):
 
 @admin.register(Carrera)
 class CarreraAdmin(admin.ModelAdmin):
-    list_display = ("nombre", "campus", "modalidad", "vigencia_sniese")
-    search_fields = ("nombre", "codigo_de_carrera")
-    list_filter = ("modalidad", "campus")
+    list_display = ("nombre", "campus", "modalidad", "facultad", "vigencia_sniese")
+    search_fields = ("nombre", "codigo_de_carrera", "facultad")
+    list_filter = ("modalidad", "campus", "facultad")
     ordering = ("campus", "nombre")
-
     fieldsets = (
         (None, {
             "fields": (
@@ -70,7 +69,7 @@ class CarreraAdmin(admin.ModelAdmin):
                 "codigo_de_carrera", 
                 "nombre", 
                 "modalidad", 
-                "campo_de_conocimiento", 
+                "facultad",
                 "vigencia_sniese"
             )
         }),
