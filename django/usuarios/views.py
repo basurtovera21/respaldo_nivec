@@ -242,31 +242,50 @@ def registrar_estudiante(request):
 
 @login_required
 def listar_administrativos(request):
-    administrativos = PerfilAdministrativo.objects.all().select_related("usuario_de_sistema")
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("panel_principal")
+
+    administrativos = PerfilAdministrativo.objects.filter(
+        universidad=universidad_usuario
+    ).select_related("usuario_de_sistema")
+    
     return render(request, "usuarios/listar_administrativos.html", {"administrativos": administrativos})
 
 
 @login_required
 def registrar_administrativo(request):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("panel_principal")
+
     if request.method == "POST":
         formulario_usuario = FormularioUsuarioDeSistema(request.POST)
         formulario_perfil = FormularioPerfilAdministrativo(request.POST)
+
         if formulario_usuario.is_valid() and formulario_perfil.is_valid():
             usuario = formulario_usuario.save(commit=False)
             usuario.set_password(formulario_usuario.cleaned_data["contrasena"])
             usuario.save()
+            
             perfil = formulario_perfil.save(commit=False)
             perfil.usuario_de_sistema = usuario
+            perfil.universidad = universidad_usuario
             perfil.save()
-            messages.success(request, "Perfil administrativo registrado correctamente.")
+            
+            messages.success(request, "El usuario administrativo ha sido registrado correctamente.")
             return redirect("listar_administrativos")
     else:
         formulario_usuario = FormularioUsuarioDeSistema()
         formulario_perfil = FormularioPerfilAdministrativo()
+
     return render(request, "usuarios/formulario_administrativo.html", {
-        "formulario_usuario": formulario_usuario,
-        "formulario_perfil": formulario_perfil,
+        "form_usuario": formulario_usuario,
+        "form_perfil": formulario_perfil,
         "titulo": "Registrar perfil administrativo",
+        "boton_texto": "Registrar",
     })
 
 

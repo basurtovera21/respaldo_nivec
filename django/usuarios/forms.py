@@ -1,17 +1,26 @@
 from django import forms
 from .models import (UsuarioDeSistema, PerfilDocente, PerfilEstudiante, PerfilAdministrativo)
-
+from poo.clases.enums.estado_de_usuario import EstadoDeUsuario
 
 class FormularioUsuarioDeSistema(forms.ModelForm):
-    contrasena = forms.CharField(label="Contraseña", widget=forms.PasswordInput, min_length=8)
-    confirmar_contrasena = forms.CharField(label="Confirmar contraseña", widget=forms.PasswordInput)
+    contrasena = forms.CharField(label="Contraseña", widget=forms.PasswordInput, min_length=8, required=True)
+    confirmar_contrasena = forms.CharField(label="Confirmar contraseña", widget=forms.PasswordInput, required=True)
+
+    estado_de_usuario = forms.ChoiceField(
+        choices=[
+            (EstadoDeUsuario.ACTIVO.value, 'Activo'),
+            (EstadoDeUsuario.INACTIVO.value, 'Inactivo'),
+            (EstadoDeUsuario.BLOQUEADO.value, 'Bloqueado'),
+        ],
+        label="Estado de usuario",
+        widget=forms.Select(attrs={'class': 'campo-select'})
+    )
 
     class Meta:
         model = UsuarioDeSistema
         fields = (
             "tipo_de_identificacion", "identificacion", "nombres", "apellidos", 
-            "correo_institucional", "fecha_de_nacimiento", "sexo", "etnia", 
-            "porcentaje_de_discapacidad", "celular", "direccion", "estado_de_usuario"
+            "correo_institucional", "estado_de_usuario"
         )
         labels = {
             "tipo_de_identificacion": "Tipo de identificación",
@@ -19,22 +28,19 @@ class FormularioUsuarioDeSistema(forms.ModelForm):
             "nombres": "Nombres",
             "apellidos": "Apellidos",
             "correo_institucional": "Correo institucional",
-            "fecha_de_nacimiento": "Fecha de nacimiento",
-            "sexo": "Sexo",
-            "etnia": "Etnia",
-            "porcentaje_de_discapacidad": "Porcentaje de discapacidad",
-            "celular": "Número de celular",
-            "direccion": "Dirección",
             "estado_de_usuario": "Estado de usuario",
         }
-        widgets = {"fecha_de_nacimiento": forms.DateInput(attrs={"type": "date"})}
+        widgets = {
+            "tipo_de_identificacion": forms.Select(attrs={'class': 'campo-select'}),
+            "estado_de_usuario": forms.Select(attrs={'class': 'campo-select'}),
+        }
 
     def clean(self):
         registro_valido = super().clean()
         contrasena = registro_valido.get("contrasena")
         confirmar_contrasena = registro_valido.get("confirmar_contrasena")
         if contrasena and confirmar_contrasena and contrasena != confirmar_contrasena:
-            raise forms.ValidationError("Los registros no coinciden.")
+            raise forms.ValidationError("Las contraseñas no coinciden.")
         return registro_valido
 
 
@@ -58,6 +64,12 @@ class FormularioPerfilDocente(forms.ModelForm):
         }
         widgets = {
             "carga_horaria_actual": forms.NumberInput(attrs={'readonly': True}),
+            "tipo_de_vinculacion": forms.Select(attrs={'class': 'campo-select'}),
+            "tiempo_de_dedicacion": forms.Select(attrs={'class': 'campo-select'}),
+            "estado_de_vinculacion": forms.Select(attrs={'class': 'campo-select'}),
+        }
+        help_texts = {
+            "especialidades": "Ingrese las especialidades separadas por comas."
         }
 
 
@@ -79,22 +91,34 @@ class FormularioPerfilEstudiante(forms.ModelForm):
             "campus_registrado": "Campus registrado",
             "estado_de_matricula": "Estado de matrícula",
         }
+        widgets = {
+            "jornada": forms.Select(attrs={'class': 'campo-select'}),
+            "registro_de_cupo": forms.Select(attrs={'class': 'campo-select'}),
+            "carrera_registrada": forms.Select(attrs={'class': 'campo-select'}),
+            "campus_registrado": forms.Select(attrs={'class': 'campo-select'}),
+            "estado_de_matricula": forms.Select(attrs={'class': 'campo-select'}),
+        }
 
 
 class FormularioPerfilAdministrativo(forms.ModelForm):
+    OPCIONES_PERFIL_ADMINISTRATIVO = [
+        ('Rector', 'Rector'),
+        ('Vicerrector académico', 'Vicerrector académico'),
+    ]
+
+    perfil_administrativo = forms.ChoiceField(
+        choices=OPCIONES_PERFIL_ADMINISTRATIVO,
+        label="Perfil administrativo",
+        widget=forms.Select(attrs={'class': 'campo-select'})
+    )
+
     class Meta:
         model = PerfilAdministrativo
         fields = (
-            "usuario_de_sistema", "identificador_administrativo", "perfil_administrativo", 
-            "identificador_coordinador_dan", "identificador_coordinador_ua", "unidad_academica",
-            "universidad"
+            "identificador_administrativo", 
+            "perfil_administrativo"
         )
         labels = {
-            "usuario_de_sistema": "Usuario de sistema registrado",
             "identificador_administrativo": "Número de identificador administrativo",
-            "perfil_administrativo": "Perfil administrativo",
-            "identificador_coordinador_dan": "Número de identificador DAN",
-            "identificador_coordinador_ua": "Número de identificador UA",
-            "unidad_academica": "Unidad académica",
-            "universidad": "Universidad registrada"
+            "perfil_administrativo": "Perfil administrativo"
         }

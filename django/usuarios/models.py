@@ -47,15 +47,16 @@ class UsuarioDeSistema(AbstractBaseUser, PermissionsMixin):
     nombres = models.CharField(max_length=150, verbose_name="Nombres")
     apellidos = models.CharField(max_length=150, verbose_name="Apellidos")
     correo_institucional = models.EmailField(unique=True, verbose_name="Correo institucional")
+    
     fecha_de_nacimiento = models.DateField(null=True, blank=True, verbose_name="Fecha de nacimiento")
-    sexo = models.CharField(max_length=20, verbose_name="Sexo")
-    etnia = models.CharField(max_length=50, verbose_name="Etnia")
-    porcentaje_de_discapacidad = models.FloatField(default=0.0, verbose_name="Porcentaje de discapacidad")
-    celular = models.CharField(max_length=15, verbose_name="Número de celular")
-    direccion = models.CharField(max_length=300, verbose_name="Dirección")
+    sexo = models.CharField(max_length=20, null=True, blank=True, verbose_name="Sexo")
+    etnia = models.CharField(max_length=50, null=True, blank=True, verbose_name="Etnia")
+    porcentaje_de_discapacidad = models.FloatField(default=0.0, null=True, blank=True, verbose_name="Porcentaje de discapacidad")
+    celular = models.CharField(max_length=15, null=True, blank=True, verbose_name="Número de celular")
+    direccion = models.CharField(max_length=300, null=True, blank=True, verbose_name="Dirección")
+    
     estado_de_usuario = models.CharField(max_length=50, choices=cambiar_enum_a_choices(EstadoDeUsuario), default=EstadoDeUsuario.PENDIENTE.value, verbose_name="Estado de usuario")
     
-    #Atributos requeridos
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 

@@ -17,19 +17,27 @@ urlpatterns = [
     path("panel/estudiante/", views.panel_estudiante, name="panel_estudiante"),
     path("panel/administrativo/", views.panel_administrativo, name="panel_administrativo"),
 
-    # Usuarios
+    # Usuarios Generales
     path("usuarios/", views.listar_usuarios, name="listar_usuarios"),
     path("usuarios/registrar/", views.registrar_usuario, name="registrar_usuario"),
+    
+    # Docentes
     path("docentes/", views.listar_docentes, name="listar_docentes"),
     path("docentes/registrar/", views.registrar_docente, name="registrar_docente"),
+    path("docentes/<int:docente_id>/inhabilitar/", views.inhabilitar_docente, name="inhabilitar_docente"),
+    
+    # Estudiantes
     path("estudiantes/", views.listar_estudiantes, name="listar_estudiantes"),
     path("estudiantes/registrar/", views.registrar_estudiante, name="registrar_estudiante"),
-    path("administrativos/", views.listar_administrativos, name="listar_administrativos"),
-    path("administrativos/registrar/", views.registrar_administrativo, name="registrar_administrativo"),
-    
     path("estudiantes/<int:estudiante_id>/formalizar/", views.formalizar_matricula, name="formalizar_matricula"),
     path("estudiantes/<int:estudiante_id>/retiro/", views.solicitar_retiro, name="solicitar_retiro"),
     path("estudiantes/<int:estudiante_id>/aprobar-retiro/", views.aprobar_retiro, name="aprobar_retiro"),
     path("estudiantes/<int:estudiante_id>/anular/", views.anular_matricula, name="anular_matricula"),
-    path("docentes/<int:docente_id>/inhabilitar/", views.inhabilitar_docente, name="inhabilitar_docente"),
+    
+    # Administrativos
+    path("administrativos/", views.listar_administrativos, name="listar_administrativos"),
+    path("administrativos/registrar/", views.registrar_administrativo, name="registrar_administrativo"),
+    # Rutas preparadas para la próxima fase de desarrollo:
+    # path("administrativos/<int:admin_id>/modificar/", views.modificar_administrativo, name="modificar_administrativo"),
+    # path("administrativos/<int:admin_id>/eliminar/", views.eliminar_administrativo, name="eliminar_administrativo"),
 ]
