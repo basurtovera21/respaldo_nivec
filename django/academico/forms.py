@@ -9,7 +9,7 @@ class BaseModelForm(forms.ModelForm):
             field.widget.attrs.update({'class': 'input-estilo'})
             
             
-class FormularioUniversidad(BaseModelForm): # Ahora hereda de BaseModelForm
+class FormularioUniversidad(BaseModelForm):
     class Meta:
         model = Universidad
         fields = ("nombre", "abreviatura", "codigo_sniese", "direccion_matriz", "identificador_visual")
@@ -73,7 +73,7 @@ class FormularioMallaCurricular(forms.ModelForm):
             "duracion_semanas": "Duración (en semanas)",
             "version_de_malla": "Versión de malla curricular",
             "modalidad": "Modalidad",
-            "estado": "Estado",
+           "estado": "Estado",
             "total_horas_nivelacion": "Total de horas de nivelación",
         }
 
@@ -301,6 +301,7 @@ class FormularioEvaluacionDeDesempeno(forms.ModelForm):
         widgets = {
             "puntaje_final": forms.NumberInput(attrs={'readonly': True}),
         }
+
 
 class FormularioInformeGeneral(forms.ModelForm):
     class Meta:

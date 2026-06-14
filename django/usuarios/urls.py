@@ -37,7 +37,6 @@ urlpatterns = [
     # Administrativos
     path("administrativos/", views.listar_administrativos, name="listar_administrativos"),
     path("administrativos/registrar/", views.registrar_administrativo, name="registrar_administrativo"),
-    # Rutas preparadas para la próxima fase de desarrollo:
-    # path("administrativos/<int:admin_id>/modificar/", views.modificar_administrativo, name="modificar_administrativo"),
-    # path("administrativos/<int:admin_id>/eliminar/", views.eliminar_administrativo, name="eliminar_administrativo"),
+    path("administrativos/<int:admin_id>/modificar/", views.modificar_administrativo, name="modificar_administrativo"),
+    path("administrativos/<int:admin_id>/eliminar/", views.eliminar_administrativo, name="eliminar_administrativo"),
 ]

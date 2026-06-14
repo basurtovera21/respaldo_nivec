@@ -379,7 +379,6 @@ def listar_paralelos(request):
     )
     return render(request, "academico/listar_paralelos.html", {"paralelos": paralelos})
 
-
 @login_required
 def registrar_paralelo(request):
     if request.method == "POST":
@@ -493,7 +492,6 @@ def listar_evaluaciones(request):
     )
     return render(request, "academico/listar_evaluaciones.html", {"evaluaciones": evaluaciones})
 
-
 @login_required
 def registrar_evaluacion(request):
     if request.method == "POST":
@@ -518,7 +516,6 @@ def listar_incidencias(request):
         "docente_implicado", "responsable_autorizacion"
     )
     return render(request, "academico/listar_incidencias.html", {"incidencias": incidencias})
-
 
 @login_required
 def registrar_incidencia(request):

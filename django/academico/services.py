@@ -27,7 +27,6 @@ from usuarios.models import PerfilEstudiante
 
 
 #PeriodoDeNivelacion
-#Constructor
 def _construir_periodo_de_nivelacion(periodo_de_nivelacion: PeriodoDeNivelacion):
     return PeriodoDeNivelacionBase(
         codigo_periodo = periodo_de_nivelacion.codigo_periodo,
@@ -55,6 +54,7 @@ def servicio_finalizar_periodo_de_nivelacion(periodo_de_nivelacion: PeriodoDeNiv
         periodo_de_nivelacion.estado = EstadoDePeriodo.CERRADO.value
         periodo_de_nivelacion.save()
     return puede_finalizar
+
 
 
 def servicio_registrar_evaluacion_academica(evaluacion_academica: EvaluacionAcademica):

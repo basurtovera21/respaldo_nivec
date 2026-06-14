@@ -34,7 +34,6 @@ class UniversidadAdmin(admin.ModelAdmin):
         }),
     )
 
-
 @admin.register(Campus)
 class CampusAdmin(admin.ModelAdmin):
     list_display = ("nombre", "universidad", "provincia", "infraestructura_compartida")
@@ -55,7 +54,6 @@ class CampusAdmin(admin.ModelAdmin):
         }),
     )
 
-
 @admin.register(Carrera)
 class CarreraAdmin(admin.ModelAdmin):
     list_display = ("nombre", "campus", "modalidad", "facultad", "vigencia_sniese")
@@ -74,7 +72,6 @@ class CarreraAdmin(admin.ModelAdmin):
             )
         }),
     )
-
 
 @admin.register(MallaCurricular)
 class MallaCurricularAdmin(admin.ModelAdmin):
@@ -98,7 +95,6 @@ class MallaCurricularAdmin(admin.ModelAdmin):
             )
         }),
     )
-
 
 @admin.register(UnidadCurricular)
 class UnidadCurricularAdmin(admin.ModelAdmin):
@@ -125,7 +121,6 @@ class UnidadCurricularAdmin(admin.ModelAdmin):
         }),
     )
 
-
 @admin.register(PeriodoDeNivelacion)
 class PeriodoDeNivelacionAdmin(admin.ModelAdmin):
     list_display = ("periodo", "universidad", "anio", "numero_periodo", "modalidad", "fecha_inicio", "fecha_fin", "estado")
@@ -149,7 +144,6 @@ class PeriodoDeNivelacionAdmin(admin.ModelAdmin):
         }),
     )
 
-
 @admin.register(Paralelo)
 class ParaleloAdmin(admin.ModelAdmin):
     list_display = ("nombre", "periodo_de_nivelacion", "unidad_curricular", "docente_responsable", "jornada", "modalidad", "capacidad_maxima")
@@ -172,7 +166,6 @@ class ParaleloAdmin(admin.ModelAdmin):
         }),
     )
 
-
 @admin.register(Horario)
 class HorarioAdmin(admin.ModelAdmin):
     list_display = ("paralelo", "dia_semana", "hora_inicio", "hora_fin", "tipo_de_sesion", "espacio_de_imparticion", "numero_semana")
@@ -194,7 +187,6 @@ class HorarioAdmin(admin.ModelAdmin):
             )
         }),
     )
-
 
 @admin.register(CohorteDeMatricula)
 class CohorteDeMatriculaAdmin(admin.ModelAdmin):
@@ -220,7 +212,6 @@ class CohorteDeMatriculaAdmin(admin.ModelAdmin):
         }),
     )
 
-
 @admin.register(MatriculaParalelo)
 class MatriculaParaleloAdmin(admin.ModelAdmin):
     list_display = ("estudiante", "paralelo", "cohorte_de_matricula", "fecha_registro")
@@ -241,7 +232,6 @@ class MatriculaParaleloAdmin(admin.ModelAdmin):
         }),
     )
 
-
 @admin.register(ConsolidadoAcademico)
 class ConsolidadoAcademicoAdmin(admin.ModelAdmin):
     list_display = ("periodo_academico", "fecha_de_corte", "total_cupos_aceptados", "registros_totales", "registros_validos", "registros_observados")
@@ -260,7 +250,6 @@ class ConsolidadoAcademicoAdmin(admin.ModelAdmin):
             )
         }),
     )
-
 
 @admin.register(EvaluacionAcademica)
 class EvaluacionAcademicaAdmin(admin.ModelAdmin):
@@ -284,7 +273,6 @@ class EvaluacionAcademicaAdmin(admin.ModelAdmin):
         }),
     )
 
-
 @admin.register(IncidenciaAcademica)
 class IncidenciaAcademicaAdmin(admin.ModelAdmin):
     list_display = ("codigo_incidencia", "docente_implicado", "fecha_incidencia", "responsable_autorizacion")
@@ -303,7 +291,6 @@ class IncidenciaAcademicaAdmin(admin.ModelAdmin):
             )
         }),
     )
-
 
 @admin.register(EvaluacionDeDesempeno)
 class EvaluacionDeDesempenoAdmin(admin.ModelAdmin):
@@ -325,7 +312,6 @@ class EvaluacionDeDesempenoAdmin(admin.ModelAdmin):
             )
         }),
     )
-
 
 @admin.register(InformeGeneral)
 class InformeGeneralAdmin(admin.ModelAdmin):

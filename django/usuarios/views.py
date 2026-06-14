@@ -12,12 +12,20 @@ from .models import PerfilDocente
 from .models import PerfilEstudiante
 from .models import PerfilAdministrativo
 
-from .forms import FormularioUsuarioDeSistema
-from .forms import FormularioPerfilEstudiante
-from .forms import FormularioPerfilDocente
-from .forms import FormularioPerfilAdministrativo
+from .forms import (
+    FormularioUsuarioDeSistema, 
+    FormularioModificarUsuarioDeSistema, 
+    FormularioPerfilEstudiante, 
+    FormularioPerfilDocente, 
+    FormularioRegistrarPerfilAdministrativo,
+    FormularioModificarPerfilAdministrativo
+)
 
 from . import services
+
+from usuarios.utils import generar_identificador_siguiente
+
+from poo.clases.enums.perfil_administrativo import PerfilAdministrativo as EnumPerfilAdministrativo
 
 
 #Autenticación
@@ -29,12 +37,13 @@ def iniciar_sesion(request):
     if request.method == "POST":
         correo_institucional = request.POST.get("correo_institucional")
         contrasena = request.POST.get("contrasena")
-        inicio_sesion = services.servicio_iniciar_sesion(request, correo_institucional, contrasena)
         
-        if inicio_sesion:
+        resultado_inicio = services.servicio_iniciar_sesion(request, correo_institucional, contrasena)
+        
+        if resultado_inicio["exito"]:
             return redirect("panel_principal")
-        
-        messages.error(request, "Las credenciales registradas no son válidas.")
+
+        messages.error(request, resultado_inicio["mensaje"])
     
     return render(request, "autenticacion/iniciar_sesion.html")
 
@@ -59,13 +68,13 @@ def panel_principal(request):
     if perfil_administrativo:
         tipo_de_perfil = perfil_administrativo.perfil_administrativo
 
-        if tipo_de_perfil == 'COORDINADOR_UA':
+        if tipo_de_perfil == EnumPerfilAdministrativo.COORDINADOR_UA.value:
             return redirect('panel_ua')
         
-        elif tipo_de_perfil == 'DIRECTOR_DAN':
+        elif tipo_de_perfil == EnumPerfilAdministrativo.DIRECTOR_DAN.value:
             return redirect('panel_director_dan')
             
-        elif tipo_de_perfil == 'COORDINADOR_DAN':
+        elif tipo_de_perfil == EnumPerfilAdministrativo.COORDINADOR_DAN.value:
             return redirect('panel_dan')
             
         else:
@@ -147,7 +156,6 @@ def panel_estudiante(request):
 
 @login_required
 def panel_administrativo(request):
-    # Esto apunta a la carpeta 'administrativo' y al archivo 'panel_director_dan.html'
     return render(request, "administrativo/panel_director_dan.html", {
         "titulo": "Panel Administrativo",
     })
@@ -166,9 +174,11 @@ def registrar_usuario(request):
         formulario = FormularioUsuarioDeSistema(request.POST)
         if formulario.is_valid():
             usuario = formulario.save(commit=False)
-            usuario.set_password(formulario.cleaned_data["contrasena"])
+            
+            usuario.set_password(usuario.identificacion)
+            
             usuario.save()
-            messages.success(request, "Usuario registrado correctamente.")
+            messages.success(request, "El usuario ha sido registrado correctamente.")
             return redirect("listar_usuarios")
     else:
         formulario = FormularioUsuarioDeSistema()
@@ -189,18 +199,34 @@ def registrar_docente(request):
     if request.method == "POST":
         formulario_usuario = FormularioUsuarioDeSistema(request.POST)
         formulario_perfil = FormularioPerfilDocente(request.POST)
+        
+        formulario_perfil.fields['identificador_institucional'].required = False
+        
         if formulario_usuario.is_valid() and formulario_perfil.is_valid():
             usuario = formulario_usuario.save(commit=False)
-            usuario.set_password(formulario_usuario.cleaned_data["contrasena"])
+            
+            usuario.set_password(usuario.identificacion)
+            
             usuario.save()
+            
             perfil = formulario_perfil.save(commit=False)
             perfil.usuario_de_sistema = usuario
+            
+            perfil.identificador_institucional = generar_identificador_siguiente(
+                PerfilDocente, 'DC', 'identificador_institucional'
+            )
+            
             perfil.save()
             messages.success(request, "Docente registrado correctamente.")
             return redirect("listar_docentes")
     else:
         formulario_usuario = FormularioUsuarioDeSistema()
-        formulario_perfil = FormularioPerfilDocente()
+        
+        siguiente_id = generar_identificador_siguiente(PerfilDocente, 'DC', 'identificador_institucional')
+        formulario_perfil = FormularioPerfilDocente(initial={
+            'identificador_institucional': siguiente_id
+        })
+        
     return render(request, "usuarios/formulario_docente.html", {
         "formulario_usuario": formulario_usuario,
         "formulario_perfil": formulario_perfil,
@@ -221,18 +247,41 @@ def registrar_estudiante(request):
     if request.method == "POST":
         formulario_usuario = FormularioUsuarioDeSistema(request.POST)
         formulario_perfil = FormularioPerfilEstudiante(request.POST)
+        
+        formulario_perfil.fields['identificador_institucional'].required = False
+        formulario_perfil.fields['numero_de_matricula'].required = False
+        
         if formulario_usuario.is_valid() and formulario_perfil.is_valid():
             usuario = formulario_usuario.save(commit=False)
-            usuario.set_password(formulario_usuario.cleaned_data["contrasena"])
+            
+            usuario.set_password(usuario.identificacion)
+            
             usuario.save()
+            
             perfil = formulario_perfil.save(commit=False)
             perfil.usuario_de_sistema = usuario
+            
+            perfil.identificador_institucional = generar_identificador_siguiente(
+                PerfilEstudiante, 'ES', 'identificador_institucional'
+            )
+            perfil.numero_de_matricula = generar_identificador_siguiente(
+                PerfilEstudiante, 'MAT', 'numero_de_matricula'
+            )
+            
             perfil.save()
             messages.success(request, "Estudiante registrado correctamente.")
             return redirect("listar_estudiantes")
     else:
         formulario_usuario = FormularioUsuarioDeSistema()
-        formulario_perfil = FormularioPerfilEstudiante()
+        
+        siguiente_id = generar_identificador_siguiente(PerfilEstudiante, 'ES', 'identificador_institucional')
+        siguiente_matricula = generar_identificador_siguiente(PerfilEstudiante, 'MAT', 'numero_de_matricula')
+        
+        formulario_perfil = FormularioPerfilEstudiante(initial={
+            'identificador_institucional': siguiente_id,
+            'numero_de_matricula': siguiente_matricula
+        })
+        
     return render(request, "usuarios/formulario_estudiante.html", {
         "formulario_usuario": formulario_usuario,
         "formulario_perfil": formulario_perfil,
@@ -263,23 +312,43 @@ def registrar_administrativo(request):
 
     if request.method == "POST":
         formulario_usuario = FormularioUsuarioDeSistema(request.POST)
-        formulario_perfil = FormularioPerfilAdministrativo(request.POST)
+        formulario_perfil = FormularioRegistrarPerfilAdministrativo(request.POST)
+
+        formulario_perfil.fields['identificador_administrativo'].required = False
 
         if formulario_usuario.is_valid() and formulario_perfil.is_valid():
             usuario = formulario_usuario.save(commit=False)
-            usuario.set_password(formulario_usuario.cleaned_data["contrasena"])
+            
+            usuario.set_password(usuario.identificacion)
             usuario.save()
             
             perfil = formulario_perfil.save(commit=False)
             perfil.usuario_de_sistema = usuario
             perfil.universidad = universidad_usuario
+            
+            rol_seleccionado = perfil.perfil_administrativo
+            
+            mapeo_prefijos = {
+                EnumPerfilAdministrativo.RECTOR.value: "AD",
+                EnumPerfilAdministrativo.VICERRECTOR_ACADEMICO.value: "AD",
+                EnumPerfilAdministrativo.DIRECTOR_DAN.value: "DAN",
+                EnumPerfilAdministrativo.COORDINADOR_DAN.value: "CAN",
+                EnumPerfilAdministrativo.COORDINADOR_UA.value: "CUA",
+            }
+            
+            prefijo = mapeo_prefijos.get(rol_seleccionado, "AD")
+                
+            perfil.identificador_administrativo = generar_identificador_siguiente(
+                PerfilAdministrativo, prefijo, 'identificador_administrativo'
+            )
+            
             perfil.save()
             
             messages.success(request, "El usuario administrativo ha sido registrado correctamente.")
             return redirect("listar_administrativos")
     else:
         formulario_usuario = FormularioUsuarioDeSistema()
-        formulario_perfil = FormularioPerfilAdministrativo()
+        formulario_perfil = FormularioRegistrarPerfilAdministrativo()
 
     return render(request, "usuarios/formulario_administrativo.html", {
         "form_usuario": formulario_usuario,
@@ -287,6 +356,63 @@ def registrar_administrativo(request):
         "titulo": "Registrar perfil administrativo",
         "boton_texto": "Registrar",
     })
+
+@login_required
+def modificar_administrativo(request, admin_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("panel_principal")
+
+    perfil = get_object_or_404(PerfilAdministrativo, pk=admin_id, universidad=universidad_usuario)
+    
+    # --- PROTECCIÓN: Evitar modificación del Director DAN ---
+    if perfil.perfil_administrativo == "Director de dirección de admisión y nivelación":
+        messages.error(request, "El perfil de Director DAN no puede ser modificado desde esta sección.")
+        return redirect("listar_administrativos")
+
+    usuario = perfil.usuario_de_sistema
+
+    if request.method == "POST":
+        formulario_usuario = FormularioModificarUsuarioDeSistema(request.POST, instance=usuario)
+        formulario_perfil = FormularioModificarPerfilAdministrativo(request.POST, instance=perfil)
+
+        if formulario_usuario.is_valid() and formulario_perfil.is_valid():
+            usuario_modificado = formulario_usuario.save(commit=False)
+            
+            nueva_contrasena = formulario_usuario.cleaned_data.get("contrasena")
+            if nueva_contrasena:
+                usuario_modificado.set_password(nueva_contrasena)
+            
+            usuario_modificado.save()
+            formulario_perfil.save()
+            
+            messages.success(request, "El usuario administrativo ha sido modificado correctamente.")
+            return redirect("listar_administrativos")
+    else:
+        formulario_usuario = FormularioModificarUsuarioDeSistema(instance=usuario)
+        formulario_perfil = FormularioModificarPerfilAdministrativo(instance=perfil)
+
+    return render(request, "usuarios/formulario_administrativo.html", {
+        "form_usuario": formulario_usuario,
+        "form_perfil": formulario_perfil,
+        "titulo": f"Modificar: {usuario.nombres} {usuario.apellidos}",
+        "boton_texto": "Guardar cambios",
+    })
+
+@login_required
+def eliminar_administrativo(request, admin_id):
+    perfil = get_object_or_404(PerfilAdministrativo, pk=admin_id)
+    
+    # --- PROTECCIÓN ---
+    if perfil.perfil_administrativo == "Director de dirección de admisión y nivelación":
+        messages.error(request, "El usuario no puede ser eliminado.")
+        return redirect("listar_administrativos")
+
+    usuario = perfil.usuario_de_sistema
+    usuario.delete()
+    messages.success(request, "El usuario administrativo ha sido eliminado correctamente.")
+    return redirect("listar_administrativos")
 
 
 #Acciones sobre estudiantes

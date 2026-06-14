@@ -12,16 +12,34 @@ from poo.clases.enums.registro_de_cupo import RegistroDeCupo
 from poo.clases.enums.tipo_de_vinculacion import TipoDeVinculacion
 from poo.clases.enums.tiempo_de_dedicacion import TiempoDeDedicacion
 from poo.clases.enums.tipo_de_identificacion import TipoDeIdentificacion
+from poo.clases.enums.estado_de_usuario import EstadoDeUsuario
 from .models import PerfilEstudiante, PerfilDocente, PerfilAdministrativo
 
 #UsuarioDeSistema
 def servicio_iniciar_sesion(request, correo_institucional, contrasena):
     usuario_de_sistema = authenticate(request, username=correo_institucional, password=contrasena)
-    if usuario_de_sistema is not None:
-        login(request, usuario_de_sistema)
-        return True
     
-    return False
+    if usuario_de_sistema is not None:
+        estado_actual = usuario_de_sistema.estado_de_usuario
+        
+        if estado_actual == EstadoDeUsuario.ACTIVO.value:
+            login(request, usuario_de_sistema)
+            return {"exito": True, "mensaje": ""}
+            
+        elif estado_actual == EstadoDeUsuario.BLOQUEADO.value:
+            return {"exito": False, "mensaje": "El usuario ha sido bloqueado indefinidamente."}
+            
+        elif estado_actual == EstadoDeUsuario.INACTIVO.value:
+            return {"exito": False, "mensaje": "El usuario se encuentra inactivo actualmente."}
+            
+        elif estado_actual == EstadoDeUsuario.PENDIENTE.value:
+            return {"exito": False, "mensaje": "El usuario está pendiente de activación."}
+            
+        else:
+            return {"exito": False, "mensaje": "Estado no reconocido."}
+            
+    # Credenciales incorrectas
+    return {"exito": False, "mensaje": "Las credenciales registradas no son válidas."}
 
 
 def servicio_cerrar_sesion(request):
@@ -77,6 +95,7 @@ def servicio_inhabilitar_perfil_docente(perfil_docente: PerfilDocente):
     docente.inhabilitar_perfil()
     perfil_docente.estado_de_vinculacion = EstadoDeVinculacion.INACTIVO.value
     perfil_docente.save()
+
 
 #UsuarioAcademico
 def servicio_obtener_registro_institucional(perfil_estudiante: PerfilEstudiante):

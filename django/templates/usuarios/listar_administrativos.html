@@ -35,11 +35,13 @@
                 <td style="font-family: monospace; font-weight: bold; text-align: left;">{{ admin.identificador_administrativo }}</td>
                 <td style="text-align: left;">{{ admin.perfil_administrativo }}</td>
                 <td style="text-align: left;">
-                    <a href="#" style="color: #0071e3; font-weight: 500; font-size: 13px; text-decoration: none; margin-right: 15px;">Modificar</a>
-                    
-                    <a href="#" 
-                       onclick="return confirm('Confirmar acción');"
-                       style="color: #c81e1e; font-weight: 500; font-size: 13px; text-decoration: none;">Eliminar</a>
+                    {% if admin.perfil_administrativo != "Director de dirección de admisión y nivelación" %}
+                        <a href="{% url 'modificar_administrativo' admin.id %}" style="color: #0071e3; font-weight: 500; font-size: 13px; text-decoration: none; margin-right: 15px;">Modificar</a>
+                        
+                        <a href="{% url 'eliminar_administrativo' admin.id %}" 
+                           onclick="return confirm('Confirmar acción');"
+                           style="color: #c81e1e; font-weight: 500; font-size: 13px; text-decoration: none;">Eliminar</a>
+                    {% endif %}
                 </td>
             </tr>
             {% empty %}
