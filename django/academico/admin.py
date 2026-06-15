@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from .models import Universidad
 from .models import Campus
 from .models import Carrera

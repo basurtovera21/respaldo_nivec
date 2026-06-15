@@ -18,7 +18,9 @@ from .forms import (
     FormularioPerfilEstudiante, 
     FormularioPerfilDocente, 
     FormularioRegistrarPerfilAdministrativo,
-    FormularioModificarPerfilAdministrativo
+    FormularioModificarPerfilAdministrativo,
+    FormularioRegistrarCoordinadorDAN,
+    FormularioRegistrarCoordinadorUA
 )
 
 from . import services
@@ -298,8 +300,12 @@ def listar_administrativos(request):
 
     administrativos = PerfilAdministrativo.objects.filter(
         universidad=universidad_usuario
+    ).exclude(
+        perfil_administrativo__in=[
+            EnumPerfilAdministrativo.COORDINADOR_DAN.value,
+            EnumPerfilAdministrativo.COORDINADOR_UA.value # <-- Excluimos al UA también
+        ]
     ).select_related("usuario_de_sistema")
-    
     return render(request, "usuarios/listar_administrativos.html", {"administrativos": administrativos})
 
 
@@ -366,9 +372,8 @@ def modificar_administrativo(request, admin_id):
 
     perfil = get_object_or_404(PerfilAdministrativo, pk=admin_id, universidad=universidad_usuario)
     
-    # --- PROTECCIÓN: Evitar modificación del Director DAN ---
     if perfil.perfil_administrativo == "Director de dirección de admisión y nivelación":
-        messages.error(request, "El perfil de Director DAN no puede ser modificado desde esta sección.")
+        messages.error(request, "El perfil no puede ser modificado.")
         return redirect("listar_administrativos")
 
     usuario = perfil.usuario_de_sistema
@@ -387,32 +392,205 @@ def modificar_administrativo(request, admin_id):
             usuario_modificado.save()
             formulario_perfil.save()
             
-            messages.success(request, "El usuario administrativo ha sido modificado correctamente.")
-            return redirect("listar_administrativos")
+            # --- MENSAJES Y REDIRECCIÓN DINÁMICA POST-GUARDADO ---
+            if perfil.perfil_administrativo == EnumPerfilAdministrativo.COORDINADOR_DAN.value:
+                messages.success(request, "El coordinador de dirección de admisión y nivelación ha sido modificado correctamente.")
+                return redirect("listar_coordinadores_dan")
+            elif perfil.perfil_administrativo == EnumPerfilAdministrativo.COORDINADOR_UA.value:
+                messages.success(request, "El coordinador de unidad académica ha sido modificado correctamente.")
+                return redirect("listar_coordinadores_ua")
+            else:
+                messages.success(request, "El usuario administrativo ha sido modificado correctamente.")
+                return redirect("listar_administrativos")
     else:
         formulario_usuario = FormularioModificarUsuarioDeSistema(instance=usuario)
         formulario_perfil = FormularioModificarPerfilAdministrativo(instance=perfil)
 
+    # --- DETERMINACIÓN DE VARIABLES PARA EL TEMPLATE ---
+    if perfil.perfil_administrativo == EnumPerfilAdministrativo.COORDINADOR_DAN.value:
+        url_cancelar = "listar_coordinadores_dan"
+        titulo_pagina = "Coordinador DAN - NIVEC"
+    elif perfil.perfil_administrativo == EnumPerfilAdministrativo.COORDINADOR_UA.value:
+        url_cancelar = "listar_coordinadores_ua"
+        titulo_pagina = "Coordinador UA - NIVEC"
+    else:
+        url_cancelar = "listar_administrativos"
+        titulo_pagina = "Administrativo - NIVEC"
+
     return render(request, "usuarios/formulario_administrativo.html", {
         "form_usuario": formulario_usuario,
         "form_perfil": formulario_perfil,
-        "titulo": f"Modificar: {usuario.nombres} {usuario.apellidos}",
-        "boton_texto": "Guardar cambios",
+        "titulo": f"{usuario.nombres} {usuario.apellidos}",
+        "boton_texto": "Modificar",
+        "url_cancelar": url_cancelar,
+        "titulo_pagina": titulo_pagina
     })
-
+    
 @login_required
 def eliminar_administrativo(request, admin_id):
     perfil = get_object_or_404(PerfilAdministrativo, pk=admin_id)
     
-    # --- PROTECCIÓN ---
     if perfil.perfil_administrativo == "Director de dirección de admisión y nivelación":
         messages.error(request, "El usuario no puede ser eliminado.")
         return redirect("listar_administrativos")
 
+    # --- GUARDAR EL ROL ANTES DE ELIMINAR EL REGISTRO ---
+    rol_eliminado = perfil.perfil_administrativo
+
     usuario = perfil.usuario_de_sistema
     usuario.delete()
-    messages.success(request, "El usuario administrativo ha sido eliminado correctamente.")
-    return redirect("listar_administrativos")
+    
+    # --- MENSAJES Y REDIRECCIÓN DINÁMICA ---
+    if rol_eliminado == EnumPerfilAdministrativo.COORDINADOR_DAN.value:
+        messages.success(request, "El coordinador de dirección de admisión y nivelación ha sido eliminado correctamente.")
+        return redirect("listar_coordinadores_dan")
+    elif rol_eliminado == EnumPerfilAdministrativo.COORDINADOR_UA.value:
+        messages.success(request, "El coordinador de unidad académica ha sido eliminado correctamente.")
+        return redirect("listar_coordinadores_ua")
+    else:
+        messages.success(request, "El usuario administrativo ha sido eliminado correctamente.")
+        return redirect("listar_administrativos")
+
+@login_required
+def listar_coordinadores_dan(request):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("panel_principal")
+
+    coordinadores = PerfilAdministrativo.objects.filter(
+        universidad=universidad_usuario,
+        perfil_administrativo=EnumPerfilAdministrativo.COORDINADOR_DAN.value
+    ).select_related("usuario_de_sistema")
+    
+    return render(request, "usuarios/listar_coordinadores_dan.html", {"coordinadores": coordinadores})
+
+
+@login_required
+def registrar_coordinador_dan(request):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("panel_principal")
+
+    if request.method == "POST":
+        formulario_usuario = FormularioUsuarioDeSistema(request.POST)
+        formulario_perfil = FormularioRegistrarCoordinadorDAN(request.POST)
+
+        formulario_perfil.fields['identificador_administrativo'].required = False
+
+        if formulario_usuario.is_valid() and formulario_perfil.is_valid():
+            usuario = formulario_usuario.save(commit=False)
+            usuario.set_password(usuario.identificacion)
+            usuario.save()
+            
+            perfil = formulario_perfil.save(commit=False)
+            perfil.usuario_de_sistema = usuario
+            perfil.universidad = universidad_usuario
+            
+            rol_seleccionado = perfil.perfil_administrativo
+            
+            mapeo_prefijos = {
+                EnumPerfilAdministrativo.RECTOR.value: "AD",
+                EnumPerfilAdministrativo.VICERRECTOR_ACADEMICO.value: "AD",
+                EnumPerfilAdministrativo.DIRECTOR_DAN.value: "DAN",
+                EnumPerfilAdministrativo.COORDINADOR_DAN.value: "CAN",
+                EnumPerfilAdministrativo.COORDINADOR_UA.value: "CUA",
+            }
+            
+            prefijo = mapeo_prefijos.get(rol_seleccionado, "CAN")
+                
+            perfil.identificador_administrativo = generar_identificador_siguiente(
+                PerfilAdministrativo, prefijo, 'identificador_administrativo'
+            )
+            
+            perfil.save()
+            
+            messages.success(request, "El coordinador de dirección de admisión y nivelación ha sido registrado correctamente.")
+            # CAMBIO AQUÍ: Redirigir a la lista de coordinadores
+            return redirect("listar_coordinadores_dan")
+    else:
+        formulario_usuario = FormularioUsuarioDeSistema()
+        formulario_perfil = FormularioRegistrarCoordinadorDAN()
+
+    return render(request, "usuarios/formulario_administrativo.html", {
+        "form_usuario": formulario_usuario,
+        "form_perfil": formulario_perfil,
+        "titulo": "Registrar coordinador de dirección de admisión y nivelación",
+        "boton_texto": "Registrar", # <-- Nuevo texto del botón
+        "titulo_pagina": "Coordinador DAN - NIVEC",
+        "url_cancelar": "listar_coordinadores_dan"
+    })
+
+@login_required
+def listar_coordinadores_ua(request):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("panel_principal")
+
+    coordinadores = PerfilAdministrativo.objects.filter(
+        universidad=universidad_usuario,
+        perfil_administrativo=EnumPerfilAdministrativo.COORDINADOR_UA.value
+    ).select_related("usuario_de_sistema")
+    
+    return render(request, "usuarios/listar_coordinadores_ua.html", {"coordinadores": coordinadores})
+
+
+@login_required
+def registrar_coordinador_ua(request):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("panel_principal")
+
+    if request.method == "POST":
+        formulario_usuario = FormularioUsuarioDeSistema(request.POST)
+        formulario_perfil = FormularioRegistrarCoordinadorUA(request.POST)
+
+        formulario_perfil.fields['identificador_administrativo'].required = False
+
+        if formulario_usuario.is_valid() and formulario_perfil.is_valid():
+            usuario = formulario_usuario.save(commit=False)
+            usuario.set_password(usuario.identificacion)
+            usuario.save()
+            
+            perfil = formulario_perfil.save(commit=False)
+            perfil.usuario_de_sistema = usuario
+            perfil.universidad = universidad_usuario
+            
+            rol_seleccionado = perfil.perfil_administrativo
+            
+            mapeo_prefijos = {
+                EnumPerfilAdministrativo.RECTOR.value: "AD",
+                EnumPerfilAdministrativo.VICERRECTOR_ACADEMICO.value: "AD",
+                EnumPerfilAdministrativo.DIRECTOR_DAN.value: "DAN",
+                EnumPerfilAdministrativo.COORDINADOR_DAN.value: "CAN",
+                EnumPerfilAdministrativo.COORDINADOR_UA.value: "CUA",
+            }
+            
+            prefijo = mapeo_prefijos.get(rol_seleccionado, "CUA")
+                
+            perfil.identificador_administrativo = generar_identificador_siguiente(
+                PerfilAdministrativo, prefijo, 'identificador_administrativo'
+            )
+            
+            perfil.save()
+            
+            messages.success(request, "El coordinador de unidad académica ha sido registrado correctamente.")
+            return redirect("listar_coordinadores_ua")
+    else:
+        formulario_usuario = FormularioUsuarioDeSistema()
+        formulario_perfil = FormularioRegistrarCoordinadorUA()
+
+    return render(request, "usuarios/formulario_administrativo.html", {
+        "form_usuario": formulario_usuario,
+        "form_perfil": formulario_perfil,
+        "titulo": "Registrar coordinador de unidad académica",
+        "boton_texto": "Registrar",
+        "url_cancelar": "listar_coordinadores_ua",
+        "titulo_pagina": "Coordinador UA - NIVEC"
+    })
 
 
 #Acciones sobre estudiantes

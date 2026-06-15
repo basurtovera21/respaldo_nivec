@@ -20,10 +20,10 @@
         <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Perfiles institucionales</p>
         <div class="acciones" style="margin-bottom: 0;">
             <a href="{% url 'listar_administrativos' %}" class="boton boton-secundario">Administrativos</a>
-            <a href="#" class="boton boton-secundario">Coordinadores de admisión y nivelación</a>
-            <a href="#" class="boton boton-secundario">Coordinadores de unidades académicas</a>
-            <a href="#" class="boton boton-secundario">Docentes</a>
-            <a href="#" class="boton boton-secundario">Estudiantes</a>
+            <a href="{% url 'listar_coordinadores_dan' %}" class="boton boton-secundario">Coordinadores de admisión y nivelación</a>
+            <a href="{% url 'listar_coordinadores_ua' %}" class="boton boton-secundario">Coordinadores de unidades académicas</a>
+            <a href="{% url 'listar_docentes' %}" class="boton boton-secundario">Docentes</a>
+            <a href="{% url 'listar_estudiantes' %}" class="boton boton-secundario">Estudiantes</a>
         </div>
     </div>
 

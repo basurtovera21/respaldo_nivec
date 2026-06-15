@@ -153,3 +153,26 @@ class FormularioModificarPerfilAdministrativo(forms.ModelForm):
                 'style': 'background-color: #f5f5f7; color: #86868b; cursor: not-allowed;'
             }),
         }
+        
+class FormularioRegistrarCoordinadorDAN(FormularioPerfilAdministrativo):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['perfil_administrativo'].choices = [
+            (perfil_administrativo.PerfilAdministrativo.COORDINADOR_DAN.value, 'Coordinador de dirección de admisión y nivelación'),
+        ]
+
+        self.fields['perfil_administrativo'].widget.attrs.update({
+            'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;',
+            'readonly': True
+        })
+        
+class FormularioRegistrarCoordinadorUA(FormularioPerfilAdministrativo):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['perfil_administrativo'].choices = [
+            (perfil_administrativo.PerfilAdministrativo.COORDINADOR_UA.value, 'Coordinador de unidad académica'),
+        ]
+        self.fields['perfil_administrativo'].widget.attrs.update({
+            'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;',
+            'readonly': True
+        })
