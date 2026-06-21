@@ -46,11 +46,13 @@
             padding: 12px 14px; 
             border-radius: 8px; 
             margin-bottom: 8px; 
-            font-size: 13px; 
+            font-size: 13px;
+            font-weight: bold;
         }
         .mensaje.exito  { background: #e8f5e9; color: #2e7d32; border: 1px solid rgba(46,125,50,0.1); }
         .mensaje.error  { background: #fdf2f2; color: #c81e1e; border: 1px solid rgba(200,30,30,0.1); }
         .mensaje.aviso  { background: #fef9ec; color: #b45309; border: 1px solid rgba(180,83,9,0.1); }
+        .mensaje.info   { background: #f0f6ff; color: #0071e3; border: 1px solid rgba(0,113,227,0.1); }
 
         .campo { margin-bottom: 14px; }
         .campo label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px; color: #515154; }
@@ -68,8 +70,8 @@
         .campo input:focus, .campo select:focus, .campo textarea:focus {
             border-color: #0071e3; 
         }
-        .campo .ayuda { font-size: 11px; color: #86868b; margin-top: 3px; }
-        .campo .error-campo { font-size: 11px; color: #c81e1e; margin-top: 3px; }
+        .campo .ayuda { font-size: 13px; color: #86868b; margin-top: 3px; }
+        .campo .error-campo { font-size: 13px; color: #c81e1e; margin-top: 3px; }
 
         .boton { 
             padding: 10px 20px; 
@@ -119,6 +121,7 @@
         <div class="mensaje
             {% if mensaje.tags == 'success' %}exito
             {% elif mensaje.tags == 'error' %}error
+            {% elif mensaje.tags == 'info' %}info
             {% else %}aviso{% endif %}">
             {{ mensaje }}
         </div>

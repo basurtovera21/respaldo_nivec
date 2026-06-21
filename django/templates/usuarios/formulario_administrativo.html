@@ -1,60 +1,71 @@
-{% extends "base.html" %}
+{% extends "base_formulario.html" %}
 
-{% block titulo %}{{ titulo_pagina|default:"Administrativos - NIVEC" }}{% endblock %}
+{% block form_fields %}
+    {% if form_usuario.non_field_errors %}
+    <div class="mensajes">
+        {% for error in form_usuario.non_field_errors %}
+        <div class="mensaje error">{{ error }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
-{% block contenido %}
-<div class="tarjeta">
-    <h2 style="font-weight: bold; margin-bottom: 20px;">{{ titulo }}</h2>
+    <div style="margin-top: 10px; margin-bottom: 15px;">
+        <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f;">Información personal</h3>
+    </div>
 
-    <form method="post" style="max-width: 500px;">
-        {% csrf_token %}
-        
-        {% if form_usuario.non_field_errors %}
-        <div class="mensajes">
-            {% for error in form_usuario.non_field_errors %}
-            <div class="mensaje error">{{ error }}</div>
+    {% for field in form_usuario %}
+        <div class="campo">
+            <label for="{{ field.id_for_label }}" style="font-weight: bold;">{{ field.label }}</label>
+            {{ field }}
+            
+            {% if field.help_text %}
+                <div class="ayuda">{{ field.help_text }}</div>
+            {% endif %}
+            
+            {% for error in field.errors %}
+                <div class="error-campo">{{ error }}</div>
             {% endfor %}
         </div>
-        {% endif %}
+    {% endfor %}
 
-        <div style="margin-top: 10px; margin-bottom: 15px;">
-            <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f;">Datos personales</h3>
+    <div style="margin-top: 30px; margin-bottom: 15px;">
+        <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f;">Información institucional</h3>
+    </div>
+
+    {% for field in form_perfil %}
+        <div class="campo">
+            <label for="{{ field.id_for_label }}" style="font-weight: bold;">{{ field.label }}</label>
+            {{ field }}
+            
+            {% if field.help_text %}
+                <div class="ayuda">{{ field.help_text }}</div>
+            {% endif %}
+
+            {% for error in field.errors %}
+                <div class="error-campo">{{ error }}</div>
+            {% endfor %}
         </div>
+    {% endfor %}
 
-        {% for field in form_usuario %}
-            <div class="campo">
-                <label for="{{ field.id_for_label }}" style="font-weight: bold;">{{ field.label }}</label>
-                {{ field }}
-                
-                {% if field.help_text %}
-                    <div class="ayuda">{{ field.help_text }}</div>
-                {% endif %}
-                
-                {% for error in field.errors %}
-                    <div class="error-campo">{{ error }}</div>
-                {% endfor %}
-            </div>
-        {% endfor %}
+    {% if form_docente %}
+    <div style="margin-top: 30px; margin-bottom: 15px;">
+        <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f;">Información docente</h3>
+    </div>
 
-        <div style="margin-top: 30px; margin-bottom: 15px;">
-            <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f;">Datos institucionales</h3>
+    {% for field in form_docente %}
+        <div class="campo">
+            <label for="{{ field.id_for_label }}" style="font-weight: bold;">{{ field.label }}</label>
+            {{ field }}
+            
+            {% if field.help_text %}
+                <div class="ayuda">{{ field.help_text }}</div>
+            {% endif %}
+
+            {% for error in field.errors %}
+                <div class="error-campo">{{ error }}</div>
+            {% endfor %}
         </div>
+    {% endfor %}
+    {% endif %}
 
-        {% for field in form_perfil %}
-            <div class="campo">
-                <label for="{{ field.id_for_label }}" style="font-weight: bold;">{{ field.label }}</label>
-                {{ field }}
-                
-                {% for error in field.errors %}
-                    <div class="error-campo">{{ error }}</div>
-                {% endfor %}
-            </div>
-        {% endfor %}
-
-        <div style="margin-top: 25px; display: flex; gap: 15px;">
-            <button type="submit" class="boton boton-primario">{{ boton_texto }}</button>
-            <a href="{% if url_cancelar %}{% url url_cancelar %}{% else %}{% url 'listar_administrativos' %}{% endif %}" class="boton boton-secundario">Cancelar</a>
-        </div>
-    </form>
-</div>
 {% endblock %}

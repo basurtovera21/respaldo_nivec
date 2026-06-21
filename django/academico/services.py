@@ -26,30 +26,18 @@ from .models import (PeriodoDeNivelacion, Paralelo, EvaluacionAcademica, Cohorte
 from usuarios.models import PerfilEstudiante
 
 
-#PeriodoDeNivelacion
-def _construir_periodo_de_nivelacion(periodo_de_nivelacion: PeriodoDeNivelacion):
-    return PeriodoDeNivelacionBase(
-        codigo_periodo = periodo_de_nivelacion.codigo_periodo,
-        anio = periodo_de_nivelacion.anio,
-        periodo = periodo_de_nivelacion.periodo,
-        fecha_inicio = periodo_de_nivelacion.fecha_inicio,
-        fecha_fin = periodo_de_nivelacion.fecha_fin,
-        modalidad = Modalidad(periodo_de_nivelacion.modalidad),
-        numero_periodo = periodo_de_nivelacion.numero_periodo,
-        estado = EstadoDePeriodo(periodo_de_nivelacion.estado)
-    )
-    
-def servicio_iniciar_periodo_de_nivelacion(periodo_de_nivelacion: PeriodoDeNivelacion):
-    periodo = _construir_periodo_de_nivelacion(periodo_de_nivelacion)
-    puede_iniciar = periodo.iniciar_periodo_de_nivelacion()
+#PeriodoDeNivelacion 
+def servicio_iniciar_periodo_de_nivelacion(periodo_de_nivelacion):
+    periodo_poo = PeriodoDeNivelacionBase.definir_periodo_de_nivelacion_en_modelo(periodo_de_nivelacion)
+    puede_iniciar = periodo_poo.iniciar_periodo_de_nivelacion()
     if puede_iniciar:
         periodo_de_nivelacion.estado = EstadoDePeriodo.EN_CURSO.value
         periodo_de_nivelacion.save()
     return puede_iniciar
 
-def servicio_finalizar_periodo_de_nivelacion(periodo_de_nivelacion: PeriodoDeNivelacion):
-    periodo = _construir_periodo_de_nivelacion(periodo_de_nivelacion)
-    puede_finalizar = periodo.finalizar_periodo_de_nivelacion()
+def servicio_finalizar_periodo_de_nivelacion(periodo_de_nivelacion):
+    periodo_poo = PeriodoDeNivelacionBase.definir_periodo_de_nivelacion_en_modelo(periodo_de_nivelacion)
+    puede_finalizar = periodo_poo.finalizar_periodo_de_nivelacion()
     if puede_finalizar:
         periodo_de_nivelacion.estado = EstadoDePeriodo.CERRADO.value
         periodo_de_nivelacion.save()

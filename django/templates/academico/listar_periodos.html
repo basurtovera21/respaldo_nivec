@@ -1,67 +1,45 @@
-{% extends "base.html" %}
+{% extends "base_listar.html" %}
 
-{% block titulo %}Periodos de nivelación - NIVEC{% endblock %}
+{% block cabeceras_tabla %}
+    <th style="font-weight: bold; text-align: left; color: #515154">Código de periodo</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Periodo</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Año</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Número de periodo</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Fecha</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Modalidad</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Estado</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Acciones</th>
+{% endblock %}
 
-{% block contenido %}
-<style>
-    .tarjeta table th, .tarjeta table td {
-        padding: 12px 24px; 
-    }
-</style>
-
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Periodos de Nivelación</h2>
-    <a href="{% url 'registrar_periodo' %}" class="boton boton-primario">Registrar periodo de nivelación</a>
-</div>
-
-<div class="tarjeta" style="padding: 0; overflow: hidden;">
-    <table>
-        <thead>
-            <tr>
-                <th style="font-weight: bold; text-align: left; color: #515154">Código de periodo</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Periodo</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Año</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Número de periodo</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Fecha</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Modalidad</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Estado</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for p in periodos %}
-            <tr>
-                <td style="font-family: monospace; font-weight: bold; text-align: left;">{{ p.codigo_periodo }}</td>
-                <td style="font-weight: bold; text-align: left;">{{ p.periodo }}</td>
-                <td style="text-align: left;">{{ p.anio }}</td>
-                <td style="text-align: left;">{{ p.numero_periodo }}</td>
-                <td style="text-align: left; font-size: 12px;">{{ p.fecha_inicio|date:"d/m/Y" }} a {{ p.fecha_fin|date:"d/m/Y" }}</td>
-                <td style="text-align: left;">{{ p.get_modalidad_display }}</td>
-                <td style="text-align: left;">
-                    <span style="background-color: #f2f2f7; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold;">
-                        {{ p.get_estado_display }}
-                    </span>
-                </td>
-                <td style="text-align: left;">
-                    <a href="{% url 'modificar_periodo' p.id %}" style="color: #0071e3; font-weight: 500; font-size: 13px; text-decoration: none; margin-right: 15px;">Modificar</a>
-                    
-                    <a href="{% url 'eliminar_periodo' p.id %}" 
-                       onclick="return confirm('Confirmar acción');"
-                       style="color: #c81e1e; font-weight: 500; font-size: 13px; text-decoration: none;">Eliminar</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="8" style="text-align: center; color: #86868b; padding: 30px;">
-                    No existen registros actualmente
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<div style="margin-top: 15px;">
-    <a href="{% url 'panel_principal' %}" class="boton boton-secundario">Volver</a>
-</div>
+{% block cuerpo_tabla %}
+    {% for p in periodos %}
+    <tr>
+        <td style="font-family: monospace; text-align: left; color: #1d1d1f;">{{ p.codigo_periodo }}</td>
+        <td style="text-align: left; color: #1d1d1f;">{{ p.periodo }}</td>
+        <td style="text-align: left; color: #1d1d1f;">{{ p.anio }}</td>
+        <td style="text-align: left; color: #1d1d1f;">{{ p.numero_periodo }}</td>
+        <td style="text-align: left; font-size: 12px; color: #1d1d1f;">{{ p.fecha_inicio|date:"d/m/Y" }} a {{ p.fecha_fin|date:"d/m/Y" }}</td>
+        <td style="text-align: left; color: #1d1d1f;">{{ p.get_modalidad_display }}</td>
+        
+        <td style="text-align: left;">
+            <span style="background-color: #f2f2f7; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; color: #1d1d1f;">
+                {{ p.get_estado_display }}
+            </span>
+        </td>
+        
+        <td style="text-align: left;">
+            <a href="{% url 'modificar_periodo' p.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
+            
+            <a href="{% url 'eliminar_periodo' p.id %}" 
+               onclick="return confirm('Confirmar acción');"
+               class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="8" style="text-align: left; color: #86868b; padding: 30px;">
+            No existen registros actualmente
+        </td>
+    </tr>
+    {% endfor %}
 {% endblock %}

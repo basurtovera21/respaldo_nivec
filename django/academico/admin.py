@@ -37,9 +37,9 @@ class UniversidadAdmin(admin.ModelAdmin):
 
 @admin.register(Campus)
 class CampusAdmin(admin.ModelAdmin):
-    list_display = ("nombre", "universidad", "provincia", "infraestructura_compartida")
+    list_display = ("nombre", "universidad", "provincia")
     search_fields = ("nombre", "provincia", "codigo_de_campus")
-    list_filter = ("infraestructura_compartida", "universidad")
+    list_filter = ("universidad",)
     ordering = ("universidad", "nombre")
 
     fieldsets = (
@@ -49,12 +49,11 @@ class CampusAdmin(admin.ModelAdmin):
                 "codigo_de_campus", 
                 "nombre", 
                 "direccion_fisica", 
-                "provincia", 
-                "infraestructura_compartida"
+                "provincia"
             )
         }),
     )
-
+    
 @admin.register(Carrera)
 class CarreraAdmin(admin.ModelAdmin):
     list_display = ("nombre", "campus", "modalidad", "facultad", "vigencia_sniese")

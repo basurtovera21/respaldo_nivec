@@ -45,7 +45,73 @@ def servicio_iniciar_sesion(request, correo_institucional, contrasena):
 def servicio_cerrar_sesion(request):
     logout(request)
 
+import openpyxl
+from usuarios.models import UsuarioDeSistema, PerfilAdministrativo
+from usuarios.utils import generar_identificador_siguiente
+from poo.clases.enums.perfil_administrativo import PerfilAdministrativo as EnumPerfilAdministrativo
+from poo.clases.usuarios.usuario_administrativo import UsuarioAdministrativo as UsuarioAdministrativoBase
 
+def servicio_administrativo_registrar_masivo_desde_excel(archivo, universidad_usuario):
+    try:
+        wb = openpyxl.load_workbook(archivo)
+        ws = wb.active
+        registros_exitosos = 0
+        
+        
+        mapeo_prefijos = {
+            EnumPerfilAdministrativo.RECTOR.value: "AD",
+            EnumPerfilAdministrativo.VICERRECTOR_ACADEMICO.value: "AD",
+            EnumPerfilAdministrativo.DIRECTOR_DAN.value: "DAN",
+            EnumPerfilAdministrativo.COORDINADOR_DAN.value: "CAN",
+            EnumPerfilAdministrativo.COORDINADOR_UA.value: "CUA",
+        }
+
+        for fila in ws.iter_rows(min_row=2, values_only=True):
+            tipo_id, identificacion, nombres, apellidos, correo, perfil_str = fila[:6]
+            
+            if not all([tipo_id, identificacion, nombres, apellidos, correo, perfil_str]):
+                continue
+                
+            identificacion = str(identificacion).strip()
+            
+            try:
+                UsuarioAdministrativoBase.validar_creacion_de_usuario_administrativo(identificacion, identificacion)
+            except ValueError:
+                continue 
+
+            if UsuarioDeSistema.objects.filter(identificacion=identificacion).exists():
+                continue
+
+            usuario = UsuarioDeSistema.objects.create(
+                tipo_de_identificacion=tipo_id,
+                identificacion=identificacion,
+                nombres=nombres,
+                apellidos=apellidos,
+                correo_institucional=correo,
+                estado_de_usuario="Activo"
+            )
+            usuario.set_password(identificacion)
+            usuario.save()
+
+            prefijo = mapeo_prefijos.get(perfil_str, "AD")
+            nuevo_identificador = generar_identificador_siguiente(
+                PerfilAdministrativo, prefijo, 'identificador_administrativo'
+            )
+
+            PerfilAdministrativo.objects.create(
+                usuario_de_sistema=usuario,
+                universidad=universidad_usuario,
+                identificador_administrativo=nuevo_identificador,
+                perfil_administrativo=perfil_str
+            )
+            
+            registros_exitosos += 1
+            
+        return registros_exitosos
+    except Exception as e:
+        return None
+    
+    
 #Estudiante
 def servicio_formalizar_matricula(perfil_estudiante: PerfilEstudiante):
     estudiante = _construir_estudiante(perfil_estudiante)
@@ -90,7 +156,7 @@ def servicio_visualizar_carga_academica(perfil_docente: PerfilDocente):
     return docente.visualizar_carga_academica()
 
 
-def servicio_inhabilitar_perfil_docente(perfil_docente: PerfilDocente):
+#def servicio_inhabilitar_perfil_docente(perfil_docente: PerfilDocente):
     docente = _construir_docente(perfil_docente)
     docente.inhabilitar_perfil()
     perfil_docente.estado_de_vinculacion = EstadoDeVinculacion.INACTIVO.value

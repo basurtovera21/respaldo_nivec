@@ -12,12 +12,14 @@ urlpatterns = [
     path("campus/registrar/", views.registrar_campus, name="registrar_campus"),
     path("campus/editar/<int:campus_id>/", views.modificar_campus, name="modificar_campus"),
     path("campus/eliminar/<int:campus_id>/", views.eliminar_campus, name="eliminar_campus"),
+    path("campus/descargar-plantilla/", views.descargar_plantilla_campus, name="descargar_plantilla_campus"),
 
     # Carrera
     path("carreras/", views.listar_carreras, name="listar_carreras"),
     path("carreras/registrar/", views.registrar_carrera, name="registrar_carrera"),
     path("carreras/editar/<int:carrera_id>/", views.modificar_carrera, name="modificar_carrera"),
     path("carreras/eliminar/<int:carrera_id>/", views.eliminar_carrera, name="eliminar_carrera"),
+    path("carrera/descargar-plantilla/", views.descargar_plantilla_carrera, name="descargar_plantilla_carrera"),
     
     #Periodo de nivelación
     path("periodos/", views.listar_periodos, name="listar_periodos"),

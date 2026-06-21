@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ titulo_pagina|default:"Listado - NIVEC" }}{% endblock %}
+
+{% block contenido %}
+<style>
+    .tarjeta table th, .tarjeta table td {
+        padding: 12px 24px; 
+        white-space: nowrap; /* Evita que el texto se aplaste hacia abajo */
+    }
+    
+    .etiqueta-accion {
+        padding: 4px 12px;
+        border-radius: 6px; 
+        font-size: 12px;
+        text-decoration: none;
+        display: inline-block;
+        font-weight: bold;
+        transition: all 0.2s ease;
+    }
+    
+    .etiqueta-modificar {
+        background-color: #f0f6ff; 
+        color: #0071e3;            
+        border: 1px solid rgba(0, 113, 227, 0.1);
+        margin-right: 8px;
+    }
+    
+    .etiqueta-modificar:hover {
+        background-color: #dbeaff; 
+    }
+    
+    .etiqueta-eliminar {
+        background-color: #fdf2f2; 
+        color: #c81e1e;            
+        border: 1px solid rgba(200, 30, 30, 0.1);
+    }
+    
+    .etiqueta-eliminar:hover {
+        background-color: #fce4e4; 
+    }
+</style>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
+    
+    {% if url_registrar %}
+    <a href="{% url url_registrar %}" class="boton boton-primario">{{ texto_registrar|default:"Registrar" }}</a>
+    {% endif %}
+</div>
+
+<div class="tarjeta" style="padding: 0; overflow-x: auto;">
+    <table style="width: 100%;">
+        <thead>
+            <tr>
+                {% block cabeceras_tabla %}{% endblock %}
+            </tr>
+        </thead>
+        <tbody>
+            {% block cuerpo_tabla %}{% endblock %}
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top: 15px;">
+    <a href="{% if url_volver %}{% url url_volver %}{% else %}#{% endif %}" class="boton boton-secundario">Volver</a>
+</div>
+{% endblock %}

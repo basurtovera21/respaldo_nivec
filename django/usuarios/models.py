@@ -92,15 +92,51 @@ class PerfilDocente(models.Model):
 
 
 class PerfilEstudiante(models.Model):
-    usuario_de_sistema = models.OneToOneField(UsuarioDeSistema, on_delete=models.CASCADE, related_name="perfil_estudiante", verbose_name="Usuario de sistema registrado")
-    identificador_institucional = models.CharField(max_length=50, unique=True, verbose_name="Número de identificador institucional")
-    numero_de_matricula = models.CharField(max_length=50, unique=True, verbose_name="Número de matrícula")
-    jornada = models.CharField(max_length=50, choices=cambiar_enum_a_choices(Jornada), verbose_name="Jornada registrada")
-    registro_de_cupo = models.CharField(max_length=50, choices=cambiar_enum_a_choices(RegistroDeCupo), verbose_name="Registro de cupo")
+    usuario_de_sistema = models.OneToOneField(
+        UsuarioDeSistema, 
+        on_delete=models.CASCADE, 
+        related_name="perfil_estudiante", 
+        verbose_name="Usuario de sistema registrado"
+    )
+    identificador_institucional = models.CharField(
+        max_length=50, 
+        unique=True, 
+        verbose_name="Número de identificador institucional"
+    )
+    numero_de_matricula = models.CharField(
+        max_length=50, 
+        unique=True, 
+        verbose_name="Número de matrícula"
+    )
+    jornada = models.CharField(
+        max_length=50, 
+        choices=cambiar_enum_a_choices(Jornada), 
+        verbose_name="Jornada registrada"
+    )
+    registro_de_cupo = models.CharField(
+        max_length=50, 
+        choices=cambiar_enum_a_choices(RegistroDeCupo), 
+        verbose_name="Registro de cupo"
+    )
     
-    carrera_registrada = models.ForeignKey('academico.Carrera', on_delete=models.PROTECT, related_name="estudiantes")
-    campus_registrado = models.ForeignKey('academico.Campus', on_delete=models.PROTECT, related_name="estudiantes")
-    estado_de_matricula = models.CharField(max_length=50, choices=cambiar_enum_a_choices(EstadoDeMatricula), default=EstadoDeMatricula.ASPIRANTE.value, verbose_name="Estado de matrícula")
+    carrera_registrada = models.ForeignKey(
+        'academico.Carrera', 
+        on_delete=models.PROTECT, 
+        related_name="estudiantes"
+    )
+    campus_registrado = models.ForeignKey(
+        'academico.Campus', 
+        on_delete=models.PROTECT, 
+        related_name="estudiantes"
+    )
+    
+    # ACTUALIZADO: Default ahora es MATRICULADO
+    estado_de_matricula = models.CharField(
+        max_length=50, 
+        choices=cambiar_enum_a_choices(EstadoDeMatricula), 
+        default=EstadoDeMatricula.MATRICULADO.value, 
+        verbose_name="Estado de matrícula"
+    )
     
     class Meta:
         verbose_name = "Perfil estudiante"

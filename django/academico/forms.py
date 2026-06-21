@@ -21,18 +21,69 @@ class FormularioUniversidad(BaseModelForm):
             "identificador_visual": "Identificador visual",
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        for field in self.fields.values():
+            field.required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        errores = {}
+        
+        campos_requeridos = ["nombre", "abreviatura", "codigo_sniese", "direccion_matriz"]
+
+        for campo in campos_requeridos:
+            if not cleaned_data.get(campo):
+                errores[campo] = "Información requerida"
+
+        if errores:
+            raise forms.ValidationError(errores)
+
 
 class FormularioCampus(forms.ModelForm):
     class Meta:
         model = Campus
-        fields = ("codigo_de_campus", "nombre", "direccion_fisica", "provincia", "infraestructura_compartida")
+        fields = ("codigo_de_campus", "nombre", "direccion_fisica", "provincia")
         labels = {
             "codigo_de_campus": "Código de campus",
             "nombre": "Nombre",
             "direccion_fisica": "Dirección física",
             "provincia": "Provincia",
-            "infraestructura_compartida": "Infraestructura compartida",
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['nombre'].required = False
+        self.fields['direccion_fisica'].required = False
+        self.fields['provincia'].required = False
+
+        self.fields['codigo_de_campus'].required = False
+        self.fields['codigo_de_campus'].widget.attrs.update({
+            'placeholder': 'El código será determinado de forma automática',
+            'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;',
+            'readonly': True
+        })
+
+    def clean(self):
+        cleaned_data = super().clean()
+        nombre = cleaned_data.get("nombre")
+        direccion = cleaned_data.get("direccion_fisica")
+        provincia = cleaned_data.get("provincia")
+
+        errores = {}
+
+        if not nombre:
+            errores['nombre'] = "Información requerida"
+        if not direccion:
+            errores['direccion_fisica'] = "Información requerida"
+        if not provincia:
+            errores['provincia'] = "Información requerida"
+
+        if errores:
+            raise forms.ValidationError(errores)
+
+        return cleaned_data
 
 
 class FormularioCarrera(forms.ModelForm):
@@ -56,8 +107,50 @@ class FormularioCarrera(forms.ModelForm):
         }
         widgets = {
             "vigencia_sniese": forms.DateInput(attrs={"type": "date"}),
-            "campus": forms.Select(attrs={"class": "form-control"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['campus'].required = False
+        self.fields['nombre'].required = False
+        self.fields['modalidad'].required = False
+        self.fields['facultad'].required = False
+        self.fields['vigencia_sniese'].required = False
+
+        self.fields['codigo_de_carrera'].required = False
+        self.fields['codigo_de_carrera'].widget.attrs.update({
+            'placeholder': 'El código será determinado de forma automática',
+            'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;',
+            'readonly': True
+        })
+
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        campus = cleaned_data.get("campus")
+        nombre = cleaned_data.get("nombre")
+        modalidad = cleaned_data.get("modalidad")
+        facultad = cleaned_data.get("facultad")
+        vigencia_sniese = cleaned_data.get("vigencia_sniese")
+
+        errores = {}
+
+        if not campus:
+            errores['campus'] = "Información requerida"
+        if not nombre:
+            errores['nombre'] = "Información requerida"
+        if not modalidad:
+            errores['modalidad'] = "Información requerida"
+        if not facultad:
+            errores['facultad'] = "Información requerida"
+        if not vigencia_sniese:
+            errores['vigencia_sniese'] = "Información requerida"
+
+        if errores:
+            raise forms.ValidationError(errores)
+
+        return cleaned_data
 
 
 class FormularioMallaCurricular(forms.ModelForm):
@@ -105,26 +198,29 @@ class FormularioUnidadCurricular(forms.ModelForm):
         horas_asincronicas = registros.get("horas_asincronicas", 0)
         horas_totales = registros.get("horas_totales", 0)
         if (horas_sincronicas + horas_asincronicas) != horas_totales:
-            raise forms.ValidationError(f"Las horas registradas deben coincidir con el total de {horas_totales} horas.")
+            raise forms.ValidationError(f"Las horas registradas deben coincidir con el total de {horas_totales} horas")
         return registros
 
+
+from django.db.models import Q
+from poo.clases.periodo_de_nivelacion import PeriodoDeNivelacion as PeriodoDeNivelacionBase
+from poo.clases.enums.modalidad import Modalidad
+from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
 
 class FormularioPeriodoDeNivelacion(forms.ModelForm):
     class Meta:
         model = PeriodoDeNivelacion
         fields = (
-            "universidad", "codigo_periodo", "anio", "periodo", 
-            "fecha_inicio", "fecha_fin", "modalidad", "numero_periodo", "estado"
+            "codigo_periodo", "anio", "numero_periodo", 
+            "fecha_inicio", "fecha_fin", "modalidad", "estado"
         )
         labels = {
-            "universidad": "Universidad registrada",
             "codigo_periodo": "Código de periodo",
             "anio": "Año",
-            "periodo": "Periodo",
+            "numero_periodo": "Número de periodo",
             "fecha_inicio": "Fecha de inicio",
             "fecha_fin": "Fecha de finalización",
             "modalidad": "Modalidad",
-            "numero_periodo": "Número de periodo",
             "estado": "Estado",
         }
         widgets = {
@@ -132,15 +228,114 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
             "fecha_fin": forms.DateInput(attrs={"type": "date"})
         }
 
-    def clean(self):
-        registros = super().clean()
-        fecha_de_inicio = registros.get("fecha_inicio")
-        fecha_de_finalizacion = registros.get("fecha_fin")
+    def __init__(self, *args, **kwargs):
+        self.universidad = kwargs.pop('universidad', None)
+        super().__init__(*args, **kwargs)
         
-        if fecha_de_inicio and fecha_de_finalizacion and fecha_de_finalizacion <= fecha_de_inicio:
-            raise forms.ValidationError("La fecha de finalización debe ser posterior a la fecha de inicio.")
+        for field in self.fields.values():
+            field.required = False
             
-        return registros
+        self.fields['codigo_periodo'].widget.attrs.update({
+            'placeholder': 'El código será determinado de forma automática',
+            'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;',
+            'readonly': True
+        })
+
+        opciones_originales = list(self.fields['estado'].choices)
+        estado_actual = self.instance.estado if (self.instance and self.instance.pk) else None
+
+        if not self.instance.pk:
+            opcion_planif = [c for c in opciones_originales if 'PLANIF' in str(c[0]).upper() or 'PLANIF' in str(c[1]).upper()]
+            if opcion_planif:
+                self.fields['estado'].choices = opcion_planif
+                self.initial['estado'] = opcion_planif[0][0]
+        else:
+            estado_str = str(estado_actual).upper()
+            
+            if 'PLANIF' in estado_str:
+                opcion_planif = [c for c in opciones_originales if 'PLANIF' in str(c[0]).upper() or 'PLANIF' in str(c[1]).upper()]
+                self.fields['estado'].choices = opcion_planif
+                
+            elif 'CURSO' in estado_str:
+                opciones_permitidas = [
+                    c for c in opciones_originales 
+                    if 'CURSO' in str(c[0]).upper() or 'EVALU' in str(c[0]).upper() or 'CURSO' in str(c[1]).upper() or 'EVALU' in str(c[1]).upper()
+                ]
+                self.fields['estado'].choices = opciones_permitidas
+                
+            elif 'EVALU' in estado_str:
+                opcion_evalu = [c for c in opciones_originales if 'EVALU' in str(c[0]).upper() or 'EVALU' in str(c[1]).upper()]
+                self.fields['estado'].choices = opcion_evalu
+                
+            elif 'CERRADO' in estado_str or 'CIERRA' in estado_str:
+                opcion_cerrado = [c for c in opciones_originales if 'CERRADO' in str(c[0]).upper() or 'CERRADO' in str(c[1]).upper()]
+                self.fields['estado'].choices = opcion_cerrado
+                
+                for name, field in self.fields.items():
+                    if isinstance(field.widget, (forms.Select, forms.RadioSelect)):
+                        field.widget.attrs['disabled'] = True
+                    else:
+                        field.widget.attrs['readonly'] = True
+                        
+                    field.widget.attrs['style'] = 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'
+
+    def clean(self):
+        if self.instance and self.instance.pk and str(self.instance.estado).upper() in ['CERRADO', 'CIERRA']:
+            self.cleaned_data = {
+                "codigo_periodo": self.instance.codigo_periodo,
+                "anio": self.instance.anio,
+                "numero_periodo": self.instance.numero_periodo,
+                "fecha_inicio": self.instance.fecha_inicio,
+                "fecha_fin": self.instance.fecha_fin,
+                "modalidad": self.instance.modalidad,
+                "estado": self.instance.estado,
+            }
+            return self.cleaned_data
+
+        cleaned_data = super().clean()
+        errores = {}
+        campos_requeridos = ["anio", "numero_periodo", "fecha_inicio", "fecha_fin", "modalidad", "estado"]
+        
+        for campo in campos_requeridos:
+            if not cleaned_data.get(campo):
+                errores[campo] = "Información requerida"
+                
+        fecha_de_inicio = cleaned_data.get("fecha_inicio")
+        fecha_de_finalizacion = cleaned_data.get("fecha_fin")
+        
+        if fecha_de_inicio and fecha_de_finalizacion:
+            periodo_poo = PeriodoDeNivelacionBase(
+                codigo_periodo="TEMP",
+                anio=cleaned_data.get("anio", 2000),
+                periodo="TEMP",
+                fecha_inicio=fecha_de_inicio,
+                fecha_fin=fecha_de_finalizacion,
+                modalidad=Modalidad.VIRTUAL,
+                numero_periodo=cleaned_data.get("numero_periodo", 1),
+                estado=EstadoDePeriodo.PLANIFICACION
+            )
+
+            if not periodo_poo.validar_fechas():
+                errores["fecha_fin"] = "La fecha de finalización debe ser posterior a la fecha de inicio"
+            
+            elif self.universidad:
+                periodos_chocan = PeriodoDeNivelacion.objects.filter(
+                    universidad=self.universidad,
+                    fecha_inicio__lte=fecha_de_finalizacion,
+                    fecha_fin__gte=fecha_de_inicio
+                ).exclude(estado="Cerrado") 
+                
+                if self.instance and self.instance.pk:
+                    periodos_chocan = periodos_chocan.exclude(pk=self.instance.pk)
+                    
+                if periodos_chocan.exists():
+                    errores["fecha_inicio"] = "La fecha especificada presenta conflicto con un periodo registrado previamente"
+                    errores["fecha_fin"] = "La fecha especificada presenta conflicto con un periodo registrado previamente"
+            
+        if errores:
+            raise forms.ValidationError(errores)
+            
+        return cleaned_data
     
     
 class FormularioParalelo(forms.ModelForm):

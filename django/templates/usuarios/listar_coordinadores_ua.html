@@ -1,57 +1,38 @@
-{% extends "base.html" %}
+{% extends "base_listar.html" %}
 
-{% block titulo %}Coordinadores UA - NIVEC{% endblock %}
+{% block cabeceras_tabla %}
+    <th style="font-weight: bold; text-align: left; color: #515154">Número de identificación</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Apellidos y Nombres</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Correo institucional</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Número de identificador UA</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Unidad académica</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Tipo de vinculación</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Tiempo de dedicación</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Carga horaria máxima</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Acciones</th>
+{% endblock %}
 
-{% block contenido %}
-<style>
-    .tarjeta table th, .tarjeta table td {
-        padding: 12px 24px; 
-    }
-</style>
-
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Coordinadores de unidades académicas</h2>
-    <a href="{% url 'registrar_coordinador_ua' %}" class="boton boton-primario">Registrar coordinador de unidad académica</a>
-</div>
-
-<div class="tarjeta" style="padding: 0; overflow: hidden;">
-    <table>
-        <thead>
-            <tr>
-                <th style="font-weight: bold; text-align: left; color: #515154">Número de identificación</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Apellidos y Nombres</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Correo institucional</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Número de identificador administrativo</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for coordinador in coordinadores %}
-            <tr>
-                <td style="font-family: monospace; text-align: left;">{{ coordinador.usuario_de_sistema.identificacion }}</td>
-                <td style="font-weight: bold; text-align: left;">{{ coordinador.usuario_de_sistema.apellidos }} {{ coordinador.usuario_de_sistema.nombres }}</td>
-                <td style="text-align: left;">{{ coordinador.usuario_de_sistema.correo_institucional }}</td>
-                <td style="font-family: monospace; font-weight: bold; text-align: left;">{{ coordinador.identificador_administrativo }}</td>
-                <td style="text-align: left;">
-                    <a href="{% url 'modificar_administrativo' coordinador.id %}" style="color: #0071e3; font-weight: 500; font-size: 13px; text-decoration: none; margin-right: 15px;">Modificar</a>
-                    
-                    <a href="{% url 'eliminar_administrativo' coordinador.id %}" 
-                       onclick="return confirm('Confirmar acción');"
-                       style="color: #c81e1e; font-weight: 500; font-size: 13px; text-decoration: none;">Eliminar</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5" style="text-align: center; color: #86868b; padding: 30px;">
-                    No existen registros actualmente
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<div style="margin-top: 15px;">
-    <a href="{% url 'panel_director_dan' %}" class="boton boton-secundario">Volver</a>
-</div>
+{% block cuerpo_tabla %}
+    {% for coordinador in coordinadores %}
+    <tr>
+        <td style="font-family: monospace; text-align: left;">{{ coordinador.usuario_de_sistema.identificacion }}</td>
+        <td style="text-align: left;">{{ coordinador.usuario_de_sistema.apellidos }} {{ coordinador.usuario_de_sistema.nombres }}</td>
+        <td style="text-align: left;">{{ coordinador.usuario_de_sistema.correo_institucional }}</td>
+        <td style="font-family: monospace; text-align: left;">{{ coordinador.identificador_coordinador_ua }}</td>
+        <td style="text-align: left;">{{ coordinador.unidad_academica|default:"-" }}</td>
+        <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.tipo_de_vinculacion|default:"-" }}</td>
+        <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.tiempo_de_dedicacion|default:"-" }}</td>
+        <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.carga_horaria_maxima|default:"0" }}h</td>
+        <td style="text-align: left;">
+            <a href="{% url 'modificar_administrativo' coordinador.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
+            <a href="{% url 'eliminar_administrativo' coordinador.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="9" style="text-align: center; color: #86868b; padding: 30px;">
+            No existen registros actualmente
+        </td>
+    </tr>
+    {% endfor %}
 {% endblock %}

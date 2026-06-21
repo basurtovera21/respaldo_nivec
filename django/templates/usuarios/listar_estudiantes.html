@@ -1,0 +1,103 @@
+{% extends "base_listar.html" %}
+
+{% block cabeceras_tabla %}
+    <th style="font-weight: bold; text-align: left; color: #515154">Número de identificación</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Apellidos y Nombres</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Correo institucional</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Número de identificación institucional</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Número de matrícula</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Jornada registrada</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Registro de cupo</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Carrera registrada</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Campus registrado</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Estado</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Acciones</th>
+{% endblock %}
+
+{% block cuerpo_tabla %}
+    <style>
+        .etiqueta-estado {
+            background-color: #f2f2f7; 
+            padding: 4px 8px; 
+            border-radius: 6px; 
+            font-size: 12px; 
+            font-weight: bold; 
+            color: #1d1d1f;
+        }
+        .etiqueta-accion {
+            padding: 4px 12px;
+            border-radius: 6px; 
+            font-size: 12px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            margin-right: 8px;
+        }
+        .etiqueta-modificar {
+            background-color: #f0f6ff; 
+            color: #0071e3;            
+            border: 1px solid rgba(0, 113, 227, 0.1);
+        }
+        .etiqueta-anular {
+            background-color: #fff7ed; 
+            color: #c2410c; 
+            border: 1px solid rgba(194, 65, 12, 0.1);
+        }
+        .etiqueta-matricular {
+            background-color: #fff7ed; 
+            color: #c2410c; 
+            border: 1px solid rgba(194, 65, 12, 0.1);
+        }
+        .etiqueta-eliminar {
+            background-color: #fdf2f2; 
+            color: #c81e1e; 
+            border: 1px solid rgba(200, 30, 30, 0.1);
+        }
+    </style>
+
+    {% for est in estudiantes %}
+    <tr>
+        <td style="font-family: monospace; text-align: left;">{{ est.usuario_de_sistema.identificacion }}</td>
+        <td style="text-align: left;">{{ est.usuario_de_sistema.apellidos }} {{ est.usuario_de_sistema.nombres }}</td>
+        <td style="text-align: left;">{{ est.usuario_de_sistema.correo_institucional }}</td>
+        <td style="font-family: monospace; text-align: left;">{{ est.identificador_institucional }}</td>
+        <td style="font-family: monospace; text-align: left;">{{ est.numero_de_matricula }}</td>
+        <td style="text-align: left;">{{ est.get_jornada_display }}</td>
+        <td style="text-align: left;">{{ est.get_registro_de_cupo_display }}</td>
+        <td style="text-align: left;">{{ est.carrera_registrada.nombre }}</td>
+        <td style="text-align: left;">{{ est.campus_registrado.nombre }}</td>
+        
+        <td style="text-align: left;">
+            <span class="etiqueta-estado">{{ est.get_estado_de_matricula_display }}</span>
+        </td>
+        
+        <td style="text-align: left;">
+            <a href="{% url 'modificar_estudiante' est.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
+            
+            {% if est.estado_de_matricula == 'Matriculado' %}
+                <a href="{% url 'solicitar_retiro' est.id %}" 
+                   onclick="return confirm('Confirmar acción');" 
+                   class="etiqueta-accion etiqueta-anular">Retirar</a>
+                <a href="{% url 'anular_matricula' est.id %}" 
+                   onclick="return confirm('Confirmar acción');" 
+                   class="etiqueta-accion etiqueta-anular">Anular</a>
+            {% else %}
+                <a href="{% url 'formalizar_matricula' est.id %}" 
+                   onclick="return confirm('Confirmar acción');" 
+                   class="etiqueta-accion etiqueta-matricular">Matricular</a>
+            {% endif %}
+
+            <a href="{% url 'eliminar_estudiante' est.id %}" 
+               onclick="return confirm('Confirmar acción');" 
+               class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="11" style="text-align: center; color: #86868b; padding: 30px;">
+            No existen registros actualmente
+        </td>
+    </tr>
+    {% endfor %}
+{% endblock %}

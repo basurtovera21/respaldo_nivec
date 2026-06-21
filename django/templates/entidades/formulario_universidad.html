@@ -1,8 +1,6 @@
-{% extends "base.html" %}
+{% extends "base_formulario.html" %}
 
-{% block titulo %}Universidad - NIVEC{% endblock %}
-
-{% block contenido %}
+{% block form_fields %}
 <style>
     .campo input[type="file"] {
         padding: 9px 12px;
@@ -32,28 +30,19 @@
     }
 </style>
 
-<div class="tarjeta">
-    <h2 style="font-weight: bold;">{{ titulo }}</h2>
-    <form method="post" enctype="multipart/form-data" style="max-width: 500px;">
-        {% csrf_token %}
+{% for field in formulario %}
+    <div class="campo">
+        <label for="{{ field.id_for_label }}" style="font-weight: bold;">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}
+            <div class="ayuda">{{ field.help_text }}</div>
+        {% endif %}
         
-        {% for field in formulario %}
-            <div class="campo">
-                <label for="{{ field.id_for_label }}" style="font-weight: bold;">{{ field.label }}</label>
-                {{ field }}
-                {% if field.help_text %}
-                    <div class="ayuda">{{ field.help_text }}</div>
-                {% endif %}
-                {% if field.errors %}
-                    <div class="error-campo">{{ field.errors }}</div>
-                {% endif %}
-            </div>
-        {% endfor %}
-
-        <div style="margin-top: 25px; display: flex; gap: 15px;">
-            <button type="submit" class="boton boton-primario">{{ boton_texto }}</button>
-            <a href="{% url 'panel_principal' %}" class="boton boton-secundario">Cancelar</a>
-        </div>
-    </form>
-</div>
+        {% if field.errors %}
+            {% for error in field.errors %}
+                <div class="error-campo">{{ error }}</div>
+            {% endfor %}
+        {% endif %}
+    </div>
+{% endfor %}
 {% endblock %}

@@ -44,7 +44,6 @@ class Campus(models.Model):
     nombre = models.CharField(max_length=200, verbose_name="Nombre")
     direccion_fisica = models.CharField(max_length=300, verbose_name="Dirección física")
     provincia = models.CharField(max_length=100, verbose_name="Provincia")
-    infraestructura_compartida = models.BooleanField(default=False, verbose_name="Infraestructura compartida")
 
     class Meta:
         verbose_name = "Campus"
@@ -71,16 +70,8 @@ class Carrera(models.Model):
 
     def esta_activa(self):
         from poo.clases.carrera import Carrera as CarreraBase
-        from poo.clases.enums.modalidad import Modalidad as ModalidadBase
-        
-        carrera = CarreraBase(
-            codigo_de_carrera=self.codigo_de_carrera,
-            nombre=self.nombre,
-            modalidad=ModalidadBase(self.modalidad),
-            facultad=self.facultad,
-            vigencia_sniese=self.vigencia_sniese
-        )
-        return carrera.esta_activa()
+        carrera_poo = CarreraBase.definir_carrera_en_modelo(self)
+        return carrera_poo.esta_activa()
 
 
 class MallaCurricular(models.Model):
@@ -160,20 +151,10 @@ class PeriodoDeNivelacion(models.Model):
         return f"{self.periodo} ({self.estado})"
     
     def calcular_duracion_semanas(self):
-        #poo/
         from poo.clases.periodo_de_nivelacion import PeriodoDeNivelacion as PeriodoDeNivelacionBase
-        from poo.clases.enums.modalidad import Modalidad as ModalidadBase
         
-        periodo_de_nivelacion = PeriodoDeNivelacionBase(
-            codigo_periodo=self.codigo_periodo,
-            anio=self.anio,
-            periodo=self.periodo,
-            fecha_inicio=self.fecha_inicio,
-            fecha_fin=self.fecha_fin,
-            modalidad=ModalidadBase(self.modalidad),
-            numero_periodo=self.numero_periodo
-        )
-        return periodo_de_nivelacion.calcular_duracion_semanas()
+        periodo_poo = PeriodoDeNivelacionBase.definir_periodo_de_nivelacion_en_modelo(self)
+        return periodo_poo.calcular_duracion_semanas()
 
 
 class Paralelo(models.Model):

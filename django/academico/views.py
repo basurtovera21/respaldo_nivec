@@ -1,6 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+import openpyxl
+from django.http import HttpResponse
+from usuarios.utils import generar_identificador_siguiente
 
 from .models import (Universidad, Campus, Carrera, MallaCurricular, UnidadCurricular,
                      PeriodoDeNivelacion, Paralelo, Horario, CohorteDeMatricula,
@@ -14,7 +17,7 @@ from .forms import (FormularioUniversidad, FormularioCampus, FormularioCarrera,
                     FormularioIncidenciaAcademica, FormularioEvaluacionDeDesempeno,
                     FormularioInformeGeneral)
 from . import services
-
+from datetime import datetime, date
 
 #Entidades base
 @login_required
@@ -24,7 +27,8 @@ def detalle_universidad(request):
         return redirect("registrar_universidad")
         
     return render(request, "entidades/detalle_universidad.html", {
-        "universidad": universidad
+        "universidad": universidad,
+        "titulo_pagina": "Universidad - NIVEC"
     })
 
 @login_required
@@ -40,37 +44,43 @@ def registrar_universidad(request):
             perfil.universidad = nueva_universidad
             perfil.save()
             
-            messages.success(request, "La universidad ha sido registrada correctamente.")
+            messages.success(request, "La universidad ha sido registrada correctamente")
             return redirect("panel_principal")
     else:
         formulario_universidad = FormularioUniversidad()
         
     return render(request, "entidades/formulario_universidad.html", {
         "formulario": formulario_universidad,
+        "titulo_pagina": "Universidad - NIVEC",
         "titulo": "Registrar universidad",
-        "boton_texto": "Registrar"
+        "boton_texto": "Registrar",
+        "url_cancelar": "panel_principal",
+        "mostrar_carga_masiva": False
     })
 
 @login_required
 def modificar_universidad(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("registrar_universidad")
 
     if request.method == "POST":
         formulario = FormularioUniversidad(request.POST, request.FILES, instance=universidad_usuario)
         if formulario.is_valid():
             formulario.save()
-            messages.success(request, "La universidad ha sido modificada correctamente.")
+            messages.success(request, "La universidad ha sido modificada correctamente")
             return redirect("detalle_universidad")
     else:
         formulario = FormularioUniversidad(instance=universidad_usuario)
         
     return render(request, "entidades/formulario_universidad.html", {
         "formulario": formulario,
+        "titulo_pagina": "Universidad - NIVEC",
         "titulo": "Modificar universidad",
-        "boton_texto": "Modificar"
+        "boton_texto": "Modificar",
+        "url_cancelar": "detalle_universidad",
+        "mostrar_carga_masiva": False
     })
 
 
@@ -78,43 +88,120 @@ def modificar_universidad(request):
 def listar_campus(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("registrar_universidad")
 
     campus = Campus.objects.filter(universidad=universidad_usuario)
     
-    return render(request, "entidades/listar_campus.html", {"campus": campus})
+    return render(request, "entidades/listar_campus.html", {
+        "campus": campus,
+        "titulo_pagina": "Campus - NIVEC",
+        "titulo": "Campus",
+        "url_registrar": "registrar_campus",
+        "texto_registrar": "Registrar",
+        "url_volver": "panel_principal"
+    })
+
+@login_required
+def descargar_plantilla_campus(request):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Campus"
+
+    cabeceras = ["Nombre del campus", "Dirección física", "Provincia"]
+    ws.append(cabeceras)
+
+    ws.column_dimensions['A'].width = 40
+    ws.column_dimensions['B'].width = 40
+    ws.column_dimensions['C'].width = 40
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="formato_campus_nivec.xlsx"'
+    wb.save(response)
+    return response
 
 @login_required
 def registrar_campus(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("registrar_universidad")
 
     if request.method == "POST":
-        formulario = FormularioCampus(request.POST)
-        if formulario.is_valid():
-            nuevo_campus = formulario.save(commit=False)
-            nuevo_campus.universidad = universidad_usuario
-            nuevo_campus.save()
-            messages.success(request, "El campus ha sido registrado correctamente.")
-            return redirect("listar_campus")
+        if 'archivo_excel' in request.FILES:
+            archivo = request.FILES['archivo_excel']
+            
+            if not archivo.name.endswith('.xlsx'):
+                messages.error(request, "Documento con formato no válido")
+                return redirect("registrar_campus")
+
+            try:
+                wb = openpyxl.load_workbook(archivo)
+                ws = wb.active
+                registros_exitosos = 0
+                
+                for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    nombre = fila[0]
+                    direccion = fila[1]
+                    provincia = fila[2]
+                    
+                    if not nombre and not direccion and not provincia:
+                        continue
+                        
+                    if not nombre or not direccion or not provincia:
+                        messages.warning(request, f"El registro de la fila {numero_fila} fue omitido por falta de información")
+                        continue
+                    
+                    nuevo_codigo = generar_identificador_siguiente(Campus, 'CAM', 'codigo_de_campus')
+
+                    Campus.objects.create(
+                        universidad=universidad_usuario,
+                        codigo_de_campus=nuevo_codigo,
+                        nombre=nombre,
+                        direccion_fisica=direccion,
+                        provincia=provincia
+                    )
+                    registros_exitosos += 1
+                
+                messages.success(request, f"{registros_exitosos} campus han sido registrados correctamente")
+                return redirect("listar_campus")
+                
+            except Exception as e:
+                messages.error(request, f"Ha ocurrido un error al procesar el documento ({str(e)})")
+                return redirect("registrar_campus")
+
+        else:
+            formulario = FormularioCampus(request.POST)
+            
+            if 'codigo_de_campus' in formulario.fields:
+                formulario.fields['codigo_de_campus'].required = False
+
+            if formulario.is_valid():
+                nuevo_campus = formulario.save(commit=False)
+                nuevo_campus.universidad = universidad_usuario
+                nuevo_campus.codigo_de_campus = generar_identificador_siguiente(Campus, 'CAM', 'codigo_de_campus')
+                nuevo_campus.save()
+                messages.success(request, "El campus ha sido registrado correctamente")
+                return redirect("listar_campus")
     else:
         formulario = FormularioCampus()
         
     return render(request, "entidades/formulario_campus.html", {
         "formulario": formulario,
+        "titulo_pagina": "Campus - NIVEC",
         "titulo": "Registrar campus",
-        "boton_texto": "Registrar"
+        "boton_texto": "Registrar",
+        "url_cancelar": "listar_campus",
+        "mostrar_carga_masiva": True,
+        "url_plantilla": "descargar_plantilla_campus"
     })
-
+    
 @login_required
 def modificar_campus(request, campus_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("registrar_universidad")
 
     campus = get_object_or_404(Campus, id=campus_id, universidad=universidad_usuario)
@@ -123,28 +210,31 @@ def modificar_campus(request, campus_id):
         formulario = FormularioCampus(request.POST, instance=campus)
         if formulario.is_valid():
             formulario.save()
-            messages.success(request, "El campus ha sido modificado correctamente.")
+            messages.success(request, "El campus ha sido modificado correctamente")
             return redirect("listar_campus")
     else:
         formulario = FormularioCampus(instance=campus)
         
     return render(request, "entidades/formulario_campus.html", {
         "formulario": formulario,
+        "titulo_pagina": "Campus - NIVEC",
         "titulo": "Modificar campus",
-        "boton_texto": "Modificar"
+        "boton_texto": "Modificar",
+        "url_cancelar": "listar_campus",
+        "mostrar_carga_masiva": False
     })
 
 @login_required
 def eliminar_campus(request, campus_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("registrar_universidad")
 
     campus = get_object_or_404(Campus, id=campus_id, universidad=universidad_usuario)
     campus.delete()
     
-    messages.success(request, "El campus ha sido eliminado correctamente.")
+    messages.success(request, "El campus ha sido eliminado correctamente")
     return redirect("listar_campus")
 
 
@@ -152,50 +242,174 @@ def eliminar_campus(request, campus_id):
 def listar_carreras(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("registrar_universidad")
 
     if not Campus.objects.filter(universidad=universidad_usuario).exists():
-        messages.info(request, "No hay registros de campus actualmente.")
+        messages.info(request, "No hay registros de campus actualmente")
         return redirect("registrar_campus")
 
     carreras = Carrera.objects.filter(campus__universidad=universidad_usuario).select_related("campus")
-    return render(request, "entidades/listar_carreras.html", {"carreras": carreras})
+    
+    return render(request, "entidades/listar_carreras.html", {
+        "carreras": carreras,
+        "titulo_pagina": "Carrera - NIVEC",
+        "titulo": "Carreras",
+        "url_registrar": "registrar_carrera",
+        "texto_registrar": "Registrar",
+        "url_volver": "panel_principal"
+    })
+
+@login_required
+def descargar_plantilla_carrera(request):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Carreras"
+
+    cabeceras = [
+        "Código de campus (CAM...)", 
+        "Nombre de la carrera", 
+        "Modalidad (Virtual, Presencial, Semipresencial)",
+        "Facultad", 
+        "Vigencia SNIESE (AAAA-MM-DD)"
+    ]
+    ws.append(cabeceras)
+
+    ws.column_dimensions['A'].width = 40
+    ws.column_dimensions['B'].width = 40
+    ws.column_dimensions['C'].width = 40  
+    ws.column_dimensions['D'].width = 40
+    ws.column_dimensions['E'].width = 40
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="formato_carreras_nivec.xlsx"'
+    wb.save(response)
+    return response
+
 
 @login_required
 def registrar_carrera(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("registrar_universidad")
 
     campus_existente = Campus.objects.filter(universidad=universidad_usuario)
     
     if not campus_existente.exists():
-        messages.warning(request, "No hay registros de campus actualmente.")
+        messages.warning(request, "No hay registros de campus actualmente")
         return redirect("registrar_campus")
 
     if request.method == "POST":
-        formulario = FormularioCarrera(request.POST)
-        if formulario.is_valid():
-            formulario.save()
-            messages.success(request, "La carrera ha sido registrada correctamente.")
-            return redirect("listar_carreras")
+
+        if 'archivo_excel' in request.FILES:
+            archivo = request.FILES['archivo_excel']
+            
+            if not archivo.name.endswith('.xlsx'):
+                messages.error(request, "Documento con formato no válido")
+                return redirect("registrar_carrera")
+
+            try:
+                wb = openpyxl.load_workbook(archivo)
+                ws = wb.active
+                registros_exitosos = 0
+                
+                for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                    codigo_campus = fila[0]
+                    nombre = fila[1]
+                    modalidad = fila[2]
+                    facultad = fila[3]
+                    vigencia = fila[4]
+                    
+                    if not codigo_campus and not nombre and not modalidad and not facultad and not vigencia:
+                        continue
+                        
+                    if not codigo_campus or not nombre or not modalidad or not facultad or not vigencia:
+                        messages.warning(request, f"El registro de la fila {numero_fila} fue omitido por falta de información")
+                        continue
+                    
+                    opciones_validas = ["Virtual", "Presencial", "Semipresencial"]
+                    modalidad_str = str(modalidad).strip().capitalize()
+                    
+                    if modalidad_str not in opciones_validas:
+                        messages.warning(request, f"El registro de la fila {numero_fila} fue omitido ('{modalidad}' no reconocida)")
+                        continue
+                    modalidad = modalidad_str
+                    
+                    if isinstance(vigencia, (datetime, date)):
+                        if isinstance(vigencia, datetime):
+                            vigencia = vigencia.date()
+                    elif isinstance(vigencia, str):
+                        try:
+                            vigencia = datetime.strptime(vigencia.strip(), "%Y-%m-%d").date()
+                        except ValueError:
+                            messages.warning(request, f"El registro de la fila {numero_fila} fue omitido (formato de fecha no válido)")
+                            continue
+                    else:
+                        messages.warning(request, f"El registro de la fila {numero_fila} fue omitido (formato de fecha no válido)")
+                        continue
+
+                    campus_obj = campus_existente.filter(codigo_de_campus=codigo_campus).first()
+                    
+                    if not campus_obj:
+                        messages.warning(request, f"El registro de la fila {numero_fila} fue omitido por falta de información (código de campus no válido)")
+                        continue
+                    
+                    nuevo_codigo = generar_identificador_siguiente(Carrera, 'CAR', 'codigo_de_carrera')
+
+                    Carrera.objects.create(
+                        campus=campus_obj,
+                        codigo_de_carrera=nuevo_codigo,
+                        nombre=nombre,
+                        modalidad=modalidad, 
+                        facultad=facultad,
+                        vigencia_sniese=vigencia
+                    )
+                    registros_exitosos += 1
+                
+                if registros_exitosos > 0:
+                    messages.success(request, f"{registros_exitosos} carreras han sido registradas correctamente")
+                else:
+                    messages.warning(request, "No se registraron carreras nuevas")
+                    
+                return redirect("listar_carreras")
+                
+            except Exception as e:
+                messages.error(request, f"Ha ocurrido un error al procesar el documento ({str(e)})")
+                return redirect("registrar_carrera")
+
+        else:
+            formulario = FormularioCarrera(request.POST)
+            
+            if 'codigo_de_carrera' in formulario.fields:
+                formulario.fields['codigo_de_carrera'].required = False
+
+            if formulario.is_valid():
+                nueva_carrera = formulario.save(commit=False)
+                nueva_carrera.codigo_de_carrera = generar_identificador_siguiente(Carrera, 'CAR', 'codigo_de_carrera')
+                nueva_carrera.save()
+                
+                messages.success(request, "La carrera ha sido registrada correctamente")
+                return redirect("listar_carreras")
     else:
         formulario = FormularioCarrera()
         formulario.fields['campus'].queryset = campus_existente
         
     return render(request, "entidades/formulario_carrera.html", {
         "formulario": formulario,
+        "titulo_pagina": "Carrera - NIVEC",
         "titulo": "Registrar carrera",
-        "boton_texto": "Registrar"
+        "boton_texto": "Registrar",
+        "url_cancelar": "listar_carreras",
+        "mostrar_carga_masiva": True,
+        "url_plantilla": "descargar_plantilla_carrera"
     })
 
 @login_required
 def modificar_carrera(request, carrera_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("registrar_universidad")
 
     carrera = get_object_or_404(Carrera, id=carrera_id, campus__universidad=universidad_usuario)
@@ -204,7 +418,7 @@ def modificar_carrera(request, carrera_id):
         formulario = FormularioCarrera(request.POST, instance=carrera)
         if formulario.is_valid():
             formulario.save()
-            messages.success(request, "La carrera ha sido modificada correctamente.")
+            messages.success(request, "La carrera ha sido modificada correctamente")
             return redirect("listar_carreras")
     else:
         formulario = FormularioCarrera(instance=carrera)
@@ -212,21 +426,24 @@ def modificar_carrera(request, carrera_id):
 
     return render(request, "entidades/formulario_carrera.html", {
         "formulario": formulario,
+        "titulo_pagina": "Carrera - NIVEC",
         "titulo": "Modificar carrera",
-        "boton_texto": "Modificar"
+        "boton_texto": "Modificar",
+        "url_cancelar": "listar_carreras",
+        "mostrar_carga_masiva": False
     })
 
 @login_required
 def eliminar_carrera(request, carrera_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("registrar_universidad")
 
     carrera = get_object_or_404(Carrera, id=carrera_id, campus__universidad=universidad_usuario)
     carrera.delete()
     
-    messages.success(request, "La carrera ha sido eliminada correctamente.")
+    messages.success(request, "La carrera ha sido eliminada correctamente")
     return redirect("listar_carreras")
 
 
@@ -279,12 +496,19 @@ def registrar_unidad(request):
 def listar_periodos(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("registrar_universidad")
 
     periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario).order_by("-anio", "-numero_periodo")
     
-    return render(request, "academico/listar_periodos.html", {"periodos": periodos})
+    return render(request, "academico/listar_periodos.html", {
+        "periodos": periodos,
+        "titulo_pagina": "Periodo de nivelación - NIVEC",
+        "titulo": "Periodos de Nivelación",
+        "url_registrar": "registrar_periodo",
+        "texto_registrar": "Registrar",
+        "url_volver": "panel_principal"
+    })
 
 @login_required
 def registrar_periodo(request):
@@ -294,57 +518,69 @@ def registrar_periodo(request):
         return redirect("registrar_universidad")
 
     if request.method == "POST":
-        formulario = FormularioPeriodoDeNivelacion(request.POST)
+        formulario = FormularioPeriodoDeNivelacion(request.POST, universidad=universidad_usuario)
         if formulario.is_valid():
-            formulario.save()
-            messages.success(request, "El periodo de nivelación ha sido registrado correctamente.")
+            nuevo_periodo = formulario.save(commit=False)
+            nuevo_periodo.universidad = universidad_usuario
+            nuevo_periodo.codigo_periodo = generar_identificador_siguiente(PeriodoDeNivelacion, 'PNV', 'codigo_periodo')
+            nuevo_periodo.periodo = f"{nuevo_periodo.anio}-{nuevo_periodo.numero_periodo}"
+            nuevo_periodo.save()
+            
+            messages.success(request, "El periodo de nivelación ha sido registrado correctamente")
             return redirect("listar_periodos")
     else:
-        formulario = FormularioPeriodoDeNivelacion()
-        formulario.fields['universidad'].queryset = Universidad.objects.filter(id=universidad_usuario.id)
+        formulario = FormularioPeriodoDeNivelacion(universidad=universidad_usuario)
         
     return render(request, "academico/formulario_periodo.html", {
         "formulario": formulario,
+        "titulo_pagina": "Periodos - NIVEC",
         "titulo": "Registrar periodo de nivelación",
-        "boton_texto": "Registrar"
+        "boton_texto": "Registrar",
+        "url_cancelar": "listar_periodos",
+        "mostrar_carga_masiva": False,
     })
 
 @login_required
 def modificar_periodo(request, periodo_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("registrar_universidad")
 
     periodo = get_object_or_404(PeriodoDeNivelacion, id=periodo_id, universidad=universidad_usuario)
 
     if request.method == "POST":
-        formulario = FormularioPeriodoDeNivelacion(request.POST, instance=periodo)
+
+        formulario = FormularioPeriodoDeNivelacion(request.POST, instance=periodo, universidad=universidad_usuario)
         if formulario.is_valid():
-            formulario.save()
-            messages.success(request, "El periodo de nivelación ha sido modificado correctamente.")
+            periodo_modificado = formulario.save(commit=False)
+            periodo_modificado.periodo = f"{periodo_modificado.anio}-{periodo_modificado.numero_periodo}"
+            periodo_modificado.save()
+            messages.success(request, "El periodo de nivelación ha sido modificado correctamente")
             return redirect("listar_periodos")
     else:
-        formulario = FormularioPeriodoDeNivelacion(instance=periodo)
-        formulario.fields['universidad'].queryset = Universidad.objects.filter(id=universidad_usuario.id)
+        formulario = FormularioPeriodoDeNivelacion(instance=periodo, universidad=universidad_usuario)
         
     return render(request, "academico/formulario_periodo.html", {
         "formulario": formulario,
-        "titulo": "Modificar periodo de nivelación",
-        "boton_texto": "Modificar",
+        "titulo_pagina": "Modificar Periodo - NIVEC",
+        "titulo": "Modificar periodo de nivelación", 
+        "boton_texto": "Modificar",                  
+        "url_cancelar": "listar_periodos",
+        "mostrar_carga_masiva": False,
         "periodo": periodo
     })
-
+    
 @login_required
 def eliminar_periodo(request, periodo_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("registrar_universidad")
 
     periodo = get_object_or_404(PeriodoDeNivelacion, id=periodo_id, universidad=universidad_usuario)
     periodo.delete()
-    messages.success(request, "El periodo de nivelación ha sido eliminado correctamente.")
+    messages.success(request, "El periodo de nivelación ha sido eliminado correctamente")
     return redirect("listar_periodos")
 
 @login_required
@@ -353,9 +589,9 @@ def iniciar_periodo(request, periodo_id):
     periodo = get_object_or_404(PeriodoDeNivelacion, pk=periodo_id, universidad=universidad_usuario)
     resultado = services.servicio_iniciar_periodo_de_nivelacion(periodo)
     if resultado:
-        messages.success(request, f"El periodo de nivelación {periodo.periodo} ha iniciado.")
+        messages.success(request, f"El periodo de nivelación {periodo.periodo} ha iniciado")
     else:
-        messages.error(request, "No se ha podido iniciar el periodo de nivelación.")
+        messages.error(request, "No se ha podido iniciar el periodo de nivelación")
         
     return redirect("listar_periodos")
 
@@ -365,9 +601,9 @@ def finalizar_periodo(request, periodo_id):
     periodo = get_object_or_404(PeriodoDeNivelacion, pk=periodo_id, universidad=universidad_usuario)
     resultado = services.servicio_finalizar_periodo_de_nivelacion(periodo)
     if resultado:
-        messages.success(request, f"El periodo de nivelación {periodo.periodo} ha finalizado.")
+        messages.success(request, f"El periodo de nivelación {periodo.periodo} ha finalizado")
     else:
-        messages.error(request, "No se ha podido finalizar el periodo de nivelación.")
+        messages.error(request, "No se ha podido finalizar el periodo de nivelación")
         
     return redirect("listar_periodos")
 
