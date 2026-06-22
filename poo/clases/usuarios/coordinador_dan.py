@@ -1,4 +1,3 @@
-#Herencia
 from poo.clases.usuarios.usuario_administrativo import UsuarioAdministrativo
 from poo.clases.universidad import Universidad
 

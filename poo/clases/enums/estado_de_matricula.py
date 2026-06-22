@@ -1,10 +1,7 @@
-#Estudiante
+# estado_de_matricula.py
 from enum import Enum
 
-
 class EstadoDeMatricula(Enum):
-    ASPIRANTE = "Aspirante" #No formalizado
-    PENDIENTE_DE_PAGO = "Pendiente de pago" #Pérdida de gratuidad
-    MATRICULADO = "Matriculado" #Formalizado
-    RETIRADO = "Retirada" #Procesado por solicitar_retiro()
-    ANULADO = "Anulada"
+    MATRICULADO = "Matriculado" # Estado inicial al registrar
+    RETIRADO = "Retirado"       # Estado tras solicitar_retiro()
+    ANULADO = "Anulado"         # Estado tras anular_matricula()

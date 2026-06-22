@@ -20,9 +20,25 @@ class UsuarioAdministrativo(UsuarioDeSistema):
             direccion = direccion,
             **kwargs
         )
+        self.universidad = universidad
         self.identificador_administrativo = identificador_administrativo
         self.perfil_administrativo = perfil_administrativo
-        self.universidad = universidad
-    
+        
     def iniciar_sesion(self):
         return True
+      
+    def puede_ser_modificado_o_eliminado(self):
+        if self.perfil_administrativo == PerfilAdministrativo.DIRECTOR_DAN:
+            return False
+        return True
+
+    @staticmethod
+    def definir_prefijo_identificador(perfil: PerfilAdministrativo):
+        mapeo_prefijos = {
+            PerfilAdministrativo.RECTOR: "AD",
+            PerfilAdministrativo.VICERRECTOR_ACADEMICO: "AD",
+            PerfilAdministrativo.DIRECTOR_DAN: "DAN",
+            PerfilAdministrativo.COORDINADOR_DAN: "CAN",
+            PerfilAdministrativo.COORDINADOR_UA: "CUA",
+        }
+        return mapeo_prefijos.get(perfil, "AD")

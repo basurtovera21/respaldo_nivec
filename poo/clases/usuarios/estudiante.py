@@ -30,38 +30,21 @@ class Estudiante(UsuarioAcademico):
         self.registro_de_cupo = registro_de_cupo #Instancia de Enum
         self.carrera_registrada = carrera_registrada
         self.campus_registrado = campus_registrado
-        self._estado_de_matricula = estado_de_matricula #Instancia de Enum
+        self._estado_de_matricula = EstadoDeMatricula.MATRICULADO #Instancia de Enum
      
      
-    def iniciar_sesion(self): #Sobreescritura
+    def iniciar_sesion(self):
         if self._estado_de_matricula in (EstadoDeMatricula.RETIRADO, EstadoDeMatricula.ANULADO):
             return False
         return True
     
+    def formalizar_matricula(self):
+        self._estado_de_matricula = EstadoDeMatricula.MATRICULADO
     
-    def formalizar_matricula(self): #ASPIRANTE a MATRICULADO
-        if self._estado_de_matricula == EstadoDeMatricula.ASPIRANTE:
-            self._estado_de_matricula = EstadoDeMatricula.MATRICULADO
-            return True
-        return False
-            
-            
     def anular_matricula(self):
         self._estado_de_matricula = EstadoDeMatricula.ANULADO
             
-            
-    def obtener_carrera(self):
-        return self.carrera_registrada
-    
-    
-    def solicitar_retiro(self): #A RETIRADO si está MATRICULADO
-        if self._estado_de_matricula == EstadoDeMatricula.MATRICULADO:
-            self._estado_de_matricula = EstadoDeMatricula.RETIRADO
-            return True
-        return False
-    
-    
-    def aprobar_retiro(self):
+    def solicitar_retiro(self):
         if self._estado_de_matricula == EstadoDeMatricula.MATRICULADO:
             self._estado_de_matricula = EstadoDeMatricula.RETIRADO
             return True

@@ -1,14 +1,20 @@
 #Enum
-from poo.clases.enums.estado_de_aprobacion import EstadoDeAprobacion
+from clases.enums.estado_de_aprobacion import EstadoDeAprobacion
 
 #Usuario
-from poo.clases.usuarios.estudiante import Estudiante
+from clases.usuarios.estudiante import Estudiante
 
-from poo.clases.unidad_curricular import UnidadCurricular
+#Unidad Curricular
+from clases.unidad_curricular import UnidadCurricular
+
+#Interfaces y Servicios (Patrones de Diseño)
+from clases.interfaces.i_sujeto_de_evaluacion import ISujetoDeEvaluacion
+from clases.servicios.manejadores_de_aprobacion import ManejadorEstadoInactivo, ManejadorAsistencia, ManejadorCalificacion
 
 
-class EvaluacionAcademica:
+class EvaluacionAcademica(ISujetoDeEvaluacion):
     def __init__(self, estudiante: Estudiante, unidad_curricular: UnidadCurricular):
+        super().__init__() #Inicializar la lista de observadores del sujeto (Observer)
         self.estudiante = estudiante #Instancia
         self.unidad_curricular = unidad_curricular #Instancia
         self._calificacion_parcial_1 = 0.0
@@ -17,6 +23,8 @@ class EvaluacionAcademica:
         self._porcentaje_asistencia = 0.0
         self._estado_de_aprobacion = EstadoDeAprobacion.PENDIENTE
         self._observacion = ""
+        #Patrón Chain of Responsibility
+        self._cadena_aprobacion = ManejadorEstadoInactivo(ManejadorAsistencia(ManejadorCalificacion()))
         
 
     def registrar_calificacion(self, *args): #Sobrecarga
@@ -74,21 +82,15 @@ class EvaluacionAcademica:
 
 
     def verificar_aprobacion(self):
-        #Determinación del estado final por criterios normativos en orden de prioridad. Actualiza _estado_de_aprobacion y retorna el estado resultante
-        if self._estado_de_aprobacion in (EstadoDeAprobacion.RETIRADO, EstadoDeAprobacion.ANULADO):
-            return self._estado_de_aprobacion
+        #Guardar el estado anterior
+        estado_anterior = self._estado_de_aprobacion
 
-        if self._porcentaje_asistencia < self.unidad_curricular.porcentaje_minimo_asistencia:
-            self._estado_de_aprobacion = EstadoDeAprobacion.REPROBADO
-            self._observacion = "Reprobado por porcentaje de asistencia insuficiente."
-            return self._estado_de_aprobacion
+        #Chain of Responsibility
+        self._cadena_aprobacion.manejar(self)
 
-        if self._nota_final >= self.unidad_curricular.criterio_de_aprobacion:
-            self._estado_de_aprobacion = EstadoDeAprobacion.APROBADO
-            
-        else:
-            self._estado_de_aprobacion = EstadoDeAprobacion.REPROBADO
-            self._observacion = "Reprobado por calificación insuficiente."
+        # Si el estado cambió (dejó de estar PENDIENTE), notificación al Observer
+        if estado_anterior == EstadoDeAprobacion.PENDIENTE and self._estado_de_aprobacion != EstadoDeAprobacion.PENDIENTE:
+            self.notificar()
 
         return self._estado_de_aprobacion
     
