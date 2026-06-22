@@ -1,0 +1,220 @@
+from django.db import transaction
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import HttpResponse
+import openpyxl
+
+from usuarios.models import UsuarioDeSistema, PerfilEstudiante
+from usuarios.forms import FormularioUsuarioDeSistema, FormularioPerfilEstudiante
+from usuarios.utils import generar_identificador_siguiente
+
+# Importamos el servicio y el puente (factory)
+from usuarios.services import servicio_estudiante_registrar_masivo_desde_excel, _crear_estudiante
+
+from poo.clases.enums.estado_de_usuario import EstadoDeUsuario as EnumEstadoDeUsuario
+from poo.clases.enums.estado_de_matricula import EstadoDeMatricula as EnumEstadoDeMatricula
+
+@login_required
+def listar_estudiantes(request):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    estudiantes = PerfilEstudiante.objects.filter(
+        carrera_registrada__campus__universidad=universidad_usuario
+    ).select_related("usuario_de_sistema", "carrera_registrada", "campus_registrado")
+    
+    return render(request, "usuarios/listar_estudiantes.html", {
+        "estudiantes": estudiantes,
+        "titulo_pagina": "Estudiante - NIVEC",
+        "titulo": "Estudiantes",
+        "url_registrar": "registrar_estudiante",
+        "texto_registrar": "Registrar",
+        "url_volver": "panel_principal"
+    })
+
+@login_required
+def descargar_plantilla_estudiante(request):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Estudiantes"
+    
+    cabeceras = [
+        "Tipo de identificación (Cédula, Pasaporte, Cédula extranjera)", 
+        "Número de identificación", "Nombres", "Apellidos", "Correo institucional",
+        "Jornada registrada (Matutina, Vespertina, Nocturna)", 
+        "Registro de cupo (Registro regular, Segunda matrícula, Proceso de exoneración)", 
+        "Carrera registrada", "Campus registrado"
+    ]
+    ws.append(cabeceras)
+    
+    for col in range(1, len(cabeceras) + 1): 
+        ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 40
+    
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="formato_estudiantes_nivec.xlsx"'
+    wb.save(response)
+    return response
+
+@login_required
+def registrar_estudiante(request):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    if request.method == "POST":
+        if 'archivo_excel' in request.FILES:
+            archivo = request.FILES['archivo_excel']
+            if not archivo.name.endswith('.xlsx'):
+                messages.error(request, "Documento con formato no válido")
+                return redirect("registrar_estudiante")
+            
+            resultado = servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuario)
+            
+            if resultado["error"]: messages.error(request, resultado["error"])
+            for adv in resultado["advertencias"]: messages.warning(request, adv)
+            if resultado["exitosos"] > 0: messages.success(request, f"{resultado['exitosos']} estudiantes registrados correctamente")
+            return redirect("listar_estudiantes")
+                
+        else:
+            formulario_usuario = FormularioUsuarioDeSistema(request.POST)
+            formulario_estudiante = FormularioPerfilEstudiante(request.POST, universidad=universidad_usuario)
+
+            if formulario_usuario.is_valid() and formulario_estudiante.is_valid():
+                with transaction.atomic():
+                    usuario = formulario_usuario.save(commit=False)
+                    usuario.set_password(usuario.identificacion)
+                    usuario.save()
+                    
+                    estudiante = formulario_estudiante.save(commit=False)
+                    estudiante.usuario_de_sistema = usuario
+                    estudiante.identificador_institucional = generar_identificador_siguiente(PerfilEstudiante, "ES", 'identificador_institucional')
+                    estudiante.numero_de_matricula = generar_identificador_siguiente(PerfilEstudiante, "MAT", 'numero_de_matricula')
+                    estudiante.estado_de_matricula = EnumEstadoDeMatricula.MATRICULADO.value
+                    estudiante.save()
+                
+                messages.success(request, "El estudiante ha sido registrado correctamente")
+                return redirect("listar_estudiantes")
+    else:
+        formulario_usuario = FormularioUsuarioDeSistema()
+        formulario_estudiante = FormularioPerfilEstudiante(universidad=universidad_usuario)
+
+    return render(request, "usuarios/formulario_estudiante.html", {
+        "form_usuario": formulario_usuario,
+        "form_estudiante": formulario_estudiante,
+        "titulo_pagina": "Estudiante - NIVEC",
+        "titulo": "Registrar estudiante",
+        "boton_texto": "Registrar",
+        "url_cancelar": "listar_estudiantes",
+        "mostrar_carga_masiva": True,
+        "url_plantilla": "descargar_plantilla_estudiante"
+    })
+
+@login_required
+def modificar_estudiante(request, estudiante_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    est = get_object_or_404(PerfilEstudiante, id=estudiante_id, carrera_registrada__campus__universidad=universidad_usuario)
+    usuario = est.usuario_de_sistema
+    
+    if request.method == "POST":
+        form_u = FormularioUsuarioDeSistema(request.POST, instance=usuario)
+        form_e = FormularioPerfilEstudiante(request.POST, instance=est)
+        
+        if 'contrasena' in form_u.fields:
+            form_u.fields['contrasena'].required = False 
+
+        if form_u.is_valid() and form_e.is_valid():
+            with transaction.atomic():
+                user_saved = form_u.save(commit=False)
+                nueva_contrasena = form_u.cleaned_data.get('contrasena')
+                if nueva_contrasena:
+                    user_saved.set_password(nueva_contrasena)
+                user_saved.save()
+                form_e.save()
+            
+            messages.success(request, "El estudiante ha sido modificado correctamente")
+            return redirect("listar_estudiantes")
+    else:
+        form_u = FormularioUsuarioDeSistema(instance=usuario)
+        form_e = FormularioPerfilEstudiante(instance=est)
+        
+    return render(request, "usuarios/formulario_estudiante.html", {
+        "form_usuario": form_u, 
+        "form_estudiante": form_e, 
+        "titulo": "Modificar estudiante",
+        "subtitulo": f"{usuario.nombres} {usuario.apellidos}",
+        "boton_texto": "Modificar",
+        "url_cancelar": "listar_estudiantes",
+        "url_volver": "listar_estudiantes",
+        "titulo_pagina": "Estudiante - NIVEC",
+        "mostrar_carga_masiva": False
+    })
+
+@login_required
+def eliminar_estudiante(request, estudiante_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    estudiante = get_object_or_404(PerfilEstudiante, id=estudiante_id, carrera_registrada__campus__universidad=universidad_usuario)
+    
+    with transaction.atomic():
+        estudiante.usuario_de_sistema.delete()
+    
+    messages.success(request, "El estudiante ha sido eliminado correctamente")
+    return redirect("listar_estudiantes")
+
+@login_required
+def formalizar_matricula(request, estudiante_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    est_db = get_object_or_404(PerfilEstudiante, id=estudiante_id, carrera_registrada__campus__universidad=universidad_usuario)
+
+    est_poo = _crear_estudiante(est_db)
+    est_poo.formalizar_matricula()
+    with transaction.atomic():
+        est_db.estado_de_matricula = est_poo._estado_de_matricula.value
+        est_db.save()
+        
+    messages.success(request, "La matrícula del estudiante ha sido formalizada correctamente")
+    return redirect("listar_estudiantes")
+
+@login_required
+def anular_matricula(request, estudiante_id):
+    est_db = get_object_or_404(PerfilEstudiante, id=estudiante_id)
+
+    est_poo = _crear_estudiante(est_db)
+    est_poo.anular_matricula()
+    
+    with transaction.atomic():
+        est_db.estado_de_matricula = est_poo._estado_de_matricula.value
+        est_db.save()
+        
+    messages.success(request, "La matrícula del estudiante ha sido anulada correctamente")
+    return redirect("listar_estudiantes")
+
+@login_required
+def solicitar_retiro(request, estudiante_id):
+    est_db = get_object_or_404(PerfilEstudiante, id=estudiante_id)
+    
+    est_poo = _crear_estudiante(est_db)
+    if est_poo.solicitar_retiro():
+        with transaction.atomic():
+            est_db.estado_de_matricula = est_poo._estado_de_matricula.value
+            est_db.save()
+        messages.success(request, "El retiro del estudiante ha sido procesado correctamente")
+    else:
+        messages.warning(request, "No se ha podido procesar el retiro")
+    return redirect("listar_estudiantes")

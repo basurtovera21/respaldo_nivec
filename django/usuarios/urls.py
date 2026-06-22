@@ -8,18 +8,15 @@ urlpatterns = [
     path("sin-perfil/", views.panel_sin_perfil, name="sin_perfil"),
     
     path("panel/", views.panel_principal, name="panel_principal"), 
+    path("mi-perfil/", views.modificar_datos_de_usuario, name="modificar_perfil"),
 
     # Paneles por rol
     path("panel/director-dan/", views.panel_director_dan, name="panel_director_dan"),
     path("panel/dan/", views.panel_dan, name="panel_dan"),
-    path("panel/coordinador-ua/", views.panel_coordinador_ua, name="panel_ua"),
+    path("panel/ua/", views.panel_ua, name="panel_ua"),
     path("panel/docente/", views.panel_docente, name="panel_docente"),
     path("panel/estudiante/", views.panel_estudiante, name="panel_estudiante"),
     path("panel/administrativo/", views.panel_administrativo, name="panel_administrativo"),
-
-    # Usuarios Generales
-    path("usuarios/", views.listar_usuarios, name="listar_usuarios"),
-    path("usuarios/registrar/", views.registrar_usuario, name="registrar_usuario"),
     
     # Docentes
     path("docentes/", views.listar_docentes, name="listar_docentes"),

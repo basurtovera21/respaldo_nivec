@@ -68,11 +68,6 @@ class Carrera(models.Model):
     def __str__(self):
         return self.nombre
 
-    def esta_activa(self):
-        from poo.clases.carrera import Carrera as CarreraBase
-        carrera_poo = CarreraBase.definir_carrera_en_modelo(self)
-        return carrera_poo.esta_activa()
-
 
 class MallaCurricular(models.Model):
     carrera = models.ForeignKey(Carrera, on_delete=models.PROTECT, related_name="mallas_curriculares", verbose_name="Carrera registrada")
@@ -149,12 +144,6 @@ class PeriodoDeNivelacion(models.Model):
 
     def __str__(self):
         return f"{self.periodo} ({self.estado})"
-    
-    def calcular_duracion_semanas(self):
-        from poo.clases.periodo_de_nivelacion import PeriodoDeNivelacion as PeriodoDeNivelacionBase
-        
-        periodo_poo = PeriodoDeNivelacionBase.definir_periodo_de_nivelacion_en_modelo(self)
-        return periodo_poo.calcular_duracion_semanas()
 
 
 class Paralelo(models.Model):

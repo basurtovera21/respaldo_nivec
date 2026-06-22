@@ -1,6 +1,7 @@
 from django import forms
 from .models import (Universidad, Campus, Carrera, MallaCurricular, UnidadCurricular, PeriodoDeNivelacion, Paralelo, Horario, CohorteDeMatricula, MatriculaParalelo, ConsolidadoAcademico, EvaluacionAcademica, IncidenciaAcademica, EvaluacionDeDesempeno, InformeGeneral)
-
+from poo.clases.carrera import Carrera as CarreraBase
+from poo.clases.enums.modalidad import Modalidad as EnumModalidad
 
 class BaseModelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -89,14 +90,7 @@ class FormularioCampus(forms.ModelForm):
 class FormularioCarrera(forms.ModelForm):
     class Meta:
         model = Carrera
-        fields = (
-            "campus", 
-            "codigo_de_carrera", 
-            "nombre", 
-            "modalidad", 
-            "facultad",
-            "vigencia_sniese"
-        )
+        fields = ("campus", "codigo_de_carrera", "nombre", "modalidad", "facultad", "vigencia_sniese")
         labels = {
             "campus": "Campus registrado",
             "codigo_de_carrera": "Código de carrera",
@@ -107,23 +101,21 @@ class FormularioCarrera(forms.ModelForm):
         }
         widgets = {
             "vigencia_sniese": forms.DateInput(attrs={"type": "date"}),
+            "codigo_de_carrera": forms.TextInput(attrs={
+                'placeholder': 'El código será determinado de forma automática', 
+                'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;', 
+                'readonly': True
+            }),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.fields['campus'].required = False
         self.fields['nombre'].required = False
         self.fields['modalidad'].required = False
         self.fields['facultad'].required = False
         self.fields['vigencia_sniese'].required = False
-
         self.fields['codigo_de_carrera'].required = False
-        self.fields['codigo_de_carrera'].widget.attrs.update({
-            'placeholder': 'El código será determinado de forma automática',
-            'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;',
-            'readonly': True
-        })
 
     def clean(self):
         cleaned_data = super().clean()
@@ -136,16 +128,23 @@ class FormularioCarrera(forms.ModelForm):
 
         errores = {}
 
-        if not campus:
-            errores['campus'] = "Información requerida"
-        if not nombre:
-            errores['nombre'] = "Información requerida"
-        if not modalidad:
-            errores['modalidad'] = "Información requerida"
-        if not facultad:
-            errores['facultad'] = "Información requerida"
-        if not vigencia_sniese:
-            errores['vigencia_sniese'] = "Información requerida"
+        if not campus: errores['campus'] = "Información requerida"
+        if not nombre: errores['nombre'] = "Información requerida"
+        if not modalidad: errores['modalidad'] = "Información requerida"
+        if not facultad: errores['facultad'] = "Información requerida"
+        if not vigencia_sniese: errores['vigencia_sniese'] = "Información requerida"
+
+        if nombre and modalidad and vigencia_sniese and facultad:
+            carrera_poo = CarreraBase(
+                codigo_de_carrera="PENDIENTE",
+                nombre=nombre,
+                modalidad=Modalidad(modalidad),
+                facultad=facultad,
+                vigencia_sniese=vigencia_sniese
+            )
+
+            if not carrera_poo.esta_activa():
+                errores['vigencia_sniese'] = "La vigencia SNIESE ha expirado"
 
         if errores:
             raise forms.ValidationError(errores)

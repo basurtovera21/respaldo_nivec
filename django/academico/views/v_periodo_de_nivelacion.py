@@ -1,0 +1,122 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+
+from academico.models import PeriodoDeNivelacion
+from academico.forms import FormularioPeriodoDeNivelacion
+from academico import services
+
+# Utilidades específicas
+from usuarios.utils import generar_identificador_siguiente
+
+@login_required
+def listar_periodos(request):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario).order_by("-anio", "-numero_periodo")
+    
+    return render(request, "academico/listar_periodos.html", {
+        "periodos": periodos,
+        "titulo_pagina": "Periodo de nivelación - NIVEC",
+        "titulo": "Periodos de Nivelación",
+        "url_registrar": "registrar_periodo",
+        "texto_registrar": "Registrar",
+        "url_volver": "panel_principal"
+    })
+
+@login_required
+def registrar_periodo(request):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        return redirect("panel_principal")
+
+    if request.method == "POST":
+        formulario = FormularioPeriodoDeNivelacion(request.POST, universidad=universidad_usuario)
+        if formulario.is_valid():
+            nuevo_periodo = formulario.save(commit=False)
+            nuevo_periodo.universidad = universidad_usuario
+            nuevo_periodo.codigo_periodo = generar_identificador_siguiente(PeriodoDeNivelacion, 'PNV', 'codigo_periodo')
+            nuevo_periodo.periodo = f"{nuevo_periodo.anio}-{nuevo_periodo.numero_periodo}"
+            nuevo_periodo.save()
+            
+            messages.success(request, "El periodo de nivelación ha sido registrado correctamente")
+            return redirect("listar_periodos")
+    else:
+        formulario = FormularioPeriodoDeNivelacion(universidad=universidad_usuario)
+        
+    return render(request, "academico/formulario_periodo.html", {
+        "formulario": formulario,
+        "titulo_pagina": "Periodo de nivelación - NIVEC",
+        "titulo": "Registrar periodo de nivelación",
+        "boton_texto": "Registrar",
+        "url_cancelar": "listar_periodos",
+        "mostrar_carga_masiva": False,
+    })
+
+@login_required
+def modificar_periodo(request, periodo_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    periodo = get_object_or_404(PeriodoDeNivelacion, id=periodo_id, universidad=universidad_usuario)
+
+    if request.method == "POST":
+        formulario = FormularioPeriodoDeNivelacion(request.POST, instance=periodo, universidad=universidad_usuario)
+        if formulario.is_valid():
+            periodo_modificado = formulario.save(commit=False)
+            periodo_modificado.periodo = f"{periodo_modificado.anio}-{periodo_modificado.numero_periodo}"
+            periodo_modificado.save()
+            messages.success(request, "El periodo de nivelación ha sido modificado correctamente")
+            return redirect("listar_periodos")
+    else:
+        formulario = FormularioPeriodoDeNivelacion(instance=periodo, universidad=universidad_usuario)
+        
+    return render(request, "academico/formulario_periodo.html", {
+        "formulario": formulario,
+        "titulo_pagina": "Periodo de nivelación - NIVEC",
+        "titulo": "Modificar periodo de nivelación", 
+        "boton_texto": "Modificar",
+        "url_cancelar": "listar_periodos",
+        "mostrar_carga_masiva": False,
+        "periodo": periodo
+    })
+    
+@login_required
+def eliminar_periodo(request, periodo_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    periodo = get_object_or_404(PeriodoDeNivelacion, id=periodo_id, universidad=universidad_usuario)
+    periodo.delete()
+    messages.success(request, "El periodo de nivelación ha sido eliminado correctamente")
+    return redirect("listar_periodos")
+
+@login_required
+def iniciar_periodo(request, periodo_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    periodo_db = get_object_or_404(PeriodoDeNivelacion, pk=periodo_id, universidad=universidad_usuario)
+    if services.servicio_iniciar_periodo_de_nivelacion(periodo_db):
+        messages.success(request, f"El periodo de nivelación {periodo_db.periodo} ha iniciado")
+    else:
+        messages.error(request, "No se ha podido iniciar el periodo de nivelación")
+        
+    return redirect("listar_periodos")
+
+@login_required
+def finalizar_periodo(request, periodo_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    periodo_db = get_object_or_404(PeriodoDeNivelacion, pk=periodo_id, universidad=universidad_usuario)
+    if services.servicio_finalizar_periodo_de_nivelacion(periodo_db):
+        messages.success(request, f"El periodo de nivelación {periodo_db.periodo} ha finalizado")
+    else:
+        messages.error(request, "No se ha podido finalizar el periodo de nivelación")
+        
+    return redirect("listar_periodos")

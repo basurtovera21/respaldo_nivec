@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titulo %}Director DAN - NIVEC{% endblock %}
+{% block titulo %}NIVEC{% endblock %}
 
 {% block contenido %}
     <h2 style="margin-bottom: 20px;">Dirección de admisión y nivelación</h2>
@@ -24,31 +24,6 @@
             <a href="{% url 'listar_coordinadores_ua' %}" class="boton boton-secundario">Coordinadores de unidades académicas</a>
             <a href="{% url 'listar_docentes' %}" class="boton boton-secundario">Docentes</a>
             <a href="{% url 'listar_estudiantes' %}" class="boton boton-secundario">Estudiantes</a>
-        </div>
-    </div>
-
-    <div class="tarjeta">
-        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Informes</h2>
-        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;"></p>
-        <div class="acciones" style="margin-bottom: 0;">
-            <a href="{% url 'listar_informes' %}" class="boton boton-secundario">Informes particulares</a>
-            <a href="{% url 'listar_informes' %}" class="boton boton-secundario">Informes generales</a>
-        </div>
-    </div>
-
-    <div class="tarjeta">
-        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Incidencias académicas</h2>
-        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;"></p>
-        <div class="acciones" style="margin-bottom: 0;">
-            <a href="{% url 'listar_incidencias' %}" class="boton boton-secundario">Registro de incidencias</a>
-        </div>
-    </div>
-
-    <div class="tarjeta">
-        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Evaluación de desempeño docente</h2>
-        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;"></p>
-        <div class="acciones" style="margin-bottom: 0;">
-            <a href="{% url 'listar_evaluaciones' %}" class="boton boton-secundario">Registro de evaluaciones</a>
         </div>
     </div>
 {% endblock %}

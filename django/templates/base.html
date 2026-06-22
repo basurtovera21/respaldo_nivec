@@ -107,7 +107,9 @@
 <nav>
     <a href="{% url 'panel_principal' %}" class="marca">NIVEC</a>
     <div>
-        <span style="font-size:13px; color:#86868b; margin-right: 8px;">{{ user.nombres }} {{ user.apellidos }}</span>
+        <a href="{% url 'modificar_perfil' %}">
+            {{ user.nombres }} {{ user.apellidos }}
+        </a>
         <a href="{% url 'cerrar_sesion' %}">Cerrar sesión</a>
     </div>
 </nav>

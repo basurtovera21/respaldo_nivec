@@ -1,253 +1,300 @@
-from django.contrib.auth import authenticate
-from django.contrib.auth import login
-from django.contrib.auth import logout
+import openpyxl
+import unicodedata
+from django.db import transaction
+from django.contrib.auth import authenticate, login, logout
 
-from poo.clases.usuarios.estudiante import Estudiante as EstudianteBase
-from poo.clases.usuarios.docente import Docente as DocenteBase
-from poo.clases.enums.estado_de_matricula import EstadoDeMatricula
-from poo.clases.enums.estado_de_vinculacion import EstadoDeVinculacion
+from usuarios.models import UsuarioDeSistema, PerfilDocente, PerfilAdministrativo, PerfilEstudiante
+from academico.models import Carrera, Campus
 
-from poo.clases.enums.jornada import Jornada
-from poo.clases.enums.registro_de_cupo import RegistroDeCupo
-from poo.clases.enums.tipo_de_vinculacion import TipoDeVinculacion
-from poo.clases.enums.tiempo_de_dedicacion import TiempoDeDedicacion
+from usuarios.utils import generar_identificador_siguiente
+
+from poo.clases.usuarios.docente import Docente
+from poo.clases.usuarios.estudiante import Estudiante
+from poo.clases.usuarios.usuario_de_sistema import UsuarioDeSistema as UsuarioDeSistemaBase
+from poo.clases.usuarios.usuario_administrativo import UsuarioAdministrativo as UsuarioAdministrativoBase
+
+from poo.clases.enums.perfil_administrativo import PerfilAdministrativo as EnumPerfilAdministrativo
 from poo.clases.enums.tipo_de_identificacion import TipoDeIdentificacion
-from poo.clases.enums.estado_de_usuario import EstadoDeUsuario
-from .models import PerfilEstudiante, PerfilDocente, PerfilAdministrativo
+from poo.clases.enums.estado_de_usuario import EstadoDeUsuario as EnumEstadoDeUsuario
+from poo.clases.enums.estado_de_vinculacion import EstadoDeVinculacion as EnumEstadoDeVinculacion
+from poo.clases.enums.tipo_de_vinculacion import TipoDeVinculacion as EnumTipoDeVinculacion
+from poo.clases.enums.tiempo_de_dedicacion import TiempoDeDedicacion as EnumTiempoDeDedicacion
+from poo.clases.enums.jornada import Jornada as EnumJornada
+from poo.clases.enums.registro_de_cupo import RegistroDeCupo as EnumRegistroDeCupo
+from poo.clases.enums.estado_de_matricula import EstadoDeMatricula as EnumEstadoDeMatricula
 
-#UsuarioDeSistema
-def servicio_iniciar_sesion(request, correo_institucional, contrasena):
-    usuario_de_sistema = authenticate(request, username=correo_institucional, password=contrasena)
-    
-    if usuario_de_sistema is not None:
-        estado_actual = usuario_de_sistema.estado_de_usuario
+
+def normalizar_texto(texto):
+    if not texto:
+        return ""
+    texto = str(texto).strip().lower()
+    texto = ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
+    return texto
+
+def obtener_enum_flexible(enum_class, valor_sucio):
+    if not valor_sucio:
+        return None
         
-        if estado_actual == EstadoDeUsuario.ACTIVO.value:
-            login(request, usuario_de_sistema)
-            return {"exito": True, "mensaje": ""}
+    valor_normalizado = normalizar_texto(valor_sucio)
+    
+    for opcion in enum_class:
+        if normalizar_texto(opcion.value) == valor_normalizado:
+            return opcion
             
-        elif estado_actual == EstadoDeUsuario.BLOQUEADO.value:
-            return {"exito": False, "mensaje": "El usuario ha sido bloqueado indefinidamente."}
-            
-        elif estado_actual == EstadoDeUsuario.INACTIVO.value:
-            return {"exito": False, "mensaje": "El usuario se encuentra inactivo actualmente."}
-            
-        elif estado_actual == EstadoDeUsuario.PENDIENTE.value:
-            return {"exito": False, "mensaje": "El usuario está pendiente de activación."}
-            
-        else:
-            return {"exito": False, "mensaje": "Estado no reconocido."}
-            
-    # Credenciales incorrectas
-    return {"exito": False, "mensaje": "Las credenciales registradas no son válidas."}
+    raise ValueError(f"'{valor_sucio}' registro no válido para {enum_class.__name__}")
 
+
+def servicio_iniciar_sesion(request, correo_institucional, contrasena):
+    usuario_de_sistema_django = authenticate(request, username=correo_institucional, password=contrasena)
+    if usuario_de_sistema_django is not None:
+        exito, mensaje = UsuarioDeSistemaBase.validar_estado_de_usuario(usuario_de_sistema_django.estado_de_usuario)
+        if exito: login(request, usuario_de_sistema_django)
+        return {"exito": exito, "mensaje": mensaje}
+    return {"exito": False, "mensaje": "Las credenciales registradas no son válidas."}
 
 def servicio_cerrar_sesion(request):
     logout(request)
 
-import openpyxl
-from usuarios.models import UsuarioDeSistema, PerfilAdministrativo
-from usuarios.utils import generar_identificador_siguiente
-from poo.clases.enums.perfil_administrativo import PerfilAdministrativo as EnumPerfilAdministrativo
-from poo.clases.usuarios.usuario_administrativo import UsuarioAdministrativo as UsuarioAdministrativoBase
-
 def servicio_administrativo_registrar_masivo_desde_excel(archivo, universidad_usuario):
+    resultado = {"exitosos": 0, "advertencias": [], "error": None}
+    try:
+        wb = openpyxl.load_workbook(archivo); ws = wb.active
+        perfiles_validos_diccionario = {str(e.value).strip().lower(): e.value for e in EnumPerfilAdministrativo}
+        for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            try:
+                tipo_id, identificacion, nombres, apellidos, correo, perfil_str = fila[:6]
+                if not any([tipo_id, identificacion, nombres, apellidos, correo, perfil_str]): continue
+                if not all([tipo_id, identificacion, nombres, apellidos, correo, perfil_str]):
+                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido por falta de información"); continue
+                tipo_id_str, identificacion_str = str(tipo_id).strip().capitalize(), str(identificacion).strip()
+                perfil_ingresado_limpio = str(perfil_str).strip().lower()
+                if perfil_ingresado_limpio not in perfiles_validos_diccionario:
+                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (tipo de perfil no válido)"); continue
+                perfil_exacto = perfiles_validos_diccionario[perfil_ingresado_limpio]
+                try: UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
+                except ValueError as e: resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido ({str(e)})"); continue
+                if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
+                    resultado["advertencias"].append(f"Fila {numero_fila} omitida (usuario administrativo ya registrado)"); continue
+                usuario = UsuarioDeSistema.objects.create(tipo_de_identificacion=tipo_id_str, identificacion=identificacion_str, nombres=str(nombres).strip(), apellidos=str(apellidos).strip(), correo_institucional=str(correo).strip(), estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value)
+                usuario.set_password(identificacion_str); usuario.save()
+                enum_perfil = EnumPerfilAdministrativo(perfil_exacto)
+                prefijo = UsuarioAdministrativoBase.definir_prefijo_identificador(enum_perfil)
+                nuevo_identificador = generar_identificador_siguiente(PerfilAdministrativo, prefijo, 'identificador_administrativo')
+                PerfilAdministrativo.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_administrativo=nuevo_identificador, perfil_administrativo=perfil_exacto)
+                resultado["exitosos"] += 1
+            except Exception as error_de_fila:
+                resultado["advertencias"].append(f"Fila {numero_fila} omitida ({str(error_de_fila)})")
+    except Exception:
+        resultado["error"] = "Ha ocurrido un error al procesar el documento"
+    return resultado
+
+def servicio_coordinador_dan_registrar_masivo_desde_excel(archivo, universidad_usuario):
+    resultado = {"exitosos": 0, "advertencias": [], "error": None}
+    try:
+        wb = openpyxl.load_workbook(archivo); ws = wb.active
+        rol_fijo = EnumPerfilAdministrativo.COORDINADOR_DAN.value
+        prefijo = UsuarioAdministrativoBase.definir_prefijo_identificador(EnumPerfilAdministrativo.COORDINADOR_DAN)
+        for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            try:
+                tipo_id, identificacion, nombres, apellidos, correo = fila[:5]
+                if not any([tipo_id, identificacion, nombres, apellidos, correo]): continue
+                if not all([tipo_id, identificacion, nombres, apellidos, correo]):
+                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido por falta de información"); continue
+                tipo_id_str, identificacion_str = str(tipo_id).strip().capitalize(), str(identificacion).strip()
+                try: UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
+                except ValueError as e: resultado["advertencias"].append(f"FRegistro de la fila {numero_fila} omitido ({str(e)})"); continue
+                if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
+                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (coordinador de dirección de admisión y nivelación ya registrado)"); continue
+                with transaction.atomic():
+                    usuario = UsuarioDeSistema.objects.create(tipo_de_identificacion=tipo_id_str, identificacion=identificacion_str, nombres=str(nombres).strip(), apellidos=str(apellidos).strip(), correo_institucional=str(correo).strip(), estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value)
+                    usuario.set_password(identificacion_str); usuario.save()
+                    PerfilAdministrativo.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_administrativo=generar_identificador_siguiente(PerfilAdministrativo, prefijo, 'identificador_administrativo'), identificador_coordinador_dan=generar_identificador_siguiente(PerfilAdministrativo, prefijo, 'identificador_coordinador_dan'), perfil_administrativo=rol_fijo)
+                    resultado["exitosos"] += 1
+            except Exception as error_de_fila:
+                resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido ({str(error_de_fila)})")
+    except Exception:
+        resultado["error"] = "Ha ocurrido un error al procesar el documento"
+    return resultado
+
+def servicio_coordinador_ua_registrar_masivo_desde_excel(archivo, universidad_usuario):
+    resultado = {"exitosos": 0, "advertencias": [], "error": None}
+    try:
+        wb = openpyxl.load_workbook(archivo); ws = wb.active
+        rol_fijo = EnumPerfilAdministrativo.COORDINADOR_UA.value
+        vinc_validas = {str(e.value).strip().lower(): e.value for e in EnumTipoDeVinculacion}
+        dedic_validas = {str(e.value).strip().lower(): e.value for e in EnumTiempoDeDedicacion}
+        prefijo_ua = UsuarioAdministrativoBase.definir_prefijo_identificador(EnumPerfilAdministrativo.COORDINADOR_UA)
+        for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            try:
+                tipo_id, identificacion, nombres, apellidos, correo, ua, tipo_vinc, tiempo_dedic, carga_max = fila[:9]
+                if not any([tipo_id, identificacion, nombres, apellidos, correo, ua, tipo_vinc, tiempo_dedic, carga_max]): continue
+                if not all([tipo_id, identificacion, nombres, apellidos, correo, ua, tipo_vinc, tiempo_dedic, carga_max]):
+                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido por falta de información"); continue
+                tipo_id_str, identificacion_str, ua_str = str(tipo_id).strip().capitalize(), str(identificacion).strip(), str(ua).strip()
+                tipo_vinc_limpio, tiempo_dedic_limpio = str(tipo_vinc).strip().lower(), str(tiempo_dedic).strip().lower()
+                if tipo_vinc_limpio not in vinc_validas or tiempo_dedic_limpio not in dedic_validas:
+                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (información no válida)"); continue
+                vinc_exacta, dedic_exacta = vinc_validas[tipo_vinc_limpio], dedic_validas[tiempo_dedic_limpio]
+                try: carga_max_float = float(carga_max)
+                except ValueError: resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (carga horaria no válida)"); continue
+                try: UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
+                except ValueError as e: resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido ({str(e)})"); continue
+                if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
+                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (coordinador de unidad académica ya registrado)"); continue
+                with transaction.atomic():
+                    usuario = UsuarioDeSistema.objects.create(tipo_de_identificacion=tipo_id_str, identificacion=identificacion_str, nombres=str(nombres).strip(), apellidos=str(apellidos).strip(), correo_institucional=str(correo).strip(), estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value)
+                    usuario.set_password(identificacion_str); usuario.save()
+                    PerfilAdministrativo.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_administrativo=generar_identificador_siguiente(PerfilAdministrativo, prefijo_ua, 'identificador_administrativo'), identificador_coordinador_ua=generar_identificador_siguiente(PerfilAdministrativo, prefijo_ua, 'identificador_coordinador_ua'), unidad_academica=ua_str, perfil_administrativo=rol_fijo)
+                    PerfilDocente.objects.create(usuario_de_sistema=usuario, identificador_institucional=generar_identificador_siguiente(PerfilDocente, "DC", 'identificador_institucional'), tipo_de_vinculacion=vinc_exacta, tiempo_de_dedicacion=dedic_exacta, carga_horaria_maxima=carga_max_float, estado_de_vinculacion=EnumEstadoDeVinculacion.ACTIVO.value)
+                    resultado["exitosos"] += 1
+            except Exception as e: resultado["advertencias"].append(f"Fila {numero_fila} omitida ({str(e)})")
+    except Exception: resultado["error"] = "Ha ocurrido un error al procesar el documento"
+    return resultado
+
+def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
+    resultado = {"exitosos": 0, "advertencias": [], "error": None}
+    
     try:
         wb = openpyxl.load_workbook(archivo)
         ws = wb.active
-        registros_exitosos = 0
         
-        
-        mapeo_prefijos = {
-            EnumPerfilAdministrativo.RECTOR.value: "AD",
-            EnumPerfilAdministrativo.VICERRECTOR_ACADEMICO.value: "AD",
-            EnumPerfilAdministrativo.DIRECTOR_DAN.value: "DAN",
-            EnumPerfilAdministrativo.COORDINADOR_DAN.value: "CAN",
-            EnumPerfilAdministrativo.COORDINADOR_UA.value: "CUA",
-        }
+        vinc_validas = {str(e.value).strip().lower(): e.value for e in EnumTipoDeVinculacion}
+        dedic_validas = {str(e.value).strip().lower(): e.value for e in EnumTiempoDeDedicacion}
 
-        for fila in ws.iter_rows(min_row=2, values_only=True):
-            tipo_id, identificacion, nombres, apellidos, correo, perfil_str = fila[:6]
+        for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            try:
+                tipo_id, identificacion, nombres, apellidos, correo, tipo_vinc, tiempo_dedic, carga_max, especialidades_str = fila[:9]
+                
+                if not any([tipo_id, identificacion, nombres, apellidos, correo, tipo_vinc, tiempo_dedic, carga_max]):
+                    continue
+                
+                if not all([tipo_id, identificacion, nombres, apellidos, correo, tipo_vinc, tiempo_dedic, carga_max]):
+                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido por falta de información")
+                    continue
+                    
+                tipo_id_str = str(tipo_id).strip().capitalize()
+                identificacion_str = str(identificacion).strip()
+                tipo_vinc_limpio = str(tipo_vinc).strip().lower()
+                tiempo_dedic_limpio = str(tiempo_dedic).strip().lower()
+
+                if tipo_vinc_limpio not in vinc_validas:
+                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (tipo de vinculación no válido)")
+                    continue
+                if tiempo_dedic_limpio not in dedic_validas:
+                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (tiempo de dedicación no válido)")
+                    continue
+                    
+                try:
+                    carga_max_float = float(carga_max)
+                except ValueError:
+                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (carga horaria no válida)")
+                    continue
+
+                try: 
+                    UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
+                except ValueError as e: 
+                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido ({str(e)})")
+                    continue
+
+                if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
+                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (el docente ya se encuentra registrado)")
+                    continue
+                
+                lista_especialidades = [esp.strip() for esp in str(especialidades_str).split(',') if esp.strip()] if especialidades_str else []
+
+                with transaction.atomic():
+                    usuario = UsuarioDeSistema.objects.create(
+                        tipo_de_identificacion=tipo_id_str,
+                        identificacion=identificacion_str,
+                        nombres=str(nombres).strip(),
+                        apellidos=str(apellidos).strip(),
+                        correo_institucional=str(correo).strip(),
+                        estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value
+                    )
+                    usuario.set_password(identificacion_str)
+                    usuario.save()
+
+                    PerfilDocente.objects.create(
+                        usuario_de_sistema=usuario,
+                        universidad=universidad,
+                        identificador_institucional=generar_identificador_siguiente(PerfilDocente, "DC", 'identificador_institucional'),
+                        tipo_de_vinculacion=vinc_validas[tipo_vinc_limpio],
+                        tiempo_de_dedicacion=dedic_validas[tiempo_dedic_limpio],
+                        carga_horaria_maxima=carga_max_float,
+                        estado_de_vinculacion=EnumEstadoDeVinculacion.ACTIVO.value,
+                        especialidades=lista_especialidades
+                    )
+                    resultado["exitosos"] += 1
             
-            if not all([tipo_id, identificacion, nombres, apellidos, correo, perfil_str]):
+            except Exception as e:
+                resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido ({str(e)})")
                 continue
                 
-            identificacion = str(identificacion).strip()
-            
+    except Exception:
+        resultado["error"] = "Ha ocurrido un error al procesar el documento"
+        
+    return resultado
+
+def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuario):
+    resultado = {"exitosos": 0, "advertencias": [], "error": None}
+    try:
+        wb = openpyxl.load_workbook(archivo); ws = wb.active
+        jornadas_map = {str(j.value).strip().lower(): j.value for j in EnumJornada}
+        cupos_map = {str(c.value).strip().lower(): c.value for c in EnumRegistroDeCupo}
+
+        for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
-                UsuarioAdministrativoBase.validar_creacion_de_usuario_administrativo(identificacion, identificacion)
-            except ValueError:
-                continue 
+                tipo_id, ident, nom, ape, corr, jor, cupo, carr, camp = fila[:9]
+                if not any([tipo_id, ident, nom, ape, corr, jor, cupo, carr, camp]): continue
+                if not all([tipo_id, ident, nom, ape, corr, jor, cupo, carr, camp]):
+                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido por falta de información"); continue
+                
+                ident_str = str(ident).strip()
+                if UsuarioDeSistema.objects.filter(identificacion=ident_str).exists():
+                    raise ValueError("el estudiante ya se encuentra registrado")
+                
+                carrera = Carrera.objects.filter(nombre__iexact=str(carr).strip()).first()
+                campus = Campus.objects.filter(nombre__iexact=str(camp).strip()).first()
+                jor_val = jornadas_map.get(str(jor).strip().lower())
+                cupo_val = cupos_map.get(str(cupo).strip().lower())
 
-            if UsuarioDeSistema.objects.filter(identificacion=identificacion).exists():
-                continue
+                if not carrera or not campus or not jor_val or not cupo_val:
+                    raise ValueError("registro no válido")
 
-            usuario = UsuarioDeSistema.objects.create(
-                tipo_de_identificacion=tipo_id,
-                identificacion=identificacion,
-                nombres=nombres,
-                apellidos=apellidos,
-                correo_institucional=correo,
-                estado_de_usuario="Activo"
-            )
-            usuario.set_password(identificacion)
-            usuario.save()
+                with transaction.atomic():
+                    usuario = UsuarioDeSistema.objects.create(
+                        tipo_de_identificacion=str(tipo_id).strip().capitalize(),
+                        identificacion=ident_str,
+                        nombres=str(nom).strip(),
+                        apellidos=str(ape).strip(),
+                        correo_institucional=str(corr).strip(),
+                        estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value
+                    )
+                    usuario.set_password(ident_str); usuario.save()
+                    PerfilEstudiante.objects.create(
+                        usuario_de_sistema=usuario,
+                        identificador_institucional=generar_identificador_siguiente(PerfilEstudiante, "ES", 'identificador_institucional'),
+                        numero_de_matricula=generar_identificador_siguiente(PerfilEstudiante, "MAT", 'numero_de_matricula'),
+                        jornada=jor_val,
+                        registro_de_cupo=cupo_val,
+                        carrera_registrada=carrera,
+                        campus_registrado=campus,
+                        estado_de_matricula=EnumEstadoDeMatricula.MATRICULADO.value
+                    )
+                    resultado["exitosos"] += 1
+            except Exception as e:
+                resultado["advertencias"].append(f"Fila {numero_fila} omitida ({str(e)})")
+    except Exception:
+        resultado["error"] = "Ha ocurrido un error al procesar el documento"
+    return resultado
 
-            prefijo = mapeo_prefijos.get(perfil_str, "AD")
-            nuevo_identificador = generar_identificador_siguiente(
-                PerfilAdministrativo, prefijo, 'identificador_administrativo'
-            )
-
-            PerfilAdministrativo.objects.create(
-                usuario_de_sistema=usuario,
-                universidad=universidad_usuario,
-                identificador_administrativo=nuevo_identificador,
-                perfil_administrativo=perfil_str
-            )
-            
-            registros_exitosos += 1
-            
-        return registros_exitosos
-    except Exception as e:
-        return None
-    
-    
-#Estudiante
-def servicio_formalizar_matricula(perfil_estudiante: PerfilEstudiante):
-    estudiante = _construir_estudiante(perfil_estudiante)
-    formalizar_matricula = estudiante.formalizar_matricula()
-    if formalizar_matricula:
-        perfil_estudiante.estado_de_matricula = EstadoDeMatricula.MATRICULADO.value
-        perfil_estudiante.save()
-    return formalizar_matricula
-
-
-def servicio_anular_matricula(perfil_estudiante: PerfilEstudiante):
-    estudiante = _construir_estudiante(perfil_estudiante)
-    anular_matricula = estudiante.anular_matricula()
-    if anular_matricula:
-        perfil_estudiante.estado_de_matricula = EstadoDeMatricula.ANULADO.value
-        perfil_estudiante.save()
-    return anular_matricula
-    
-    
-
-def servicio_solicitar_retiro(perfil_estudiante: PerfilEstudiante):
-    estudiante = _construir_estudiante(perfil_estudiante)
-    solicitar_retiro = estudiante.solicitar_retiro()
-    if solicitar_retiro:
-        perfil_estudiante.estado_de_matricula = EstadoDeMatricula.RETIRADO.value
-        perfil_estudiante.save()
-    return solicitar_retiro
-
-
-def servicio_aprobar_retiro(perfil_estudiante: PerfilEstudiante):
-    estudiante = _construir_estudiante(perfil_estudiante)
-    aprobar_retiro = estudiante.aprobar_retiro()
-    if aprobar_retiro:
-        perfil_estudiante.estado_de_matricula = EstadoDeMatricula.RETIRADO.value
-        perfil_estudiante.save()
-    return aprobar_retiro
-
-
-#Docente
-def servicio_visualizar_carga_academica(perfil_docente: PerfilDocente):
-    docente = _construir_docente(perfil_docente)
-    return docente.visualizar_carga_academica()
-
-
-#def servicio_inhabilitar_perfil_docente(perfil_docente: PerfilDocente):
-    docente = _construir_docente(perfil_docente)
-    docente.inhabilitar_perfil()
-    perfil_docente.estado_de_vinculacion = EstadoDeVinculacion.INACTIVO.value
-    perfil_docente.save()
-
-
-#UsuarioAcademico
-def servicio_obtener_registro_institucional(perfil_estudiante: PerfilEstudiante):
-    estudiante = _construir_estudiante(perfil_estudiante)
-    return estudiante.obtener_registro_institucional()
-
-
-#Constructores
-def _construir_estudiante(perfil_estudiante: PerfilEstudiante):
-    from poo.clases.carrera import Carrera as CarreraBase
-    from poo.clases.campus import Campus as CampusBase
-    from poo.clases.enums.modalidad import Modalidad
-
-    carrera = CarreraBase(
-        codigo_de_carrera = perfil_estudiante.carrera_registrada.codigo_de_carrera,
-        nombre = perfil_estudiante.carrera_registrada.nombre,
-        modalidad = Modalidad(perfil_estudiante.carrera_registrada.modalidad),
-        campo_de_conocimiento = perfil_estudiante.carrera_registrada.campo_de_conocimiento,
-        vigencia_sniese = perfil_estudiante.carrera_registrada.vigencia_sniese
-    )
-    
-    campus = CampusBase(
-        codigo_de_campus = perfil_estudiante.campus_registrado.codigo_de_campus,
-        nombre = perfil_estudiante.campus_registrado.nombre,
-        direccion_fisica = perfil_estudiante.campus_registrado.direccion_fisica,
-        provincia = perfil_estudiante.campus_registrado.provincia,
-        infraestructura_compartida = perfil_estudiante.campus_registrado.infraestructura_compartida
-    )
-    
-    usuario_de_sistema = perfil_estudiante.usuario_de_sistema
-    return EstudianteBase(
-        tipo_de_identificacion = TipoDeIdentificacion(usuario_de_sistema.tipo_de_identificacion),
-        identificacion = usuario_de_sistema.identificacion,
-        nombres = usuario_de_sistema.nombres,
-        apellidos = usuario_de_sistema.apellidos,
-        correo_institucional = usuario_de_sistema.correo_institucional,
-        contrasena = "temporal",
-        fecha_de_nacimiento = usuario_de_sistema.fecha_de_nacimiento,
-        sexo = usuario_de_sistema.sexo,
-        etnia = usuario_de_sistema.etnia,
-        porcentaje_de_discapacidad = usuario_de_sistema.porcentaje_de_discapacidad,
-        celular = usuario_de_sistema.celular,
-        direccion = usuario_de_sistema.direccion,
-        identificador_institucional = perfil_estudiante.identificador_institucional,
-        numero_de_matricula = perfil_estudiante.numero_de_matricula,
-        jornada = Jornada(perfil_estudiante.jornada),
-        registro_de_cupo = RegistroDeCupo(perfil_estudiante.registro_de_cupo),
-        carrera_registrada = carrera,
-        campus_registrado = campus,
-        estado_de_matricula = EstadoDeMatricula(perfil_estudiante.estado_de_matricula)
-    )
-
-
-def _construir_docente(perfil_docente: PerfilDocente):
-    usuario_de_sistema = perfil_docente.usuario_de_sistema
-    docente = DocenteBase(
-        tipo_de_identificacion = TipoDeIdentificacion(usuario_de_sistema.tipo_de_identificacion),
-        identificacion = usuario_de_sistema.identificacion,
-        nombres = usuario_de_sistema.nombres,
-        apellidos = usuario_de_sistema.apellidos,
-        correo_institucional = usuario_de_sistema.correo_institucional,
-        contrasena = "temporal",
-        fecha_de_nacimiento = usuario_de_sistema.fecha_de_nacimiento,
-        sexo = usuario_de_sistema.sexo,
-        etnia = usuario_de_sistema.etnia,
-        porcentaje_de_discapacidad = usuario_de_sistema.porcentaje_de_discapacidad,
-        celular = usuario_de_sistema.celular,
-        direccion = usuario_de_sistema.direccion,
-        identificador_institucional = perfil_docente.identificador_institucional,
-        tipo_de_vinculacion = TipoDeVinculacion(perfil_docente.tipo_de_vinculacion),
-        tiempo_de_dedicacion = TiempoDeDedicacion(perfil_docente.tiempo_de_dedicacion),
-        carga_horaria_maxima = perfil_docente.carga_horaria_maxima
-    )
-    docente._carga_horaria_actual = perfil_docente.carga_horaria_actual
-    docente._especialidades = perfil_docente.especialidades
-    docente._estado_de_vinculacion = EstadoDeVinculacion(perfil_docente.estado_de_vinculacion)
-    return docente
-
-
-def _construir_administrativo(perfil_administrativo: PerfilAdministrativo):
-    from poo.clases.usuarios.usuario_administrativo import UsuarioAdministrativo as UsuarioAdministrativoBase
-    from poo.clases.enums.perfil_administrativo import PerfilAdministrativo as PerfilAdministrativo
-
+# ==========================================
+# CONSTRUCTORES POO REFACTORIZADOS (BLINDADOS)
+# ==========================================
+def _crear_usuario_administrativo(perfil_administrativo: PerfilAdministrativo):
     usuario_de_sistema = perfil_administrativo.usuario_de_sistema
     return UsuarioAdministrativoBase(
-        tipo_de_identificacion=TipoDeIdentificacion(usuario_de_sistema.tipo_de_identificacion),
+        tipo_de_identificacion=obtener_enum_flexible(TipoDeIdentificacion, usuario_de_sistema.tipo_de_identificacion),
         identificacion=usuario_de_sistema.identificacion,
         nombres=usuario_de_sistema.nombres,
         apellidos=usuario_de_sistema.apellidos,
@@ -260,5 +307,52 @@ def _construir_administrativo(perfil_administrativo: PerfilAdministrativo):
         celular=usuario_de_sistema.celular,
         direccion=usuario_de_sistema.direccion,
         identificador_administrativo=perfil_administrativo.identificador_administrativo,
-        perfil_administrativo=PerfilAdministrativo(perfil_administrativo.perfil_administrativo) 
+        perfil_administrativo=obtener_enum_flexible(EnumPerfilAdministrativo, perfil_administrativo.perfil_administrativo),
+        universidad=perfil_administrativo.universidad
+    )
+
+def _crear_docente(perfil_docente: PerfilDocente):
+    usuario_de_sistema = perfil_docente.usuario_de_sistema
+    return Docente(
+        tipo_de_identificacion=obtener_enum_flexible(TipoDeIdentificacion, usuario_de_sistema.tipo_de_identificacion),
+        identificacion=usuario_de_sistema.identificacion,
+        nombres=usuario_de_sistema.nombres,
+        apellidos=usuario_de_sistema.apellidos,
+        correo_institucional=usuario_de_sistema.correo_institucional,
+        contrasena="temporal",
+        fecha_de_nacimiento=None,
+        sexo=usuario_de_sistema.sexo if hasattr(usuario_de_sistema, 'sexo') else "No especificado",
+        etnia=usuario_de_sistema.etnia if hasattr(usuario_de_sistema, 'etnia') else "No especificado",
+        porcentaje_de_discapacidad=0.0,
+        celular=usuario_de_sistema.celular if hasattr(usuario_de_sistema, 'celular') else "",
+        direccion=usuario_de_sistema.direccion if hasattr(usuario_de_sistema, 'direccion') else "",
+        identificador_institucional=perfil_docente.identificador_institucional,
+        universidad=perfil_docente.universidad,
+        tipo_de_vinculacion=obtener_enum_flexible(EnumTipoDeVinculacion, perfil_docente.tipo_de_vinculacion),
+        tiempo_de_dedicacion=obtener_enum_flexible(EnumTiempoDeDedicacion, perfil_docente.tiempo_de_dedicacion),
+        carga_horaria_maxima=perfil_docente.carga_horaria_maxima
+    )
+    
+def _crear_estudiante(perfil_est):
+    usuario = perfil_est.usuario_de_sistema
+    return Estudiante(
+        tipo_de_identificacion=obtener_enum_flexible(TipoDeIdentificacion, usuario.tipo_de_identificacion),
+        identificacion=usuario.identificacion,
+        nombres=usuario.nombres,
+        apellidos=usuario.apellidos,
+        correo_institucional=usuario.correo_institucional,
+        contrasena="temporal",
+        fecha_de_nacimiento=None,
+        sexo=usuario.sexo if hasattr(usuario, 'sexo') else "No especificado",
+        etnia=usuario.etnia if hasattr(usuario, 'etnia') else "No especificado",
+        porcentaje_de_discapacidad=0.0,
+        celular=usuario.celular if hasattr(usuario, 'celular') else "",
+        direccion=usuario.direccion if hasattr(usuario, 'direccion') else "",
+        identificador_institucional=perfil_est.identificador_institucional,
+        numero_de_matricula=perfil_est.numero_de_matricula,
+        jornada=obtener_enum_flexible(EnumJornada, perfil_est.jornada),
+        registro_de_cupo=obtener_enum_flexible(EnumRegistroDeCupo, perfil_est.registro_de_cupo),
+        carrera_registrada=perfil_est.carrera_registrada,
+        campus_registrado=perfil_est.campus_registrado,
+        estado_de_matricula=obtener_enum_flexible(EnumEstadoDeMatricula, perfil_est.estado_de_matricula)
     )

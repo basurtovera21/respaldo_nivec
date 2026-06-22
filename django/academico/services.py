@@ -1,6 +1,14 @@
 import openpyxl
-from datetime import date
+import unicodedata
+from datetime import date, datetime
+from django.db import transaction
+from django.http import HttpResponse
 
+from academico.models import Campus, Carrera, PeriodoDeNivelacion, Paralelo, EvaluacionAcademica, CohorteDeMatricula, InformeGeneral, ConsolidadoAcademico, MatriculaParalelo, Horario, MallaCurricular
+from usuarios.models import PerfilEstudiante
+from usuarios.utils import generar_identificador_siguiente
+
+# Enums
 from poo.clases.enums.estado_de_matricula import EstadoDeMatricula
 from poo.clases.enums.estado_de_aprobacion import EstadoDeAprobacion
 from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
@@ -12,8 +20,10 @@ from poo.clases.enums.tipo_de_componente import TipoDeComponente
 from poo.clases.enums.dia_de_semana import DiaDeSemana
 from poo.clases.enums.tipo_de_sesion import TipoDeSesion
 
+# POO
+from poo.clases.carrera import Carrera as CarreraBase
 from poo.clases.periodo_de_nivelacion import PeriodoDeNivelacion as PeriodoDeNivelacionBase
-from poo.clases.evaluacion_academica import EvaluacionAcademica as EvaluacionAcademica
+from poo.clases.evaluacion_academica import EvaluacionAcademica as EvaluacionAcademicaPOO # Evitar choque de nombres
 from poo.clases.informe_general import InformeGeneral as InformeGeneralPOO
 from poo.clases.servicios.procesador_de_informe import ProcesadorDeInforme
 from poo.clases.cohorte_de_matricula import CohorteDeMatricula as CohorteDeMatriculaPOO
@@ -21,29 +31,157 @@ from poo.clases.horario import Horario as HorarioPOO
 from poo.clases.servicios.distribuidor_de_estudiantes import DistribuidorDeEstudiantes
 from poo.clases.consolidado_academico import ConsolidadoAcademico as ConsolidadoAcademicoPOO
 
-from django.http import HttpResponse
-from .models import (PeriodoDeNivelacion, Paralelo, EvaluacionAcademica, CohorteDeMatricula, InformeGeneral, ConsolidadoAcademico, MatriculaParalelo, Horario, MallaCurricular)
-from usuarios.models import PerfilEstudiante
 
+def normalizar_texto(texto):
+    if not texto:
+        return ""
+    texto = str(texto).strip().lower()
+    texto = ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
+    return texto
+
+def obtener_enum_flexible(enum_class, valor_sucio):
+    if not valor_sucio:
+        return None
+    valor_normalizado = normalizar_texto(valor_sucio)
+    for opcion in enum_class:
+        if normalizar_texto(opcion.value) == valor_normalizado:
+            return opcion
+    raise ValueError(f"'{valor_sucio}' registro no válido para {enum_class.__name__}")
+
+#Campus
+def servicio_campus_registrar_masivo_desde_excel(archivo, universidad_usuario):
+    resultado = {"exitosos": 0, "advertencias": [], "error": None}
+    try:
+        wb = openpyxl.load_workbook(archivo)
+        ws = wb.active
+        
+        for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            try:
+                nombre, direccion, provincia = fila[0], fila[1], fila[2]
+                if not nombre and not direccion and not provincia: continue
+                if not nombre or not direccion or not provincia:
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido por falta de información")
+                    continue
+                
+                with transaction.atomic():
+                    Campus.objects.create(
+                        universidad=universidad_usuario,
+                        codigo_de_campus=generar_identificador_siguiente(Campus, 'CAM', 'codigo_de_campus'),
+                        nombre=nombre,
+                        direccion_fisica=direccion,
+                        provincia=provincia
+                    )
+                    resultado["exitosos"] += 1
+            except Exception as e:
+                resultado["advertencias"].append(f"Fila {numero_fila} omitida ({str(e)})")
+                
+    except Exception:
+        resultado["error"] = "Ha ocurrido un error al procesar el documento"
+        
+    return resultado
+
+
+def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
+    resultado = {"exitosos": 0, "advertencias": [], "error": None}
+    try:
+        wb = openpyxl.load_workbook(archivo)
+        ws = wb.active
+        
+        campus_existente = Campus.objects.filter(universidad=universidad_usuario)
+
+        for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            try:
+                codigo_campus, nombre, modalidad, facultad, vigencia = fila[:5]
+                
+                if not codigo_campus and not nombre and not modalidad and not facultad and not vigencia:
+                    continue
+                
+                if not codigo_campus or not nombre or not modalidad or not facultad or not vigencia:
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido por falta de información")
+                    continue
+
+                # Normalización inteligente del Enum de Modalidad
+                try:
+                    enum_modalidad = obtener_enum_flexible(Modalidad, modalidad)
+                except ValueError:
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ('{modalidad}' no es una modalidad válida)")
+                    continue
+
+                if isinstance(vigencia, (datetime, date)):
+                    vigencia_date = vigencia.date() if isinstance(vigencia, datetime) else vigencia
+                elif isinstance(vigencia, str):
+                    try:
+                        vigencia_date = datetime.strptime(vigencia.strip(), "%Y-%m-%d").date()
+                    except ValueError:
+                        resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (formato de fecha no válido)")
+                        continue
+                else:
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (formato de fecha no válido)")
+                    continue
+
+                campus_obj = campus_existente.filter(codigo_de_campus=codigo_campus).first()
+                if not campus_obj:
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (código de campus no válido)")
+                    continue
+                
+                carrera_poo = CarreraBase(
+                    codigo_de_carrera="PENDIENTE",
+                    nombre=nombre,
+                    modalidad=enum_modalidad,
+                    facultad=facultad,
+                    vigencia_sniese=vigencia_date
+                )
+
+                if not carrera_poo.esta_activa():
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (la carrera '{nombre}' no está vigente)")
+                    continue
+
+                with transaction.atomic():
+                    Carrera.objects.create(
+                        campus=campus_obj,
+                        codigo_de_carrera=generar_identificador_siguiente(Carrera, 'CAR', 'codigo_de_carrera'),
+                        nombre=nombre,
+                        modalidad=enum_modalidad.value, 
+                        facultad=facultad,
+                        vigencia_sniese=vigencia_date
+                    )
+                    resultado["exitosos"] += 1
+            except Exception as e:
+                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})")
+                
+    except Exception:
+        resultado["error"] = "Ha ocurrido un error al procesar el documento"
+        
+    return resultado
 
 #PeriodoDeNivelacion 
-def servicio_iniciar_periodo_de_nivelacion(periodo_de_nivelacion):
-    periodo_poo = PeriodoDeNivelacionBase.definir_periodo_de_nivelacion_en_modelo(periodo_de_nivelacion)
-    puede_iniciar = periodo_poo.iniciar_periodo_de_nivelacion()
-    if puede_iniciar:
-        periodo_de_nivelacion.estado = EstadoDePeriodo.EN_CURSO.value
-        periodo_de_nivelacion.save()
-    return puede_iniciar
+def _construir_periodo(periodo_db):
+    return PeriodoDeNivelacionBase(
+        codigo_periodo=periodo_db.codigo_periodo,
+        anio=periodo_db.anio,
+        periodo=periodo_db.periodo,
+        fecha_inicio=periodo_db.fecha_inicio,
+        fecha_fin=periodo_db.fecha_fin,
+        modalidad=obtener_enum_flexible(Modalidad, periodo_db.modalidad),
+        numero_periodo=periodo_db.numero_periodo,
+        estado=obtener_enum_flexible(EstadoDePeriodo, periodo_db.estado)
+    )
 
-def servicio_finalizar_periodo_de_nivelacion(periodo_de_nivelacion):
-    periodo_poo = PeriodoDeNivelacionBase.definir_periodo_de_nivelacion_en_modelo(periodo_de_nivelacion)
-    puede_finalizar = periodo_poo.finalizar_periodo_de_nivelacion()
-    if puede_finalizar:
-        periodo_de_nivelacion.estado = EstadoDePeriodo.CERRADO.value
-        periodo_de_nivelacion.save()
-    return puede_finalizar
+def servicio_iniciar_periodo_de_nivelacion(periodo_db):
+    periodo_poo = _construir_periodo(periodo_db)
+    if periodo_poo.iniciar_periodo_de_nivelacion():
+        periodo_db.estado = periodo_poo.estado.value
+        periodo_db.save()
+        return True
+    return False
 
-
+def servicio_finalizar_periodo_de_nivelacion(periodo_db):
+    periodo_poo = _construir_periodo(periodo_db)
+    if periodo_poo.finalizar_periodo_de_nivelacion():
+        periodo_db.estado = periodo_poo.estado.value
+        periodo_db.save()
+        return True
+    return False
 
 def servicio_registrar_evaluacion_academica(evaluacion_academica: EvaluacionAcademica):
     from poo.clases.unidad_curricular import UnidadCurricular as UnidadCurricularBase
@@ -57,12 +195,12 @@ def servicio_registrar_evaluacion_academica(evaluacion_academica: EvaluacionAcad
         horas_semanales = evaluacion_academica.unidad_curricular.horas_semanales,
         horas_sincronicas = evaluacion_academica.unidad_curricular.horas_sincronicas,
         horas_asincronicas = evaluacion_academica.unidad_curricular.horas_asincronicas,
-        tipo_de_componente = TipoDeComponente(evaluacion_academica.unidad_curricular.tipo_de_componente),
+        tipo_de_componente = obtener_enum_flexible(TipoDeComponente, evaluacion_academica.unidad_curricular.tipo_de_componente),
         criterio_de_aprobacion = evaluacion_academica.unidad_curricular.criterio_de_aprobacion,
         porcentaje_minimo_asistencia = evaluacion_academica.unidad_curricular.porcentaje_minimo_asistencia
     )
     estudiante = _construir_estudiante(evaluacion_academica.estudiante)
-    evaluacion = EvaluacionAcademica(estudiante = estudiante, unidad_curricular = unidad_curricular_base)
+    evaluacion = EvaluacionAcademicaPOO(estudiante = estudiante, unidad_curricular = unidad_curricular_base)
     
     evaluacion.registrar_calificacion(1, evaluacion_academica.calificacion_parcial_1)
     evaluacion.registrar_calificacion(2, evaluacion_academica.calificacion_parcial_2)
@@ -85,7 +223,6 @@ def servicio_distribuir_estudiantes(periodo_de_nivelacion: PeriodoDeNivelacion):
 
     from usuarios.services import _construir_estudiante
     from poo.clases.paralelo import Paralelo as ParaleloBase
-    from poo.clases.enums.jornada import Jornada
 
     paralelos_base = []
     indice_paralelo = {}
@@ -94,8 +231,8 @@ def servicio_distribuir_estudiantes(periodo_de_nivelacion: PeriodoDeNivelacion):
         paralelo_base = ParaleloBase(
             codigo_de_paralelo = paralelo.codigo_de_paralelo,
             nombre = paralelo.nombre,
-            jornada = Jornada(paralelo.jornada),
-            modalidad = Modalidad(paralelo.modalidad),
+            jornada = obtener_enum_flexible(Jornada, paralelo.jornada),
+            modalidad = obtener_enum_flexible(Modalidad, paralelo.modalidad),
             capacidad_maxima = paralelo.capacidad_maxima
         )
         paralelos_base.append(paralelo_base)
@@ -134,7 +271,6 @@ def servicio_distribuir_estudiantes(periodo_de_nivelacion: PeriodoDeNivelacion):
 
 def servicio_procesar_mtn(archivo, periodo_de_nivelacion: PeriodoDeNivelacion):
     from usuarios.models import UsuarioDeSistema
-    from academico.models import Carrera, Campus
 
     libro = openpyxl.load_workbook(archivo)
     hoja = libro.active
@@ -281,7 +417,7 @@ def servicio_clonar_malla_curricular(id_malla_curricular_bd: int, nuevo_id: str,
         area_de_conocimiento=malla_curricular_db.area_de_conocimiento,
         duracion_semanas=malla_curricular_db.duracion_semanas,
         version_de_malla=malla_curricular_db.version_de_malla,
-        modalidad=Modalidad(malla_curricular_db.modalidad)
+        modalidad=obtener_enum_flexible(Modalidad, malla_curricular_db.modalidad)
     )
 
     malla_curricular_clonada_base = malla_curricular_base.clonar(nuevo_id, nueva_version_de_malla)

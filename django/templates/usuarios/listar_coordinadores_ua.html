@@ -22,7 +22,7 @@
         <td style="text-align: left;">{{ coordinador.unidad_academica|default:"-" }}</td>
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.tipo_de_vinculacion|default:"-" }}</td>
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.tiempo_de_dedicacion|default:"-" }}</td>
-        <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.carga_horaria_maxima|default:"0" }}h</td>
+        <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.carga_horaria_maxima|default:"0" }} horas</td>
         <td style="text-align: left;">
             <a href="{% url 'modificar_administrativo' coordinador.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
             <a href="{% url 'eliminar_administrativo' coordinador.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
