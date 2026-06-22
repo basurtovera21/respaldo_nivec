@@ -3,7 +3,7 @@
 from abc import ABCMeta
 from abc import abstractmethod
 
-class IManejadorDeAprobacion(Metaclass = ABCMeta):
+class IManejadorDeAprobacion(metaclass = ABCMeta):
     def __init__(self, siguiente = None):
         self.siguiente = siguiente #referencia al siguiente manejador
 

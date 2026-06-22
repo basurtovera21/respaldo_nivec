@@ -1,5 +1,5 @@
 from abc import ABCMeta
-from clases.interfaces.i_observador_de_evaluacion import IObservadorDeEvaluacion
+from poo.clases.interfaces.i_observador_de_evaluacion import IObservadorDeEvaluacion
 
 class ISujetoDeEvaluacion(metaclass = ABCMeta):
     def __init__(self):

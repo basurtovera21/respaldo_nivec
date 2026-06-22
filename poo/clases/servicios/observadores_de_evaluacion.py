@@ -1,6 +1,6 @@
-from clases.interfaces.i_observador_de_evaluacion import IObservadorDeEvaluacion
-from clases.enums.estado_de_aprobacion import EstadoDeAprobacion
-from clases.evaluacion_academica import EvaluacionAcademica
+from poo.clases.interfaces.i_observador_de_evaluacion import IObservadorDeEvaluacion
+from poo.clases.enums.estado_de_aprobacion import EstadoDeAprobacion
+from poo.clases.evaluacion_academica import EvaluacionAcademica
 
 class ObservadorEstadoEstudiante(IObservadorDeEvaluacion):
     def actualizar(self, evaluacion_academica: EvaluacionAcademica):
