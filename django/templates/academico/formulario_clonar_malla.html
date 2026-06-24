@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ titulo_pagina|default:"NIVEC" }}{% endblock %}
+
+{% block contenido %}
+<div class="tarjeta">
+    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
+
+    <p style="color: #515154; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
+        Copia de la malla curricular
+        <span style="font-family: monospace;">{{ malla.codigo_de_malla }}</span>
+        {{ malla.nombre }}({{ malla.version_de_malla }}).
+        {{ malla.unidades_curriculares.count }} unidad(es) curricular(es)
+    </p>
+
+    <form method="post" novalidate style="max-width: 500px;">
+        {% csrf_token %}
+
+        <div class="campo">
+            <label for="version_de_malla" style="font-weight: bold;">Versión de malla</label>
+            <input type="text" id="version_de_malla" name="version_de_malla" value="{{ request.POST.version_de_malla }}">
+        </div>
+
+        <div class="campo">
+            <label for="nombre" style="font-weight: bold;">Nombre (opcional)</label>
+            <input type="text" id="nombre" name="nombre"
+                   value="{{ request.POST.nombre }}">
+            <div class="ayuda">No realice cambios en este campo si no desea cambiar el nombre de la malla original</div>
+        </div>
+
+        <div style="margin-top: 30px; display: flex; gap: 15px;">
+            <button type="submit" class="boton boton-primario">{{ boton_texto|default:"Clonar" }}</button>
+            <a href="{% if url_cancelar %}{% url url_cancelar %}{% else %}#{% endif %}" class="boton boton-secundario">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

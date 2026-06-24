@@ -152,8 +152,6 @@ class FormularioCarrera(forms.ModelForm):
         return cleaned_data
 
 
-# Reemplazar FormularioMallaCurricular en django/academico/forms.py
-
 class FormularioMallaCurricular(forms.ModelForm):
     class Meta:
         model = MallaCurricular
@@ -165,7 +163,6 @@ class FormularioMallaCurricular(forms.ModelForm):
             "duracion_semanas",
             "version_de_malla",
             "modalidad",
-            "estado",
         )
         labels = {
             "carrera": "Carrera registrada",
@@ -175,7 +172,6 @@ class FormularioMallaCurricular(forms.ModelForm):
             "duracion_semanas": "Duración (en semanas)",
             "version_de_malla": "Versión de malla curricular",
             "modalidad": "Modalidad",
-            "estado": "Estado",
         }
         widgets = {
             "codigo_de_malla": forms.TextInput(attrs={
@@ -201,7 +197,6 @@ class FormularioMallaCurricular(forms.ModelForm):
             "duracion_semanas",
             "version_de_malla",
             "modalidad",
-            "estado",
         ]
 
         for campo in campos_requeridos:
@@ -212,6 +207,7 @@ class FormularioMallaCurricular(forms.ModelForm):
             raise forms.ValidationError(errores)
 
         return cleaned_data
+
 
 
 # Reemplazar FormularioUnidadCurricular en django/academico/forms.py

@@ -1,14 +1,18 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import ProtectedError
 from django.http import HttpResponse
 import openpyxl
 
 from academico.models import MallaCurricular, Carrera
 from academico.forms import FormularioMallaCurricular
-from academico.services import servicio_malla_registrar_masivo_desde_excel
+from academico.services import (
+    servicio_malla_registrar_masivo_desde_excel,
+    servicio_clonar_malla_curricular,
+    servicio_cambiar_estado_malla,
+)
 from usuarios.utils import generar_identificador_siguiente
-
 
 @login_required
 def listar_mallas(request):
@@ -30,7 +34,6 @@ def listar_mallas(request):
         "url_volver": "panel_dan"
     })
 
-
 @login_required
 def descargar_plantilla_malla(request):
     wb = openpyxl.Workbook()
@@ -44,7 +47,6 @@ def descargar_plantilla_malla(request):
         "Duración en semanas (número entero)",
         "Versión de malla curricular",
         "Modalidad (Virtual, Presencial, Semipresencial)",
-        "Estado (Diseño, Activa, Histórica, Inactiva)",
     ]
     ws.append(cabeceras)
 
@@ -57,7 +59,6 @@ def descargar_plantilla_malla(request):
     response["Content-Disposition"] = 'attachment; filename="formato_mallas_nivec.xlsx"'
     wb.save(response)
     return response
-
 
 @login_required
 def registrar_malla(request):
@@ -117,7 +118,6 @@ def registrar_malla(request):
         "url_plantilla": "descargar_plantilla_malla",
     })
 
-
 @login_required
 def modificar_malla(request, malla_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
@@ -153,7 +153,6 @@ def modificar_malla(request, malla_id):
         "mostrar_carga_masiva": False,
     })
 
-
 @login_required
 def eliminar_malla(request, malla_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
@@ -164,6 +163,70 @@ def eliminar_malla(request, malla_id):
     malla = get_object_or_404(
         MallaCurricular, id=malla_id, carrera__campus__universidad=universidad_usuario
     )
-    malla.delete()
-    messages.success(request, "La malla curricular ha sido eliminada correctamente")
+
+    try:
+        malla.delete()
+        messages.success(request, "La malla curricular ha sido eliminada correctamente")
+    except ProtectedError:
+        total_unidades = malla.unidades_curriculares.count()
+        messages.error(
+            request,
+            f"La malla curricular no se ha podido eliminar ({total_unidades} unidad(es) "
+            f"curricular(es) presente(s)). Deshabilitarla"
+        )
+    return redirect("listar_mallas")
+
+@login_required
+def clonar_malla(request, malla_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    malla = get_object_or_404(
+        MallaCurricular, id=malla_id, carrera__campus__universidad=universidad_usuario
+    )
+
+    if request.method == "POST":
+        nueva_version = (request.POST.get("version_de_malla") or "").strip()
+        nuevo_nombre = (request.POST.get("nombre") or "").strip()
+
+        if not nueva_version:
+            messages.error(request, "La versión de la nueva malla curricular es requerida")
+            return redirect("clonar_malla", malla_id=malla.id)
+
+        nueva_malla = servicio_clonar_malla_curricular(
+            malla.id, nueva_version, nuevo_nombre or None
+        )
+        total_unidades = nueva_malla.unidades_curriculares.count()
+        messages.success(
+            request,
+            f"La malla curricular fue clonada correctamente ({nueva_malla.codigo_de_malla})"
+        )
+        return redirect("listar_mallas")
+
+    return render(request, "academico/formulario_clonar_malla.html", {
+        "malla": malla,
+        "titulo_pagina": "Malla curricular - NIVEC",
+        "titulo": "Copiar malla curricular",
+        "boton_texto": "Copiar",
+        "url_cancelar": "listar_mallas",
+    })
+
+@login_required
+def cambiar_estado_malla(request, malla_id, accion):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    malla = get_object_or_404(
+        MallaCurricular, id=malla_id, carrera__campus__universidad=universidad_usuario
+    )
+
+    ok, mensaje = servicio_cambiar_estado_malla(malla, accion)
+    if ok:
+        messages.success(request, mensaje)
+    else:
+        messages.error(request, mensaje)
     return redirect("listar_mallas")

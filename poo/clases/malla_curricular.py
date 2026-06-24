@@ -9,7 +9,6 @@ from poo.clases.enums.modalidad import Modalidad
 from poo.clases.interfaces.i_unidad_evaluable import IUnidadEvaluable
 from poo.clases.interfaces.i_clonable import IClonable
 
-
 class MallaCurricular(IClonable):
     def __init__(self, codigo_de_malla: str, nombre: str, area_de_conocimiento: str, duracion_semanas: int, version_de_malla: str, modalidad: Modalidad):
         self.codigo_de_malla = codigo_de_malla
@@ -23,9 +22,49 @@ class MallaCurricular(IClonable):
         self._unidades_curriculares = []
 
 
+    @property
+    def estado(self):
+        return self._estado
+
+    @property
+    def total_horas_nivelacion(self):
+        return self._total_horas_nivelacion
+
+    def establecer_estado(self, estado: EstadoDeMalla):
+        if isinstance(estado, EstadoDeMalla):
+            self._estado = estado
+            return True
+        return False
+
+    def puede_editar_estructura(self):
+        return self._estado in (EstadoDeMalla.DISENO, EstadoDeMalla.ACTIVA)
+
+    def esta_activa(self):
+        return self._estado == EstadoDeMalla.ACTIVA
+
+    def puede_usarse_en_paralelos(self):
+        return self._estado == EstadoDeMalla.ACTIVA
+
+    def activar(self):
+        if self._estado in (EstadoDeMalla.DISENO, EstadoDeMalla.INACTIVA):
+            self._estado = EstadoDeMalla.ACTIVA
+            return True
+        return False
+
+    def marcar_historica(self):
+        if self._estado == EstadoDeMalla.ACTIVA:
+            self._estado = EstadoDeMalla.HISTORICA
+            return True
+        return False
+
+    def inactivar(self):
+        if self._estado in (EstadoDeMalla.DISENO, EstadoDeMalla.ACTIVA):
+            self._estado = EstadoDeMalla.INACTIVA
+            return True
+        return False
+
     def validar_duracion(self):
         return isinstance(self.duracion_semanas, int) and self.duracion_semanas > 0
-
 
     def validar_datos_de_registro(self):
         errores = {}
@@ -47,14 +86,18 @@ class MallaCurricular(IClonable):
 
         return errores
 
-
+    #Patrón Prototype
     def clonar(self, nuevo_codigo_de_malla: str, nueva_version_de_malla: str):
         malla_curricular_clonada = copy.deepcopy(self)
         malla_curricular_clonada.codigo_de_malla = nuevo_codigo_de_malla
         malla_curricular_clonada.version_de_malla = nueva_version_de_malla
         malla_curricular_clonada._estado = EstadoDeMalla.DISENO
+        malla_curricular_clonada._total_horas_nivelacion = malla_curricular_clonada.calcular_total_horas_nivelacion()
         return malla_curricular_clonada
 
+ 
+    def obtener_unidades_curriculares(self):
+        return list(self._unidades_curriculares)
 
     def agregar_unidad_curricular(self, *args):
         unidad_agregada = True
@@ -69,22 +112,20 @@ class MallaCurricular(IClonable):
 
         return unidad_agregada
 
-
     def _agregar_una_unidad_curricular(self, unidad_curricular: IUnidadEvaluable):
-        if self._estado not in (EstadoDeMalla.DISENO, EstadoDeMalla.ACTIVA):
+        if not self.puede_editar_estructura():
             return False
 
         if not isinstance(unidad_curricular, IUnidadEvaluable):
             return False
 
         for unidad in self._unidades_curriculares:
-            if unidad.codigo_de_unidad == unidad_curricular.codigo_de_unidad:
+            if unidad.obtener_codigo_de_unidad() == unidad_curricular.obtener_codigo_de_unidad():
                 return False
 
         self._unidades_curriculares.append(unidad_curricular)
         self._total_horas_nivelacion = self.calcular_total_horas_nivelacion()
         return True
-
 
     def calcular_total_horas_nivelacion(self):
         calculo_total_horas_nivelacion = 0.0

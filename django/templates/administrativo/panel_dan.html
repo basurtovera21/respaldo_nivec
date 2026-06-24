@@ -2,16 +2,25 @@
 {% block titulo %}NIVEC{% endblock %}
 
 {% block contenido %}
+    <style>
+        .boton-deshabilitado {
+            background: #f2f2f7;
+            color: #b0b0b5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+    </style>
+
     <h2 style="margin-bottom: 20px;">Coordinación de admisión y nivelación</h2>
 
     <div class="tarjeta">
-        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Estructura académica</h2>
-        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Configuración de mallas, unidades, paralelos y horarios</p>
+        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Configuración académica</h2>
+        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Estructura académica</p>
         <div class="acciones" style="margin-bottom: 0;">
             <a href="{% url 'listar_mallas' %}" class="boton boton-secundario">Mallas curriculares</a>
-            <a href="#" class="boton boton-secundario">Unidades curriculares</a>
-            <a href="#" class="boton boton-secundario">Paralelos</a>
-            <a href="#" class="boton boton-secundario">Horarios</a>
+            <a href="{% url 'listar_unidades' %}" class="boton boton-secundario">Unidades curriculares</a>
+            <span class="boton boton-deshabilitado">Paralelos</span>
+            <span class="boton boton-deshabilitado">Horarios</span>
         </div>
     </div>
 
@@ -19,9 +28,9 @@
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Asignación docente</h2>
         <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Vinculación de docentes a paralelos y validación de carga horaria</p>
         <div class="acciones" style="margin-bottom: 0;">
-            <a href="#" class="boton boton-secundario">Asignaciones</a>
-            <a href="#" class="boton boton-secundario">Incidencias académicas</a>
-            <a href="#" class="boton boton-secundario">Evaluaciones de desempeño</a>
+            <span class="boton boton-deshabilitado">Asignaciones</span>
+            <span class="boton boton-deshabilitado">Incidencias académicas</span>
+            <span class="boton boton-deshabilitado">Evaluaciones de desempeño</span>
         </div>
     </div>
 
@@ -29,9 +38,9 @@
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Consolidación académica</h2>
         <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Procesamiento de calificaciones, actas e informes</p>
         <div class="acciones" style="margin-bottom: 0;">
-            <a href="#" class="boton boton-secundario">Cohortes de matrícula</a>
-            <a href="#" class="boton boton-secundario">Evaluaciones académicas</a>
-            <a href="#" class="boton boton-secundario">Informes generales</a>
+            <span class="boton boton-deshabilitado">Cohortes de matrícula</span>
+            <span class="boton boton-deshabilitado">Evaluaciones académicas</span>
+            <span class="boton boton-deshabilitado">Informes generales</span>
         </div>
     </div>
 
@@ -39,8 +48,8 @@
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Procesamiento de MTN</h2>
         <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Carga y validación de la Matriz de Tercer Nivel</p>
         <div class="acciones" style="margin-bottom: 0;">
-            <a href="#" class="boton boton-secundario">Procesar MTN</a>
-            <a href="#" class="boton boton-secundario">Consolidados académicos</a>
+            <span class="boton boton-deshabilitado">Procesar MTN</span>
+            <span class="boton boton-deshabilitado">Consolidados académicos</span>
         </div>
     </div>
 

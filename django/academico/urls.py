@@ -34,6 +34,8 @@ urlpatterns = [
     path("mallas/registrar/", views.registrar_malla, name="registrar_malla"),
     path("mallas/editar/<int:malla_id>/", views.modificar_malla, name="modificar_malla"),
     path("mallas/eliminar/<int:malla_id>/", views.eliminar_malla, name="eliminar_malla"),
+    path("mallas/clonar/<int:malla_id>/", views.clonar_malla, name="clonar_malla"),
+    path("mallas/<int:malla_id>/estado/<str:accion>/", views.cambiar_estado_malla, name="cambiar_estado_malla"),
     path("mallas/descargar-plantilla/", views.descargar_plantilla_malla, name="descargar_plantilla_malla"),
     path("mallas/<int:malla_id>/unidades/", views.listar_unidades_de_malla, name="listar_unidades_de_malla"),
 
@@ -42,8 +44,7 @@ urlpatterns = [
     path("unidades/editar/<int:unidad_id>/", views.modificar_unidad, name="modificar_unidad"),
     path("unidades/eliminar/<int:unidad_id>/", views.eliminar_unidad, name="eliminar_unidad"),
     path("unidades/descargar-plantilla/", views.descargar_plantilla_unidad, name="descargar_plantilla_unidad"),
-    path("mallas/<int:malla_id>/unidades/", views.listar_unidades_de_malla, name="listar_unidades_de_malla"),
-    
+
     path("paralelos/", views.listar_paralelos, name="listar_paralelos"),
     path("paralelos/registrar/", views.registrar_paralelo, name="registrar_paralelo"),
     path("horarios/registrar/", views.registrar_horario, name="registrar_horario"),

@@ -191,8 +191,6 @@ def servicio_finalizar_periodo_de_nivelacion(periodo_db):
     return False
 
 #Malla curricular
-# Agregar/reemplazar en django/academico/services.py
-
 def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
     from poo.clases.malla_curricular import MallaCurricular as MallaCurricularBase
     from poo.clases.enums.estado_de_malla import EstadoDeMalla
@@ -206,12 +204,12 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
 
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
-                codigo_carrera, nombre, area, duracion, version, modalidad_str, estado_str = fila[:7]
+                codigo_carrera, nombre, area, duracion, version, modalidad_str = fila[:6]
 
-                if not any([codigo_carrera, nombre, area, duracion, version, modalidad_str, estado_str]):
+                if not any([codigo_carrera, nombre, area, duracion, version, modalidad_str]):
                     continue
 
-                if not all([codigo_carrera, nombre, area, duracion, version, modalidad_str, estado_str]):
+                if not all([codigo_carrera, nombre, area, duracion, version, modalidad_str]):
                     resultado["advertencias"].append(
                         f"El registro de la fila {numero_fila} fue omitido por falta de información"
                     )
@@ -221,15 +219,7 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     enum_modalidad = obtener_enum_flexible(Modalidad, modalidad_str)
                 except ValueError:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido ('{modalidad_str}' no es una modalidad válida)"
-                    )
-                    continue
-
-                try:
-                    enum_estado = obtener_enum_flexible(EstadoDeMalla, estado_str)
-                except ValueError:
-                    resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido ('{estado_str}' no es un estado válido)"
+                        f"El registro de la fila {numero_fila} fue omitido (modalidad no válida)"
                     )
                     continue
 
@@ -250,7 +240,6 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     )
                     continue
 
-                # Validación a través de la capa POO
                 malla_poo = MallaCurricularBase(
                     codigo_de_malla="PENDIENTE",
                     nombre=str(nombre).strip(),
@@ -279,7 +268,7 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
                         duracion_semanas=malla_poo.duracion_semanas,
                         version_de_malla=malla_poo.version_de_malla,
                         modalidad=malla_poo.modalidad.value,
-                        estado=enum_estado.value,
+                        estado=EstadoDeMalla.DISENO.value,
                     )
                     resultado["exitosos"] += 1
 
@@ -292,6 +281,7 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
         resultado["error"] = "Ha ocurrido un error al procesar el documento"
 
     return resultado
+
 
 # Agregar en django/academico/services.py
 
@@ -636,32 +626,127 @@ def _exportar_txt(informe_django, evaluaciones):
 
 
 #MallaCurricular
-def servicio_clonar_malla_curricular(id_malla_curricular_bd: int, nuevo_id: str, nueva_version_de_malla: str):
+def _construir_unidad_poo(unidad_db):
+    from poo.clases.unidad_curricular import UnidadCurricular as UnidadCurricularBase
+
+    return UnidadCurricularBase(
+        codigo_de_unidad=unidad_db.codigo_de_unidad,
+        nombre=unidad_db.nombre,
+        area_de_conocimiento=unidad_db.area_de_conocimiento,
+        horas_totales=unidad_db.horas_totales,
+        horas_semanales=unidad_db.horas_semanales,
+        horas_sincronicas=unidad_db.horas_sincronicas,
+        horas_asincronicas=unidad_db.horas_asincronicas,
+        tipo_de_componente=obtener_enum_flexible(TipoDeComponente, unidad_db.tipo_de_componente),
+        criterio_de_aprobacion=unidad_db.criterio_de_aprobacion,
+        porcentaje_minimo_asistencia=unidad_db.porcentaje_minimo_asistencia,
+    )
+
+def _construir_malla_poo(malla_db, cargar_unidades=False):
     from poo.clases.malla_curricular import MallaCurricular as MallaCurricularBase
-    
+
+    malla_poo = MallaCurricularBase(
+        codigo_de_malla=malla_db.codigo_de_malla,
+        nombre=malla_db.nombre,
+        area_de_conocimiento=malla_db.area_de_conocimiento,
+        duracion_semanas=malla_db.duracion_semanas,
+        version_de_malla=malla_db.version_de_malla,
+        modalidad=obtener_enum_flexible(Modalidad, malla_db.modalidad),
+    )
+
+    if cargar_unidades:
+        for unidad_db in malla_db.unidades_curriculares.all():
+            malla_poo.agregar_unidad_curricular(_construir_unidad_poo(unidad_db))
+
+    malla_poo.establecer_estado(obtener_enum_flexible(EstadoDeMalla, malla_db.estado))
+    return malla_poo
+
+def servicio_recalcular_total_horas_malla(malla_db):
+    malla_poo = _construir_malla_poo(malla_db, cargar_unidades=False)
+    malla_poo.establecer_estado(EstadoDeMalla.DISENO)
+
+    for unidad_db in malla_db.unidades_curriculares.all():
+        malla_poo.agregar_unidad_curricular(_construir_unidad_poo(unidad_db))
+
+    malla_db.total_horas_nivelacion = malla_poo.calcular_total_horas_nivelacion()
+    malla_db.save(update_fields=["total_horas_nivelacion"])
+    return malla_db.total_horas_nivelacion
+
+def servicio_cambiar_estado_malla(malla_db, accion):
+    malla_poo = _construir_malla_poo(malla_db)
+
+    if accion == "activar":
+        otra_activa = MallaCurricular.objects.filter(
+            carrera=malla_db.carrera,
+            estado=EstadoDeMalla.ACTIVA.value,
+        ).exclude(pk=malla_db.pk).first()
+
+        if otra_activa:
+            return (
+                False,
+                f"La carrera tiene una malla curricular activa ({otra_activa.codigo_de_malla} - "
+                f"{otra_activa.version_de_malla}). Marcarla como histórica o inactiva"
+            )
+
+        if not malla_poo.activar():
+            return (False, "La malla curricular no puede activarse desde su estado actual")
+
+    elif accion == "historica":
+        if not malla_poo.marcar_historica():
+            return (False, "Sólo una malla curricular activa puede cambiar su estado a histórico")
+
+    elif accion == "inactivar":
+        if not malla_poo.inactivar():
+            return (False, "La malla curricular no puede deshabilitarse desde su estado actual")
+
+    else:
+        return (False, "No válido")
+
+    malla_db.estado = malla_poo.estado.value
+    malla_db.save(update_fields=["estado"])
+    return (True, "El estado de la malla curricular ha sido actualizado correctamente.")
+
+def servicio_clonar_malla_curricular(id_malla_curricular_bd, nueva_version_de_malla, nuevo_nombre=None):
+    from academico.models import UnidadCurricular
+
     malla_curricular_db = MallaCurricular.objects.get(id=id_malla_curricular_bd)
-    
-    malla_curricular_base = MallaCurricularBase(
-        codigo_de_malla=malla_curricular_db.codigo_de_malla,
-        nombre=malla_curricular_db.nombre,
-        area_de_conocimiento=malla_curricular_db.area_de_conocimiento,
-        duracion_semanas=malla_curricular_db.duracion_semanas,
-        version_de_malla=malla_curricular_db.version_de_malla,
-        modalidad=obtener_enum_flexible(Modalidad, malla_curricular_db.modalidad)
-    )
 
-    malla_curricular_clonada_base = malla_curricular_base.clonar(nuevo_id, nueva_version_de_malla)
+    malla_poo = _construir_malla_poo(malla_curricular_db, cargar_unidades=True)
 
-    nueva_malla_curricular_db = MallaCurricular.objects.create(
-        carrera=malla_curricular_db.carrera,
-        codigo_de_malla=malla_curricular_clonada_base.codigo_de_malla,
-        nombre=malla_curricular_clonada_base.nombre,
-        area_de_conocimiento=malla_curricular_clonada_base.area_de_conocimiento,
-        duracion_semanas=malla_curricular_clonada_base.duracion_semanas,
-        version_de_malla=malla_curricular_clonada_base.version_de_malla,
-        modalidad=malla_curricular_clonada_base.modalidad.value,
-        estado=malla_curricular_clonada_base._estado.value,
-        total_horas_nivelacion=malla_curricular_clonada_base._total_horas_nivelacion
-    )
-    
+    nuevo_codigo = generar_identificador_siguiente(MallaCurricular, "MC", "codigo_de_malla")
+    clon_poo = malla_poo.clonar(nuevo_codigo, str(nueva_version_de_malla).strip())
+
+    if nuevo_nombre and str(nuevo_nombre).strip():
+        clon_poo.nombre = str(nuevo_nombre).strip()
+
+    with transaction.atomic():
+        nueva_malla_curricular_db = MallaCurricular.objects.create(
+            carrera=malla_curricular_db.carrera,
+            codigo_de_malla=clon_poo.codigo_de_malla,
+            nombre=clon_poo.nombre,
+            area_de_conocimiento=clon_poo.area_de_conocimiento,
+            duracion_semanas=clon_poo.duracion_semanas,
+            version_de_malla=clon_poo.version_de_malla,
+            modalidad=clon_poo.modalidad.value,
+            estado=clon_poo.estado.value,
+            total_horas_nivelacion=clon_poo.total_horas_nivelacion,
+        )
+
+        for unidad_poo in clon_poo.obtener_unidades_curriculares():
+            UnidadCurricular.objects.create(
+                malla_curricular=nueva_malla_curricular_db,
+                codigo_de_unidad=generar_identificador_siguente(
+                    UnidadCurricular, "UC", "codigo_de_unidad"
+                ),
+                nombre=unidad_poo.nombre,
+                area_de_conocimiento=unidad_poo.area_de_conocimiento,
+                horas_totales=unidad_poo.horas_totales,
+                horas_semanales=unidad_poo.horas_semanales,
+                horas_sincronicas=unidad_poo.horas_sincronicas,
+                horas_asincronicas=unidad_poo.horas_asincronicas,
+                tipo_de_componente=unidad_poo.tipo_de_componente.value,
+                criterio_de_aprobacion=unidad_poo.criterio_de_aprobacion,
+                porcentaje_minimo_asistencia=unidad_poo.porcentaje_minimo_asistencia,
+            )
+
     return nueva_malla_curricular_db
