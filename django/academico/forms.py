@@ -152,11 +152,21 @@ class FormularioCarrera(forms.ModelForm):
         return cleaned_data
 
 
+# Reemplazar FormularioMallaCurricular en django/academico/forms.py
+
 class FormularioMallaCurricular(forms.ModelForm):
     class Meta:
         model = MallaCurricular
-        fields = ("carrera", "codigo_de_malla", "nombre", "area_de_conocimiento", "duracion_semanas", 
-                  "version_de_malla", "modalidad", "estado", "total_horas_nivelacion")
+        fields = (
+            "carrera",
+            "codigo_de_malla",
+            "nombre",
+            "area_de_conocimiento",
+            "duracion_semanas",
+            "version_de_malla",
+            "modalidad",
+            "estado",
+        )
         labels = {
             "carrera": "Carrera registrada",
             "codigo_de_malla": "Código de malla curricular",
@@ -165,22 +175,75 @@ class FormularioMallaCurricular(forms.ModelForm):
             "duracion_semanas": "Duración (en semanas)",
             "version_de_malla": "Versión de malla curricular",
             "modalidad": "Modalidad",
-           "estado": "Estado",
-            "total_horas_nivelacion": "Total de horas de nivelación",
+            "estado": "Estado",
+        }
+        widgets = {
+            "codigo_de_malla": forms.TextInput(attrs={
+                "placeholder": "El código será determinado de forma automática",
+                "style": "background-color: #f5f5f7; color: #86868b; pointer-events: none;",
+                "readonly": True,
+            }),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        errores = {}
+
+        campos_requeridos = [
+            "carrera",
+            "nombre",
+            "area_de_conocimiento",
+            "duracion_semanas",
+            "version_de_malla",
+            "modalidad",
+            "estado",
+        ]
+
+        for campo in campos_requeridos:
+            if not cleaned_data.get(campo):
+                errores[campo] = "Información requerida"
+
+        if errores:
+            raise forms.ValidationError(errores)
+
+        return cleaned_data
+
+
+# Reemplazar FormularioUnidadCurricular en django/academico/forms.py
 
 class FormularioUnidadCurricular(forms.ModelForm):
+    areas_de_conocimiento_texto = forms.CharField(
+        label="Áreas de conocimiento",
+        required=False,
+        widget=forms.TextInput(attrs={
+            "placeholder": "Registre las áreas separadas por comas"
+        }),
+        help_text="Registre la información separada por comas"
+    )
+
     class Meta:
         model = UnidadCurricular
-        fields = ("malla_curricular", "codigo_de_unidad", "nombre", "area_de_conocimiento", "horas_totales", 
-                  "horas_semanales", "horas_sincronicas", "horas_asincronicas", "tipo_de_componente", 
-                  "criterio_de_aprobacion", "porcentaje_minimo_asistencia")
+        fields = (
+            "malla_curricular",
+            "codigo_de_unidad",
+            "nombre",
+            "horas_totales",
+            "horas_semanales",
+            "horas_sincronicas",
+            "horas_asincronicas",
+            "tipo_de_componente",
+            "criterio_de_aprobacion",
+            "porcentaje_minimo_asistencia",
+        )
         labels = {
             "malla_curricular": "Malla curricular registrada",
             "codigo_de_unidad": "Código de unidad curricular",
             "nombre": "Nombre",
-            "area_de_conocimiento": "Área(s) de conocimiento",
             "horas_totales": "Horas totales",
             "horas_semanales": "Horas semanales",
             "horas_sincronicas": "Horas sincrónicas",
@@ -189,16 +252,89 @@ class FormularioUnidadCurricular(forms.ModelForm):
             "criterio_de_aprobacion": "Criterio de aprobación",
             "porcentaje_minimo_asistencia": "Porcentaje mínimo de asistencia",
         }
+        widgets = {
+            "codigo_de_unidad": forms.TextInput(attrs={
+                "placeholder": "El código será determinado de forma automática",
+                "style": "background-color: #f5f5f7; color: #86868b; pointer-events: none;",
+                "readonly": True,
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.required = False
+
+        # Si es edición, cargar las áreas actuales en el campo de texto
+        if self.instance and self.instance.pk and self.instance.area_de_conocimiento:
+            self.fields["areas_de_conocimiento_texto"].initial = ", ".join(
+                self.instance.area_de_conocimiento
+            )
 
     def clean(self):
-        #Validación de horas totales.
-        registros = super().clean()
-        horas_sincronicas = registros.get("horas_sincronicas", 0)
-        horas_asincronicas = registros.get("horas_asincronicas", 0)
-        horas_totales = registros.get("horas_totales", 0)
-        if (horas_sincronicas + horas_asincronicas) != horas_totales:
-            raise forms.ValidationError(f"Las horas registradas deben coincidir con el total de {horas_totales} horas")
-        return registros
+        from poo.clases.unidad_curricular import UnidadCurricular as UnidadCurricularBase
+        from poo.clases.enums.tipo_de_componente import TipoDeComponente
+
+        cleaned_data = super().clean()
+        errores = {}
+
+        campos_requeridos = [
+            "malla_curricular",
+            "nombre",
+            "horas_totales",
+            "horas_semanales",
+            "horas_sincronicas",
+            "horas_asincronicas",
+            "tipo_de_componente",
+            "criterio_de_aprobacion",
+            "porcentaje_minimo_asistencia",
+        ]
+
+        for campo in campos_requeridos:
+            if cleaned_data.get(campo) is None or cleaned_data.get(campo) == "":
+                errores[campo] = "Información requerida"
+
+        areas_texto = cleaned_data.get("areas_de_conocimiento_texto", "")
+        if not areas_texto or not areas_texto.strip():
+            errores["areas_de_conocimiento_texto"] = "Información requerida"
+
+        if errores:
+            raise forms.ValidationError(errores)
+
+        # Validación a través de la capa POO
+        try:
+            enum_tipo = TipoDeComponente(cleaned_data.get("tipo_de_componente"))
+        except (ValueError, KeyError):
+            raise forms.ValidationError({"tipo_de_componente": "Tipo de componente no válido"})
+
+        areas_lista = [a.strip() for a in areas_texto.split(",") if a.strip()]
+
+        unidad_poo = UnidadCurricularBase(
+            codigo_de_unidad="PENDIENTE",
+            nombre=cleaned_data.get("nombre", ""),
+            area_de_conocimiento=areas_lista,
+            horas_totales=cleaned_data.get("horas_totales", 0),
+            horas_semanales=cleaned_data.get("horas_semanales", 0),
+            horas_sincronicas=cleaned_data.get("horas_sincronicas", 0),
+            horas_asincronicas=cleaned_data.get("horas_asincronicas", 0),
+            tipo_de_componente=enum_tipo,
+            criterio_de_aprobacion=cleaned_data.get("criterio_de_aprobacion", 7.0),
+            porcentaje_minimo_asistencia=cleaned_data.get("porcentaje_minimo_asistencia", 70.0),
+        )
+
+        errores_poo = unidad_poo.validar_datos_de_registro()
+        if errores_poo:
+            raise forms.ValidationError(errores_poo)
+
+        cleaned_data["area_de_conocimiento"] = areas_lista
+        return cleaned_data
+
+    def save(self, commit=True):
+        instancia = super().save(commit=False)
+        instancia.area_de_conocimiento = self.cleaned_data.get("area_de_conocimiento", [])
+        if commit:
+            instancia.save()
+        return instancia
 
 
 from django.db.models import Q
@@ -337,10 +473,20 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
         return cleaned_data
     
     
+# Reemplazar FormularioParalelo en django/academico/forms.py
+
 class FormularioParalelo(forms.ModelForm):
     class Meta:
         model = Paralelo
-        fields = ("periodo_de_nivelacion", "unidad_curricular", "codigo_de_paralelo", "nombre", "jornada", "modalidad", "capacidad_maxima", "docente_responsable")
+        fields = (
+            "periodo_de_nivelacion",
+            "unidad_curricular",
+            "codigo_de_paralelo",
+            "nombre",
+            "jornada",
+            "modalidad",
+            "capacidad_maxima",
+        )
         labels = {
             "periodo_de_nivelacion": "Periodo de nivelación registrado",
             "unidad_curricular": "Unidad curricular",
@@ -349,8 +495,64 @@ class FormularioParalelo(forms.ModelForm):
             "jornada": "Jornada",
             "modalidad": "Modalidad",
             "capacidad_maxima": "Número máximo de estudiantes",
-            "docente_responsable": "Docente responsable",
         }
+        widgets = {
+            "codigo_de_paralelo": forms.TextInput(attrs={
+                "placeholder": "El código será determinado de forma automática",
+                "style": "background-color: #f5f5f7; color: #86868b; pointer-events: none;",
+                "readonly": True,
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.required = False
+
+    def clean(self):
+        from poo.clases.paralelo import Paralelo as ParaleloBase
+        from poo.clases.enums.jornada import Jornada
+        from poo.clases.enums.modalidad import Modalidad
+
+        cleaned_data = super().clean()
+        errores = {}
+
+        campos_requeridos = [
+            "periodo_de_nivelacion",
+            "unidad_curricular",
+            "nombre",
+            "jornada",
+            "modalidad",
+            "capacidad_maxima",
+        ]
+
+        for campo in campos_requeridos:
+            if not cleaned_data.get(campo):
+                errores[campo] = "Información requerida"
+
+        if errores:
+            raise forms.ValidationError(errores)
+
+        # Validación a través de la capa POO
+        try:
+            enum_jornada = Jornada(cleaned_data.get("jornada"))
+            enum_modalidad = Modalidad(cleaned_data.get("modalidad"))
+        except ValueError:
+            raise forms.ValidationError("Jornada o modalidad no válida")
+
+        paralelo_poo = ParaleloBase(
+            codigo_de_paralelo="PENDIENTE",
+            nombre=cleaned_data.get("nombre", ""),
+            jornada=enum_jornada,
+            modalidad=enum_modalidad,
+            capacidad_maxima=cleaned_data.get("capacidad_maxima", 0),
+        )
+
+        errores_poo = paralelo_poo.validar_datos_de_registro()
+        if errores_poo:
+            raise forms.ValidationError(errores_poo)
+
+        return cleaned_data
 
 
 class FormularioHorario(forms.ModelForm):

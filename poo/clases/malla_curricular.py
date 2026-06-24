@@ -17,10 +17,35 @@ class MallaCurricular(IClonable):
         self.area_de_conocimiento = area_de_conocimiento
         self.duracion_semanas = duracion_semanas
         self.version_de_malla = version_de_malla
-        self.modalidad = modalidad #Instancia
+        self.modalidad = modalidad
         self._estado = EstadoDeMalla.DISENO
         self._total_horas_nivelacion = 0.0
-        self._unidades_curriculares = [] #Lista unidades curriculares
+        self._unidades_curriculares = []
+
+
+    def validar_duracion(self):
+        return isinstance(self.duracion_semanas, int) and self.duracion_semanas > 0
+
+
+    def validar_datos_de_registro(self):
+        errores = {}
+
+        if not self.nombre or not self.nombre.strip():
+            errores["nombre"] = "Información requerida"
+
+        if not self.area_de_conocimiento or not self.area_de_conocimiento.strip():
+            errores["area_de_conocimiento"] = "Información requerida"
+
+        if not self.version_de_malla or not self.version_de_malla.strip():
+            errores["version_de_malla"] = "Información requerida"
+
+        if not self.validar_duracion():
+            errores["duracion_semanas"] = "La duración debe ser un número entero mayor a cero"
+
+        if not isinstance(self.modalidad, Modalidad):
+            errores["modalidad"] = "Modalidad no válida"
+
+        return errores
 
 
     def clonar(self, nuevo_codigo_de_malla: str, nueva_version_de_malla: str):
@@ -31,22 +56,20 @@ class MallaCurricular(IClonable):
         return malla_curricular_clonada
 
 
-    def agregar_unidad_curricular(self, *args): #Sobrecarga
+    def agregar_unidad_curricular(self, *args):
         unidad_agregada = True
         for entrada in args:
             if isinstance(entrada, list):
-                #Lista como argumento único
                 for unidad in entrada:
                     if not self._agregar_una_unidad_curricular(unidad):
                         unidad_agregada = False
-                        
             else:
                 if not self._agregar_una_unidad_curricular(entrada):
                     unidad_agregada = False
-        
+
         return unidad_agregada
-                
-                
+
+
     def _agregar_una_unidad_curricular(self, unidad_curricular: IUnidadEvaluable):
         if self._estado not in (EstadoDeMalla.DISENO, EstadoDeMalla.ACTIVA):
             return False
@@ -61,8 +84,8 @@ class MallaCurricular(IClonable):
         self._unidades_curriculares.append(unidad_curricular)
         self._total_horas_nivelacion = self.calcular_total_horas_nivelacion()
         return True
-       
-            
+
+
     def calcular_total_horas_nivelacion(self):
         calculo_total_horas_nivelacion = 0.0
 

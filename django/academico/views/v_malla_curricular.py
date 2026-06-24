@@ -1,0 +1,169 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import HttpResponse
+import openpyxl
+
+from academico.models import MallaCurricular, Carrera
+from academico.forms import FormularioMallaCurricular
+from academico.services import servicio_malla_registrar_masivo_desde_excel
+from usuarios.utils import generar_identificador_siguiente
+
+
+@login_required
+def listar_mallas(request):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    mallas = MallaCurricular.objects.filter(
+        carrera__campus__universidad=universidad_usuario
+    ).select_related("carrera")
+
+    return render(request, "academico/listar_mallas.html", {
+        "mallas": mallas,
+        "titulo_pagina": "Malla curricular - NIVEC",
+        "titulo": "Mallas curriculares",
+        "url_registrar": "registrar_malla",
+        "texto_registrar": "Registrar",
+        "url_volver": "panel_dan"
+    })
+
+
+@login_required
+def descargar_plantilla_malla(request):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Mallas curriculares"
+
+    cabeceras = [
+        "Código de carrera (CAR...)",
+        "Nombre de la malla curricular",
+        "Área de conocimiento",
+        "Duración en semanas (número entero)",
+        "Versión de malla curricular",
+        "Modalidad (Virtual, Presencial, Semipresencial)",
+        "Estado (Diseño, Activa, Histórica, Inactiva)",
+    ]
+    ws.append(cabeceras)
+
+    for col in range(1, len(cabeceras) + 1):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 40
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="formato_mallas_nivec.xlsx"'
+    wb.save(response)
+    return response
+
+
+@login_required
+def registrar_malla(request):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    carreras_existentes = Carrera.objects.filter(campus__universidad=universidad_usuario)
+    if not carreras_existentes.exists():
+        messages.warning(request, "No existen registros de carreras actualmente")
+        return redirect("panel_dan")
+
+    if request.method == "POST":
+        if "archivo_excel" in request.FILES:
+            archivo = request.FILES["archivo_excel"]
+            if not archivo.name.endswith(".xlsx"):
+                messages.error(request, "Documento con formato no válido")
+                return redirect("registrar_malla")
+
+            resultado = servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario)
+
+            if resultado["error"]:
+                messages.error(request, resultado["error"])
+            for adv in resultado["advertencias"]:
+                messages.warning(request, adv)
+            if resultado["exitosos"] > 0:
+                messages.success(
+                    request,
+                    f"{resultado['exitosos']} mallas curriculares registradas correctamente"
+                )
+            return redirect("listar_mallas")
+
+        else:
+            formulario = FormularioMallaCurricular(request.POST)
+            formulario.fields["carrera"].queryset = carreras_existentes
+
+            if formulario.is_valid():
+                nueva_malla = formulario.save(commit=False)
+                nueva_malla.codigo_de_malla = generar_identificador_siguiente(
+                    MallaCurricular, "MC", "codigo_de_malla"
+                )
+                nueva_malla.save()
+                messages.success(request, "La malla curricular ha sido registrada correctamente")
+                return redirect("listar_mallas")
+    else:
+        formulario = FormularioMallaCurricular()
+        formulario.fields["carrera"].queryset = carreras_existentes
+
+    return render(request, "academico/formulario_malla.html", {
+        "formulario": formulario,
+        "titulo_pagina": "Malla curricular - NIVEC",
+        "titulo": "Registrar malla curricular",
+        "boton_texto": "Registrar",
+        "url_cancelar": "listar_mallas",
+        "mostrar_carga_masiva": True,
+        "url_plantilla": "descargar_plantilla_malla",
+    })
+
+
+@login_required
+def modificar_malla(request, malla_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    malla = get_object_or_404(
+        MallaCurricular, id=malla_id, carrera__campus__universidad=universidad_usuario
+    )
+
+    if request.method == "POST":
+        formulario = FormularioMallaCurricular(request.POST, instance=malla)
+        formulario.fields["carrera"].queryset = Carrera.objects.filter(
+            campus__universidad=universidad_usuario
+        )
+        if formulario.is_valid():
+            formulario.save()
+            messages.success(request, "La malla curricular ha sido modificada correctamente")
+            return redirect("listar_mallas")
+    else:
+        formulario = FormularioMallaCurricular(instance=malla)
+        formulario.fields["carrera"].queryset = Carrera.objects.filter(
+            campus__universidad=universidad_usuario
+        )
+
+    return render(request, "academico/formulario_malla.html", {
+        "formulario": formulario,
+        "titulo_pagina": "Malla curricular - NIVEC",
+        "titulo": "Modificar malla curricular",
+        "boton_texto": "Modificar",
+        "url_cancelar": "listar_mallas",
+        "mostrar_carga_masiva": False,
+    })
+
+
+@login_required
+def eliminar_malla(request, malla_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    malla = get_object_or_404(
+        MallaCurricular, id=malla_id, carrera__campus__universidad=universidad_usuario
+    )
+    malla.delete()
+    messages.success(request, "La malla curricular ha sido eliminada correctamente")
+    return redirect("listar_mallas")

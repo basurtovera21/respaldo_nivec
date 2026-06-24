@@ -1,0 +1,51 @@
+{% extends "base_listar.html" %}
+
+{% block cabeceras_tabla %}
+    <th style="font-weight: bold; text-align: left; color: #515154">Código</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Carrera registrada</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Nombre</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Área de conocimiento</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Duración (semanas)</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Versión de malla</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Modalidad</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Estado</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Unidades curriculares</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Acciones</th>
+{% endblock %}
+
+{% block cuerpo_tabla %}
+    {% for m in mallas %}
+    <tr>
+        <td style="font-family: monospace; text-align: left; color: #1d1d1f;">{{ m.codigo_de_malla }}</td>
+        <td style="text-align: left; color: #1d1d1f;">{{ m.carrera.nombre }}</td>
+        <td style="text-align: left; color: #1d1d1f;">{{ m.nombre }}</td>
+        <td style="text-align: left; color: #1d1d1f;">{{ m.area_de_conocimiento }}</td>
+        <td style="text-align: left; color: #1d1d1f;">{{ m.duracion_semanas }}</td>
+        <td style="text-align: left; color: #1d1d1f;">{{ m.version_de_malla }}</td>
+        <td style="text-align: left; color: #1d1d1f;">{{ m.get_modalidad_display }}</td>
+        <td style="text-align: left;">
+            <span style="background-color: #f2f2f7; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; color: #1d1d1f;">
+                {{ m.get_estado_display }}
+            </span>
+        </td>
+        <td style="text-align: left;">
+            <a href="{% url 'listar_unidades_de_malla' m.id %}" 
+               style="color: #0071e3; text-decoration: none; font-size: 13px; font-weight: bold;">
+                {{ m.unidades_curriculares.count }} unidad(es)
+            </a>
+        </td>
+        <td style="text-align: left;">
+            <a href="{% url 'modificar_malla' m.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
+            <a href="{% url 'eliminar_malla' m.id %}"
+               onclick="return confirm('Confirmar acción');"
+               class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="10" style="text-align: center; color: #86868b; padding: 30px;">
+            No existen registros actualmente
+        </td>
+    </tr>
+    {% endfor %}
+{% endblock %}

@@ -31,6 +31,13 @@ from poo.clases.horario import Horario as HorarioPOO
 from poo.clases.servicios.distribuidor_de_estudiantes import DistribuidorDeEstudiantes
 from poo.clases.consolidado_academico import ConsolidadoAcademico as ConsolidadoAcademicoPOO
 
+from academico.models import (
+    Campus, Carrera, PeriodoDeNivelacion, Paralelo, EvaluacionAcademica,
+    CohorteDeMatricula, InformeGeneral, ConsolidadoAcademico, MatriculaParalelo,
+    Horario, MallaCurricular, UnidadCurricular )
+
+from poo.clases.enums.estado_de_malla import EstadoDeMalla
+
 
 def normalizar_texto(texto):
     if not texto:
@@ -80,7 +87,7 @@ def servicio_campus_registrar_masivo_desde_excel(archivo, universidad_usuario):
         
     return resultado
 
-
+#Carrera
 def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
     resultado = {"exitosos": 0, "advertencias": [], "error": None}
     try:
@@ -100,7 +107,6 @@ def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido por falta de información")
                     continue
 
-                # Normalización inteligente del Enum de Modalidad
                 try:
                     enum_modalidad = obtener_enum_flexible(Modalidad, modalidad)
                 except ValueError:
@@ -154,6 +160,7 @@ def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
         
     return resultado
 
+
 #PeriodoDeNivelacion 
 def _construir_periodo(periodo_db):
     return PeriodoDeNivelacionBase(
@@ -182,6 +189,229 @@ def servicio_finalizar_periodo_de_nivelacion(periodo_db):
         periodo_db.save()
         return True
     return False
+
+#Malla curricular
+# Agregar/reemplazar en django/academico/services.py
+
+def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
+    from poo.clases.malla_curricular import MallaCurricular as MallaCurricularBase
+    from poo.clases.enums.estado_de_malla import EstadoDeMalla
+
+    resultado = {"exitosos": 0, "advertencias": [], "error": None}
+    try:
+        wb = openpyxl.load_workbook(archivo)
+        ws = wb.active
+
+        carreras_existentes = Carrera.objects.filter(campus__universidad=universidad_usuario)
+
+        for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            try:
+                codigo_carrera, nombre, area, duracion, version, modalidad_str, estado_str = fila[:7]
+
+                if not any([codigo_carrera, nombre, area, duracion, version, modalidad_str, estado_str]):
+                    continue
+
+                if not all([codigo_carrera, nombre, area, duracion, version, modalidad_str, estado_str]):
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido por falta de información"
+                    )
+                    continue
+
+                try:
+                    enum_modalidad = obtener_enum_flexible(Modalidad, modalidad_str)
+                except ValueError:
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido ('{modalidad_str}' no es una modalidad válida)"
+                    )
+                    continue
+
+                try:
+                    enum_estado = obtener_enum_flexible(EstadoDeMalla, estado_str)
+                except ValueError:
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido ('{estado_str}' no es un estado válido)"
+                    )
+                    continue
+
+                try:
+                    duracion_int = int(duracion)
+                except (ValueError, TypeError):
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido (duración no válida)"
+                    )
+                    continue
+
+                carrera_obj = carreras_existentes.filter(
+                    codigo_de_carrera=str(codigo_carrera).strip()
+                ).first()
+                if not carrera_obj:
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido (código de carrera no válido)"
+                    )
+                    continue
+
+                # Validación a través de la capa POO
+                malla_poo = MallaCurricularBase(
+                    codigo_de_malla="PENDIENTE",
+                    nombre=str(nombre).strip(),
+                    area_de_conocimiento=str(area).strip(),
+                    duracion_semanas=duracion_int,
+                    version_de_malla=str(version).strip(),
+                    modalidad=enum_modalidad,
+                )
+
+                errores_poo = malla_poo.validar_datos_de_registro()
+                if errores_poo:
+                    primer_error = list(errores_poo.values())[0]
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido ({primer_error})"
+                    )
+                    continue
+
+                with transaction.atomic():
+                    MallaCurricular.objects.create(
+                        carrera=carrera_obj,
+                        codigo_de_malla=generar_identificador_siguiente(
+                            MallaCurricular, "MC", "codigo_de_malla"
+                        ),
+                        nombre=malla_poo.nombre,
+                        area_de_conocimiento=malla_poo.area_de_conocimiento,
+                        duracion_semanas=malla_poo.duracion_semanas,
+                        version_de_malla=malla_poo.version_de_malla,
+                        modalidad=malla_poo.modalidad.value,
+                        estado=enum_estado.value,
+                    )
+                    resultado["exitosos"] += 1
+
+            except Exception as e:
+                resultado["advertencias"].append(
+                    f"El registro de la fila {numero_fila} fue omitido ({str(e)})"
+                )
+
+    except Exception:
+        resultado["error"] = "Ha ocurrido un error al procesar el documento"
+
+    return resultado
+
+# Agregar en django/academico/services.py
+
+def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
+    from poo.clases.unidad_curricular import UnidadCurricular as UnidadCurricularBase
+    from poo.clases.enums.tipo_de_componente import TipoDeComponente
+    from academico.models import UnidadCurricular, MallaCurricular
+    from usuarios.utils import generar_identificador_siguiente
+
+    resultado = {"exitosos": 0, "advertencias": [], "error": None}
+    try:
+        wb = openpyxl.load_workbook(archivo)
+        ws = wb.active
+
+        mallas_existentes = MallaCurricular.objects.filter(
+            carrera__campus__universidad=universidad_usuario
+        )
+
+        for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            try:
+                (codigo_malla, nombre, areas_str, horas_totales, horas_semanales,
+                 horas_sincronicas, horas_asincronicas, tipo_componente_str,
+                 criterio, porcentaje_asistencia) = fila[:10]
+
+                if not any([codigo_malla, nombre, areas_str, horas_totales, horas_semanales,
+                            horas_sincronicas, horas_asincronicas, tipo_componente_str]):
+                    continue
+
+                if not all([codigo_malla, nombre, areas_str, horas_totales, horas_semanales,
+                            horas_sincronicas, horas_asincronicas, tipo_componente_str]):
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido por falta de información"
+                    )
+                    continue
+
+                try:
+                    enum_tipo = obtener_enum_flexible(TipoDeComponente, tipo_componente_str)
+                except ValueError:
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido "
+                        f"('{tipo_componente_str}' no es un tipo de componente válido)"
+                    )
+                    continue
+
+                try:
+                    horas_totales_f = float(horas_totales)
+                    horas_semanales_f = float(horas_semanales)
+                    horas_sincronicas_f = float(horas_sincronicas)
+                    horas_asincronicas_f = float(horas_asincronicas)
+                    criterio_f = float(criterio) if criterio is not None else 7.0
+                    porcentaje_f = float(porcentaje_asistencia) if porcentaje_asistencia is not None else 70.0
+                except (ValueError, TypeError):
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido (valores numéricos no válidos)"
+                    )
+                    continue
+
+                malla_obj = mallas_existentes.filter(
+                    codigo_de_malla=str(codigo_malla).strip()
+                ).first()
+                if not malla_obj:
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido (código de malla no válido)"
+                    )
+                    continue
+
+                areas_lista = [a.strip() for a in str(areas_str).split(",") if a.strip()]
+
+                # Validación a través de la capa POO
+                unidad_poo = UnidadCurricularBase(
+                    codigo_de_unidad="PENDIENTE",
+                    nombre=str(nombre).strip(),
+                    area_de_conocimiento=areas_lista,
+                    horas_totales=horas_totales_f,
+                    horas_semanales=horas_semanales_f,
+                    horas_sincronicas=horas_sincronicas_f,
+                    horas_asincronicas=horas_asincronicas_f,
+                    tipo_de_componente=enum_tipo,
+                    criterio_de_aprobacion=criterio_f,
+                    porcentaje_minimo_asistencia=porcentaje_f,
+                )
+
+                errores_poo = unidad_poo.validar_datos_de_registro()
+                if errores_poo:
+                    primer_error = list(errores_poo.values())[0]
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido ({primer_error})"
+                    )
+                    continue
+
+                with transaction.atomic():
+                    UnidadCurricular.objects.create(
+                        malla_curricular=malla_obj,
+                        codigo_de_unidad=generar_identificador_siguiente(
+                            UnidadCurricular, "UC", "codigo_de_unidad"
+                        ),
+                        nombre=unidad_poo.nombre,
+                        area_de_conocimiento=unidad_poo.area_de_conocimiento,
+                        horas_totales=unidad_poo.horas_totales,
+                        horas_semanales=unidad_poo.horas_semanales,
+                        horas_sincronicas=unidad_poo.horas_sincronicas,
+                        horas_asincronicas=unidad_poo.horas_asincronicas,
+                        tipo_de_componente=unidad_poo.tipo_de_componente.value,
+                        criterio_de_aprobacion=unidad_poo.criterio_de_aprobacion,
+                        porcentaje_minimo_asistencia=unidad_poo.porcentaje_minimo_asistencia,
+                    )
+                    resultado["exitosos"] += 1
+
+            except Exception as e:
+                resultado["advertencias"].append(
+                    f"El registro de la fila {numero_fila} fue omitido ({str(e)})"
+                )
+
+    except Exception:
+        resultado["error"] = "Ha ocurrido un error al procesar el documento"
+
+    return resultado
+
+
+
 
 def servicio_registrar_evaluacion_academica(evaluacion_academica: EvaluacionAcademica):
     from poo.clases.unidad_curricular import UnidadCurricular as UnidadCurricularBase
