@@ -71,7 +71,7 @@ def listar_unidades_de_malla(request, malla_id):
         "unidades": unidades,
         "malla": malla,
         "titulo_pagina": "Unidad curricular - NIVEC",
-        "titulo": f"Unidades curriculares - {malla.nombre}",
+        "titulo": f"Unidades curriculares ({malla.nombre})",
         "url_registrar": "registrar_unidad",
         "texto_registrar": "Registrar",
         "url_volver": "listar_mallas"
@@ -121,7 +121,7 @@ def registrar_unidad(request):
     if not mallas_existentes.exists():
         messages.warning(
             request,
-            "Mallas curriculares no registradas en estado Diseño/Activa"
+            "No existen mallas curriculares registradas en estado Diseño/Activa"
         )
         return redirect("listar_mallas")
 

@@ -322,7 +322,7 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                 except ValueError:
                     resultado["advertencias"].append(
                         f"El registro de la fila {numero_fila} fue omitido "
-                        f"('{tipo_componente_str}' no es un tipo de componente válido)"
+                        f"(tipo de componente no válido)"
                     )
                     continue
 
@@ -335,7 +335,7 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     porcentaje_f = float(porcentaje_asistencia) if porcentaje_asistencia is not None else 70.0
                 except (ValueError, TypeError):
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (valores numéricos no válidos)"
+                        f"El registro de la fila {numero_fila} fue omitido (registro de valor no válido)"
                     )
                     continue
 
