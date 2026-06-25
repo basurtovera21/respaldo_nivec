@@ -10,28 +10,26 @@
 
 {% block filtros %}
     {% if not malla %}
-    <div class="tarjeta" style="padding: 16px; margin-bottom: 16px;">
-        <form method="get" style="display: flex; align-items: center; gap: 12px;">
-            <label style="font-weight: bold; font-size: 13px; color: #515154;">Filtrar por carrera:</label>
-            <select name="carrera" onchange="this.form.submit()"
-                    style="padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 13px; background: white; color: #1d1d1f; outline: none;">
-                <option value="">Todas las carreras</option>
-                {% for c in carreras %}
-                    <option value="{{ c.id }}" {% if carrera_seleccionada.id == c.id %}selected{% endif %}>
-                        {{ c.nombre }}
-                    </option>
-                {% endfor %}
-            </select>
-            {% if carrera_seleccionada %}
-                <a href="{% url 'listar_unidades' %}" class="boton boton-secundario" style="font-size: 12px;">Limpiar filtro</a>
-            {% endif %}
-        </form>
-    </div>
+    <form method="get" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <label style="font-weight: bold; font-size: 13px; color: #515154;">Filtrar por carrera:</label>
+        <select name="carrera" onchange="this.form.submit()"
+                style="padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 13px; background: white; color: #1d1d1f; outline: none;">
+            <option value=""></option>
+            {% for c in carreras %}
+                <option value="{{ c.id }}" {% if carrera_seleccionada.id == c.id %}selected{% endif %}>
+                    {{ c.nombre }}
+                </option>
+            {% endfor %}
+        </select>
+        {% if carrera_seleccionada %}
+            <a href="{% url 'listar_unidades' %}" class="boton boton-secundario">Reiniciar</a>
+        {% endif %}
+    </form>
     {% endif %}
 {% endblock %}
 
 {% block cabeceras_tabla %}
-    <th style="font-weight: bold; text-align: left; color: #515154">Código</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Código de unidad curricular</th>
     <th style="font-weight: bold; text-align: left; color: #515154">Malla curricular</th>
     <th style="font-weight: bold; text-align: left; color: #515154">Nombre</th>
     <th style="font-weight: bold; text-align: left; color: #515154">Áreas de conocimiento</th>
@@ -48,11 +46,7 @@
         <td style="font-family: monospace; text-align: left; color: #1d1d1f;">{{ u.codigo_de_unidad }}</td>
         <td style="text-align: left; color: #1d1d1f;">{{ u.malla_curricular.nombre }}</td>
         <td style="text-align: left; color: #1d1d1f;">{{ u.nombre }}</td>
-        <td style="text-align: left; color: #1d1d1f; font-size: 12px;">
-            {% for area in u.area_de_conocimiento %}
-                <span style="background-color: #f2f2f7; padding: 2px 6px; border-radius: 4px; margin-right: 4px;">{{ area }}</span>
-            {% endfor %}
-        </td>
+        <td style="text-align: left; color: #1d1d1f; white-space: normal; max-width: 280px;">{{ u.area_de_conocimiento|join:", " }}</td>
         <td style="text-align: left; color: #1d1d1f;">{{ u.horas_totales }}</td>
         <td style="text-align: left; color: #1d1d1f;">{{ u.get_tipo_de_componente_display }}</td>
         <td style="text-align: left; color: #1d1d1f;">{{ u.criterio_de_aprobacion }}</td>

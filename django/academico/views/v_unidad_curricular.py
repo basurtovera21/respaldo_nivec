@@ -88,7 +88,6 @@ def descargar_plantilla_unidad(request):
         "Nombre de la unidad curricular",
         "Áreas de conocimiento (separadas por comas)",
         "Horas totales (número decimal)",
-        "Horas semanales (número decimal)",
         "Horas sincrónicas (número decimal)",
         "Horas asincrónicas (número decimal)",
         "Tipo de componente (Teórico, Práctico, Tutorial)",
@@ -202,7 +201,8 @@ def modificar_unidad(request, unidad_id):
         malla_anterior_id = unidad.malla_curricular_id
         formulario = FormularioUnidadCurricular(request.POST, instance=unidad)
         formulario.fields["malla_curricular"].queryset = MallaCurricular.objects.filter(
-            carrera__campus__universidad=universidad_usuario
+            carrera__campus__universidad=universidad_usuario,
+            estado__in=ESTADOS_MALLA_EDITABLE,
         )
         if formulario.is_valid():
             unidad_modificada = formulario.save()
@@ -218,7 +218,8 @@ def modificar_unidad(request, unidad_id):
     else:
         formulario = FormularioUnidadCurricular(instance=unidad)
         formulario.fields["malla_curricular"].queryset = MallaCurricular.objects.filter(
-            carrera__campus__universidad=universidad_usuario
+            carrera__campus__universidad=universidad_usuario,
+             estado__in=ESTADOS_MALLA_EDITABLE,
         )
 
     return render(request, "academico/formulario_unidad.html", {

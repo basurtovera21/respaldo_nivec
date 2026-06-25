@@ -94,7 +94,6 @@ class UnidadCurricular(models.Model):
     nombre = models.CharField(max_length=200, verbose_name="Nombre")
     area_de_conocimiento = models.JSONField(default=list, verbose_name="Área(s) de conocimiento") 
     horas_totales = models.FloatField(verbose_name="Horas totales")
-    horas_semanales = models.FloatField(verbose_name="Horas semanales")
     horas_sincronicas = models.FloatField(verbose_name="Horas sincrónicas")
     horas_asincronicas = models.FloatField(verbose_name="Horas asincrónicas")
     tipo_de_componente = models.CharField(max_length=50, choices=cambiar_enum_a_choices(TipoDeComponente), verbose_name="Tipo de componente")
@@ -107,24 +106,6 @@ class UnidadCurricular(models.Model):
 
     def __str__(self):
         return f"{self.codigo_de_unidad} ({self.nombre})"
-
-    def validar_distribucion_de_horas_totales(self):
-        from poo.clases.unidad_curricular import UnidadCurricular as UnidadCurricularBase
-        from poo.clases.enums.tipo_de_componente import TipoDeComponente as TipoDeComponenteBase
-        
-        unidad_curricular = UnidadCurricularBase(
-            codigo_de_unidad=self.codigo_de_unidad,
-            nombre=self.nombre,
-            area_de_conocimiento=self.area_de_conocimiento,
-            horas_totales=self.horas_totales,
-            horas_semanales=self.horas_semanales,
-            horas_sincronicas=self.horas_sincronicas,
-            horas_asincronicas=self.horas_asincronicas,
-            tipo_de_componente=TipoDeComponenteBase(self.tipo_de_componente),
-            criterio_de_aprobacion=self.criterio_de_aprobacion,
-            porcentaje_minimo_asistencia=self.porcentaje_minimo_asistencia
-        )
-        return unidad_curricular.validar_distribucion_de_horas_totales()
 
 
 class PeriodoDeNivelacion(models.Model):

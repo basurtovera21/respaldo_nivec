@@ -217,7 +217,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
         label="Áreas de conocimiento",
         required=False,
         widget=forms.TextInput(attrs={
-            "placeholder": "Registre las áreas separadas por comas"
         }),
         help_text="Registre la información separada por comas"
     )
@@ -229,7 +228,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
             "codigo_de_unidad",
             "nombre",
             "horas_totales",
-            "horas_semanales",
             "horas_sincronicas",
             "horas_asincronicas",
             "tipo_de_componente",
@@ -241,7 +239,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
             "codigo_de_unidad": "Código de unidad curricular",
             "nombre": "Nombre",
             "horas_totales": "Horas totales",
-            "horas_semanales": "Horas semanales",
             "horas_sincronicas": "Horas sincrónicas",
             "horas_asincronicas": "Horas asincrónicas",
             "tipo_de_componente": "Tipo de componente",
@@ -278,7 +275,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
             "malla_curricular",
             "nombre",
             "horas_totales",
-            "horas_semanales",
             "horas_sincronicas",
             "horas_asincronicas",
             "tipo_de_componente",
@@ -310,7 +306,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
             nombre=cleaned_data.get("nombre", ""),
             area_de_conocimiento=areas_lista,
             horas_totales=cleaned_data.get("horas_totales", 0),
-            horas_semanales=cleaned_data.get("horas_semanales", 0),
             horas_sincronicas=cleaned_data.get("horas_sincronicas", 0),
             horas_asincronicas=cleaned_data.get("horas_asincronicas", 0),
             tipo_de_componente=enum_tipo,

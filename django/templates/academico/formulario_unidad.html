@@ -3,7 +3,6 @@
 {% block form_fields %}
     {% for field in formulario %}
         {% if field.name == 'area_de_conocimiento' %}
-            {# Este campo se maneja por areas_de_conocimiento_texto, se omite #}
         {% else %}
             <div class="campo">
                 <label for="{{ field.id_for_label }}" style="font-weight: bold;">{{ field.label }}</label>

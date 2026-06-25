@@ -111,7 +111,6 @@ class UnidadCurricularAdmin(admin.ModelAdmin):
                 "nombre", 
                 "area_de_conocimiento", 
                 "horas_totales", 
-                "horas_semanales", 
                 "horas_sincronicas", 
                 "horas_asincronicas", 
                 "tipo_de_componente", 

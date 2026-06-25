@@ -302,15 +302,15 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
 
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
-                (codigo_malla, nombre, areas_str, horas_totales, horas_semanales,
+                (codigo_malla, nombre, areas_str, horas_totales,
                  horas_sincronicas, horas_asincronicas, tipo_componente_str,
-                 criterio, porcentaje_asistencia) = fila[:10]
+                 criterio, porcentaje_asistencia) = fila[:9]
 
-                if not any([codigo_malla, nombre, areas_str, horas_totales, horas_semanales,
+                if not any([codigo_malla, nombre, areas_str, horas_totales,
                             horas_sincronicas, horas_asincronicas, tipo_componente_str]):
                     continue
 
-                if not all([codigo_malla, nombre, areas_str, horas_totales, horas_semanales,
+                if not all([codigo_malla, nombre, areas_str, horas_totales,
                             horas_sincronicas, horas_asincronicas, tipo_componente_str]):
                     resultado["advertencias"].append(
                         f"El registro de la fila {numero_fila} fue omitido por falta de información"
@@ -328,7 +328,6 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
 
                 try:
                     horas_totales_f = float(horas_totales)
-                    horas_semanales_f = float(horas_semanales)
                     horas_sincronicas_f = float(horas_sincronicas)
                     horas_asincronicas_f = float(horas_asincronicas)
                     criterio_f = float(criterio) if criterio is not None else 7.0
@@ -356,7 +355,6 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     nombre=str(nombre).strip(),
                     area_de_conocimiento=areas_lista,
                     horas_totales=horas_totales_f,
-                    horas_semanales=horas_semanales_f,
                     horas_sincronicas=horas_sincronicas_f,
                     horas_asincronicas=horas_asincronicas_f,
                     tipo_de_componente=enum_tipo,
@@ -381,7 +379,6 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                         nombre=unidad_poo.nombre,
                         area_de_conocimiento=unidad_poo.area_de_conocimiento,
                         horas_totales=unidad_poo.horas_totales,
-                        horas_semanales=unidad_poo.horas_semanales,
                         horas_sincronicas=unidad_poo.horas_sincronicas,
                         horas_asincronicas=unidad_poo.horas_asincronicas,
                         tipo_de_componente=unidad_poo.tipo_de_componente.value,
@@ -412,7 +409,6 @@ def servicio_registrar_evaluacion_academica(evaluacion_academica: EvaluacionAcad
         nombre = evaluacion_academica.unidad_curricular.nombre,
         area_de_conocimiento = evaluacion_academica.unidad_curricular.area_de_conocimiento,
         horas_totales = evaluacion_academica.unidad_curricular.horas_totales,
-        horas_semanales = evaluacion_academica.unidad_curricular.horas_semanales,
         horas_sincronicas = evaluacion_academica.unidad_curricular.horas_sincronicas,
         horas_asincronicas = evaluacion_academica.unidad_curricular.horas_asincronicas,
         tipo_de_componente = obtener_enum_flexible(TipoDeComponente, evaluacion_academica.unidad_curricular.tipo_de_componente),
@@ -634,7 +630,6 @@ def _construir_unidad_poo(unidad_db):
         nombre=unidad_db.nombre,
         area_de_conocimiento=unidad_db.area_de_conocimiento,
         horas_totales=unidad_db.horas_totales,
-        horas_semanales=unidad_db.horas_semanales,
         horas_sincronicas=unidad_db.horas_sincronicas,
         horas_asincronicas=unidad_db.horas_asincronicas,
         tipo_de_componente=obtener_enum_flexible(TipoDeComponente, unidad_db.tipo_de_componente),
@@ -741,7 +736,6 @@ def servicio_clonar_malla_curricular(id_malla_curricular_bd, nueva_version_de_ma
                 nombre=unidad_poo.nombre,
                 area_de_conocimiento=unidad_poo.area_de_conocimiento,
                 horas_totales=unidad_poo.horas_totales,
-                horas_semanales=unidad_poo.horas_semanales,
                 horas_sincronicas=unidad_poo.horas_sincronicas,
                 horas_asincronicas=unidad_poo.horas_asincronicas,
                 tipo_de_componente=unidad_poo.tipo_de_componente.value,
