@@ -14,6 +14,7 @@ from usuarios.services import servicio_estudiante_registrar_masivo_desde_excel, 
 
 from poo.clases.enums.estado_de_usuario import EstadoDeUsuario as EnumEstadoDeUsuario
 from poo.clases.enums.estado_de_matricula import EstadoDeMatricula as EnumEstadoDeMatricula
+from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
 
 @login_required
 def listar_estudiantes(request):
@@ -183,7 +184,7 @@ def formalizar_matricula(request, estudiante_id):
     est_db = get_object_or_404(PerfilEstudiante, id=estudiante_id, carrera_registrada__campus__universidad=universidad_usuario)
 
     est_poo = _crear_estudiante(est_db)
-    est_poo.formalizar_matricula()
+    CentroDeOperacionAcademica().formalizar_matricula(est_poo)
     with transaction.atomic():
         est_db.estado_de_matricula = est_poo._estado_de_matricula.value
         est_db.save()
@@ -196,7 +197,7 @@ def anular_matricula(request, estudiante_id):
     est_db = get_object_or_404(PerfilEstudiante, id=estudiante_id)
 
     est_poo = _crear_estudiante(est_db)
-    est_poo.anular_matricula()
+    CentroDeOperacionAcademica().anular_matricula(est_poo)
     
     with transaction.atomic():
         est_db.estado_de_matricula = est_poo._estado_de_matricula.value
@@ -210,7 +211,7 @@ def solicitar_retiro(request, estudiante_id):
     est_db = get_object_or_404(PerfilEstudiante, id=estudiante_id)
     
     est_poo = _crear_estudiante(est_db)
-    if est_poo.solicitar_retiro():
+    if CentroDeOperacionAcademica().solicitar_retiro(est_poo):
         with transaction.atomic():
             est_db.estado_de_matricula = est_poo._estado_de_matricula.value
             est_db.save()

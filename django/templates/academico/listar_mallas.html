@@ -37,6 +37,7 @@
             </a>
         </td>
         <td style="text-align: left; white-space: nowrap;">
+            {% if not solo_lectura %}
             <a href="{% url 'modificar_malla' m.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
 
             <a href="{% url 'clonar_malla' m.id %}" class="etiqueta-accion etiqueta-naranja">Copiar</a>
@@ -46,7 +47,7 @@
                    onclick="return confirm('Confirmar acción');"
                    class="etiqueta-accion etiqueta-naranja">Activar</a>
                 <a href="{% url 'cambiar_estado_malla' m.id 'inactivar' %}"
-                   onclick="return confirm(''Confirmar acción'');"
+                   onclick="return confirm('Confirmar acción');"
                    class="etiqueta-accion etiqueta-naranja">Deshabilitar</a>
             {% elif m.estado == "Activa" %}
                 <a href="{% url 'cambiar_estado_malla' m.id 'historica' %}"
@@ -61,9 +62,10 @@
                    class="etiqueta-accion etiqueta-naranja">Activar</a>
             {% endif %}
 
-            <a href="{% url 'eliminar_malla' m.id %}"
-               onclick="return confirm('Confirmar acción');"
-               class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+            <a href="{% url 'eliminar_malla' m.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+            {% else %}
+            <span style="color: #86868b;">—</span>
+            {% endif %}
         </td>
     </tr>
     {% empty %}

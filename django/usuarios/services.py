@@ -236,38 +236,82 @@ def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
     return resultado
 
 def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuario):
-    resultado = {"exitosos": 0, "advertencias": [], "error": None}
+    from poo.clases.criterios_filtro.criterio_cedula_formato import CriterioCedulaFormato
+    from poo.clases.servicios.depurador_de_sincronizacion import DepuradorDeSincronizacion
+
+    resultado = {
+        "exitosos": 0,
+        "advertencias": [],
+        "error": None,
+        "observados": 0,
+        "clasificacion": {"regular": 0, "segunda": 0, "exoneracion": 0},
+        "identificaciones_validas": [],
+    }
     try:
         wb = openpyxl.load_workbook(archivo); ws = wb.active
         jornadas_map = {str(j.value).strip().lower(): j.value for j in EnumJornada}
         cupos_map = {str(c.value).strip().lower(): c.value for c in EnumRegistroDeCupo}
 
+        registros = []
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            tipo_id, ident, nom, ape, corr, jor, cupo, carr, camp = fila[:9]
+            if not any([tipo_id, ident, nom, ape, corr, jor, cupo, carr, camp]):
+                continue
+            if not all([tipo_id, ident, nom, ape, corr, jor, cupo, carr, camp]):
+                resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido por falta de información")
+                continue
+            registros.append({
+                "fila": numero_fila,
+                "tipo_de_identificacion": str(tipo_id).strip().capitalize(),
+                "cedula": str(ident).strip(),
+                "nombres": str(nom).strip(),
+                "apellidos": str(ape).strip(),
+                "correo": str(corr).strip(),
+                "jornada": str(jor).strip(),
+                "cupo": str(cupo).strip(),
+                "carrera": str(carr).strip(),
+                "campus": str(camp).strip(),
+            })
+
+        depurador = DepuradorDeSincronizacion([CriterioCedulaFormato()])
+        depurador.procesar_matriz_externa(registros)
+
+        for registro in depurador.registros_con_observaciones:
+            resultado["advertencias"].append(
+                f"Registro de la fila {registro['fila']} omitido (número de cédula no válido)"
+            )
+
+        for registro in depurador.registros_validos:
             try:
-                tipo_id, ident, nom, ape, corr, jor, cupo, carr, camp = fila[:9]
-                if not any([tipo_id, ident, nom, ape, corr, jor, cupo, carr, camp]): continue
-                if not all([tipo_id, ident, nom, ape, corr, jor, cupo, carr, camp]):
-                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido por falta de información"); continue
-                
-                ident_str = str(ident).strip()
+                ident_str = registro["cedula"]
                 if UsuarioDeSistema.objects.filter(identificacion=ident_str).exists():
-                    raise ValueError("el estudiante ya se encuentra registrado")
-                
-                carrera = Carrera.objects.filter(nombre__iexact=str(carr).strip()).first()
-                campus = Campus.objects.filter(nombre__iexact=str(camp).strip()).first()
-                jor_val = jornadas_map.get(str(jor).strip().lower())
-                cupo_val = cupos_map.get(str(cupo).strip().lower())
+                    resultado["advertencias"].append(
+                        f"Registro de la fila {registro['fila']} omitido (el estudiante ya se encuentra registrado)"
+                    )
+                    continue
+
+                carrera = Carrera.objects.filter(
+                    nombre__iexact=registro["carrera"], campus__universidad=universidad_usuario
+                ).first()
+                campus = Campus.objects.filter(
+                    nombre__iexact=registro["campus"], universidad=universidad_usuario
+                ).first()
+                jor_val = jornadas_map.get(registro["jornada"].lower())
+                cupo_val = cupos_map.get(registro["cupo"].lower())
 
                 if not carrera or not campus or not jor_val or not cupo_val:
-                    raise ValueError("registro no válido")
+                    resultado["advertencias"].append(
+                        f"Registro de la fila {registro['fila']} omitido (Carrera/Campus/Jornada/Registro de cupo no válido)"
+                    )
+                    continue
 
                 with transaction.atomic():
                     usuario = UsuarioDeSistema.objects.create(
-                        tipo_de_identificacion=str(tipo_id).strip().capitalize(),
+                        tipo_de_identificacion=registro["tipo_de_identificacion"],
                         identificacion=ident_str,
-                        nombres=str(nom).strip(),
-                        apellidos=str(ape).strip(),
-                        correo_institucional=str(corr).strip(),
+                        nombres=registro["nombres"],
+                        apellidos=registro["apellidos"],
+                        correo_institucional=registro["correo"],
                         estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value
                     )
                     usuario.set_password(ident_str); usuario.save()
@@ -282,15 +326,23 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
                         estado_de_matricula=EnumEstadoDeMatricula.MATRICULADO.value
                     )
                     resultado["exitosos"] += 1
+                    resultado["identificaciones_validas"].append(ident_str)
+
+                if cupo_val == EnumRegistroDeCupo.REGULAR.value:
+                    resultado["clasificacion"]["regular"] += 1
+                elif cupo_val == EnumRegistroDeCupo.SEGUNDA_MATRICULA.value:
+                    resultado["clasificacion"]["segunda"] += 1
+                elif cupo_val == EnumRegistroDeCupo.EXONERACION.value:
+                    resultado["clasificacion"]["exoneracion"] += 1
             except Exception as e:
-                resultado["advertencias"].append(f"Fila {numero_fila} omitida ({str(e)})")
+                resultado["advertencias"].append(f"Fila {registro['fila']} omitida ({str(e)})")
     except Exception:
         resultado["error"] = "Ha ocurrido un error al procesar el documento"
+
+    resultado["observados"] = len(resultado["advertencias"])
     return resultado
 
-# ==========================================
-# CONSTRUCTORES POO REFACTORIZADOS (BLINDADOS)
-# ==========================================
+
 def _crear_usuario_administrativo(perfil_administrativo: PerfilAdministrativo):
     usuario_de_sistema = perfil_administrativo.usuario_de_sistema
     return UsuarioAdministrativoBase(

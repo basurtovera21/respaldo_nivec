@@ -12,12 +12,21 @@ from academico.services import (
     servicio_recalcular_total_horas_malla,
 )
 from poo.clases.enums.estado_de_malla import EstadoDeMalla
-from usuarios.utils import generar_identificador_siguiente
+from usuarios.utils import (
+    generar_identificador_siguiente,
+    requiere_perfil,
+    usuario_es_solo_lectura,
+    ROL_COORDINADOR_DAN,
+    ROL_DIRECTOR_DAN,
+    ROL_RECTOR,
+    ROL_VICERRECTOR,
+)
 
-
+ROLES_VISUALIZAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
+ROLES_MODIFICAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
 ESTADOS_MALLA_EDITABLE = [EstadoDeMalla.DISENO.value, EstadoDeMalla.ACTIVA.value]
 
-@login_required
+@requiere_perfil(*ROLES_VISUALIZAN)
 def listar_unidades(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -42,6 +51,7 @@ def listar_unidades(request):
         carrera_seleccionada = carreras.filter(id=carrera_id).first()
 
     return render(request, "academico/listar_unidades.html", {
+        "solo_lectura": usuario_es_solo_lectura(request.user),
         "unidades": unidades,
         "carreras": carreras,
         "carrera_seleccionada": carrera_seleccionada,
@@ -52,7 +62,7 @@ def listar_unidades(request):
         "url_volver": "panel_dan"
     })
 
-@login_required
+@requiere_perfil(*ROLES_VISUALIZAN)
 def listar_unidades_de_malla(request, malla_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -68,6 +78,7 @@ def listar_unidades_de_malla(request, malla_id):
     ).select_related("malla_curricular")
 
     return render(request, "academico/listar_unidades.html", {
+        "solo_lectura": usuario_es_solo_lectura(request.user),
         "unidades": unidades,
         "malla": malla,
         "titulo_pagina": "Unidad curricular - NIVEC",
@@ -77,7 +88,7 @@ def listar_unidades_de_malla(request, malla_id):
         "url_volver": "listar_mallas"
     })
 
-@login_required
+@requiere_perfil(*ROLES_MODIFICAN)
 def descargar_plantilla_unidad(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -106,7 +117,7 @@ def descargar_plantilla_unidad(request):
     wb.save(response)
     return response
 
-@login_required
+@requiere_perfil(*ROLES_MODIFICAN)
 def registrar_unidad(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -184,7 +195,7 @@ def registrar_unidad(request):
         "url_plantilla": "descargar_plantilla_unidad",
     })
 
-@login_required
+@requiere_perfil(*ROLES_MODIFICAN)
 def modificar_unidad(request, unidad_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -231,7 +242,7 @@ def modificar_unidad(request, unidad_id):
         "mostrar_carga_masiva": False,
     })
 
-@login_required
+@requiere_perfil(*ROLES_MODIFICAN)
 def eliminar_unidad(request, unidad_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:

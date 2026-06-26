@@ -3,33 +3,18 @@ class DistribuidorDeEstudiantes:
     def __init__(self, lista_paralelos):
         self.paralelos = lista_paralelos
 
-
     def distribuir(self, lista_estudiantes):
         estudiantes_no_asignados = []
         for estudiante in lista_estudiantes:
-            mejor_paralelo = self._encontrar_mejor_paralelo(estudiante)
+            mejor_paralelo = self._encontrar_mejor_paralelo()
             if mejor_paralelo:
                 mejor_paralelo.vincular_estudiante(estudiante)
-                
             else:
                 estudiantes_no_asignados.append(estudiante)
-
         return estudiantes_no_asignados
 
-
-    def _encontrar_mejor_paralelo(self, estudiante):
-        paralelos_compatibles = []
-        for paralelo in self.paralelos:
-            es_compatible = (paralelo.jornada == estudiante.jornada and paralelo.carrera == estudiante.carrera)
-            if es_compatible and paralelo.tiene_cupo_disponible():
-                paralelos_compatibles.append(paralelo)
-
-        if not paralelos_compatibles:
+    def _encontrar_mejor_paralelo(self):
+        paralelos_con_cupo = [p for p in self.paralelos if p.tiene_cupo_disponible()]
+        if not paralelos_con_cupo:
             return None
-
-        paralelo_con_menos_carga = paralelos_compatibles[0]
-        for paralelo in paralelos_compatibles:
-            if len(paralelo._estudiantes_matriculados) < len(paralelo_con_menos_carga._estudiantes_matriculados):
-                paralelo_con_menos_carga = paralelo
-
-        return paralelo_con_menos_carga
+        return min(paralelos_con_cupo, key=lambda p: len(p._estudiantes_matriculados))

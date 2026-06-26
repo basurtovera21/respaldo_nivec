@@ -175,20 +175,25 @@ def _construir_periodo(periodo_db):
     )
 
 def servicio_iniciar_periodo_de_nivelacion(periodo_db):
+    from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
     periodo_poo = _construir_periodo(periodo_db)
-    if periodo_poo.iniciar_periodo_de_nivelacion():
+    facade = CentroDeOperacionAcademica()
+    if facade.iniciar_periodo(periodo_poo):
         periodo_db.estado = periodo_poo.estado.value
         periodo_db.save()
         return True
     return False
 
 def servicio_finalizar_periodo_de_nivelacion(periodo_db):
+    from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
     periodo_poo = _construir_periodo(periodo_db)
-    if periodo_poo.finalizar_periodo_de_nivelacion():
+    facade = CentroDeOperacionAcademica()
+    if facade.finalizar_periodo(periodo_poo):
         periodo_db.estado = periodo_poo.estado.value
         periodo_db.save()
         return True
     return False
+
 
 #Malla curricular
 def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
@@ -486,78 +491,44 @@ def servicio_distribuir_estudiantes(periodo_de_nivelacion: PeriodoDeNivelacion):
 
 
 def servicio_procesar_mtn(archivo, periodo_de_nivelacion: PeriodoDeNivelacion):
-    from usuarios.models import UsuarioDeSistema
+    from usuarios.services import servicio_estudiante_registrar_masivo_desde_excel
+    from poo.clases.consolidado_academico import ConsolidadoAcademico as ConsolidadoAcademicoPOO
 
-    libro = openpyxl.load_workbook(archivo)
-    hoja = libro.active
-    registros_totales = 0
-    registros_validos = 0
-    registros_observados = 0
-    filas_observadas = []
-
-    for fila in hoja.iter_rows(min_row=2, values_only=True):
-        registros_totales += 1
-        try:
-            identificacion = fila[0]
-            nombres = fila[1]
-            apellidos = fila[2]
-            correo_institucional = fila[3]
-            carrera_nombre = fila[4]
-            campus_nombre = fila[5]
-            jornada = fila[6]
-            registro_de_cupo = fila[7]
-
-            if not all([identificacion, nombres, apellidos, correo_institucional, carrera_nombre, campus_nombre, jornada, registro_de_cupo]):
-                raise ValueError("Existen criterios vacíos.")
-
-            carrera = Carrera.objects.filter(nombre__iexact=str(carrera_nombre)).first()
-            campus = Campus.objects.filter(nombre__iexact=str(campus_nombre)).first()
-
-            if not carrera or not campus:
-                raise ValueError(f"Carrera o campus no registrado ({carrera_nombre}/{campus_nombre}).")
-
-            if UsuarioDeSistema.objects.filter(identificacion=str(identificacion)).exists():
-                raise ValueError(f"Número de identificación existente: {identificacion}")
-
-            usuario = UsuarioDeSistema.objects.create_user(
-                correo_institucional = str(correo_institucional),
-                password = str(identificacion),
-                identificacion = str(identificacion),
-                nombres = str(nombres),
-                apellidos = str(apellidos),
-            )
-            PerfilEstudiante.objects.create(
-                usuario_de_sistema = usuario,
-                identificador_institucional = str(identificacion),
-                numero_de_matricula = str(identificacion),
-                jornada = str(jornada),
-                registro_de_cupo = str(registro_de_cupo),
-                carrera_registrada = carrera,
-                campus_registrado = campus,
-                estado_de_matricula = EstadoDeMatricula.ASPIRANTE.value,
-            )
-            registros_validos += 1
-
-        except Exception as error:
-            registros_observados += 1
-            filas_observadas.append(f"Fila {registros_totales + 1} ({error})")
-
-    ConsolidadoAcademico.objects.update_or_create(
-        periodo_academico = periodo_de_nivelacion,
-        defaults = {
-            "fecha_de_corte": date.today(),
-            "total_cupos_aceptados": registros_validos,
-            "registros_totales": registros_totales,
-            "registros_validos": registros_validos,
-            "registros_observados": registros_observados,
-        }
+    resultado = servicio_estudiante_registrar_masivo_desde_excel(
+        archivo, periodo_de_nivelacion.universidad
     )
-    return {
-        "registros_totales": registros_totales,
-        "registros_validos": registros_validos,
-        "registros_observados": registros_observados,
-        "filas_observadas": filas_observadas,
-    }
+
+    if resultado.get("error"):
+        return resultado
+
+    matriz_procesada = [
+        {"identificacion": identificacion} for identificacion in resultado["identificaciones_validas"]
+    ] + [{} for _ in range(resultado["observados"])]
+
+    consolidado_poo = ConsolidadoAcademicoPOO(
+        periodo_academico=None,
+        fecha_de_corte=date.today(),
+        total_de_cupos_aceptados=resultado["exitosos"],
+    )
+    consolidado_poo.cargar_matriz_de_cupos(
+        matriz_procesada, resultado["exitosos"], resultado["observados"]
+    )
+    estadisticas = consolidado_poo.obtener_estadisticas_de_consolidado()
+
+    consolidado_db, _ = ConsolidadoAcademico.objects.get_or_create(
+        periodo_academico=periodo_de_nivelacion,
+        defaults={"fecha_de_corte": date.today()},
+    )
+    consolidado_db.registros_validos += estadisticas["Registros válidos"]
+    consolidado_db.total_cupos_aceptados += estadisticas["Cupos aceptados esperados"]
+    consolidado_db.registros_observados = estadisticas["Registros observados"]
+    consolidado_db.registros_totales = consolidado_db.registros_validos + estadisticas["Registros observados"]
+    consolidado_db.fecha_de_corte = date.today()
+    consolidado_db.save()
+
+    return resultado
+
+
 
 
 def servicio_exportar_informe(informe_general: InformeGeneral, formato: str):
@@ -744,3 +715,155 @@ def servicio_clonar_malla_curricular(id_malla_curricular_bd, nueva_version_de_ma
             )
 
     return nueva_malla_curricular_db
+
+
+
+def _obtener_o_crear_cohorte(periodo_db, carrera):
+    from poo.clases.enums.tipo_de_cohorte import TipoDeCohorte
+
+    cohorte = CohorteDeMatricula.objects.filter(
+        periodo_de_nivelacion=periodo_db, carrera_registrada=carrera
+    ).first()
+    if cohorte:
+        return cohorte
+
+    return CohorteDeMatricula.objects.create(
+        periodo_de_nivelacion=periodo_db,
+        carrera_registrada=carrera,
+        codigo_de_registro=generar_identificador_siguiente(CohorteDeMatricula, "COH", "codigo_de_registro"),
+        nombre_cohorte=f"Cohorte {carrera.nombre} - {periodo_db.periodo}",
+        fecha_de_cierre=periodo_db.fecha_fin,
+        tipo_de_cohorte=TipoDeCohorte.PRIMERA_MATRICULA.value,
+    )
+
+def servicio_generar_paralelos(periodo_db, capacidad=35):
+    import math
+    from poo.clases.paralelo import Paralelo as ParaleloBase
+    from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
+    from poo.clases.enums.jornada import Jornada
+    from poo.clases.enums.modalidad import Modalidad as EnumModalidad
+    from poo.clases.enums.estado_de_malla import EstadoDeMalla
+    from poo.clases.enums.registro_de_cupo import RegistroDeCupo
+
+    resumen = {
+        "grupos_creados": 0,
+        "paralelos_creados": 0,
+        "estudiantes_distribuidos": 0,
+        "advertencias": [],
+    }
+
+    try:
+        capacidad = int(capacidad)
+    except (TypeError, ValueError):
+        capacidad = 35
+    if capacidad <= 0:
+        capacidad = 35
+
+    universidad = periodo_db.universidad
+    facade = CentroDeOperacionAcademica()
+
+    carreras = Carrera.objects.filter(campus__universidad=universidad)
+
+    for carrera in carreras:
+        malla = MallaCurricular.objects.filter(
+            carrera=carrera, estado=EstadoDeMalla.ACTIVA.value
+        ).first()
+        if not malla:
+            continue
+
+        unidades = list(malla.unidades_curriculares.all())
+        if not unidades:
+            resumen["advertencias"].append(
+                f"El registro de la Malla curricular activa de {carrera.nombre} fue omitido (no presenta Unidades curriculares)"
+            )
+            continue
+
+        try:
+            enum_modalidad = obtener_enum_flexible(EnumModalidad, malla.modalidad)
+        except ValueError:
+            enum_modalidad = EnumModalidad.PRESENCIAL
+
+        jornadas_presentes = (
+            PerfilEstudiante.objects.filter(carrera_registrada=carrera)
+            .values_list("jornada", flat=True).distinct()
+        )
+
+        for jornada_valor in jornadas_presentes:
+            estudiantes = list(
+                PerfilEstudiante.objects.filter(
+                    carrera_registrada=carrera,
+                    jornada=jornada_valor,
+                ).exclude(
+                    estudiantes_matriculados__paralelo__periodo_de_nivelacion=periodo_db
+                ).distinct()
+            )
+            if not estudiantes:
+                continue
+
+            try:
+                enum_jornada = obtener_enum_flexible(Jornada, jornada_valor)
+            except ValueError:
+                resumen["advertencias"].append(
+                    f"El registro de Jornada ({jornada_valor}) fue omitido (Jornada no válida en {carrera.nombre})"
+                )
+                continue
+
+            numero_de_grupos = math.ceil(len(estudiantes) / capacidad)
+
+            grupos_poo = [
+                ParaleloBase(
+                    codigo_de_paralelo=f"G{indice}",
+                    nombre=f"Grupo {indice}",
+                    jornada=enum_jornada,
+                    modalidad=enum_modalidad,
+                    capacidad_maxima=capacidad,
+                )
+                for indice in range(1, numero_de_grupos + 1)
+            ]
+
+            facade.distribuir_estudiantes(grupos_poo, estudiantes)
+
+            cohorte = _obtener_o_crear_cohorte(periodo_db, carrera)
+
+            with transaction.atomic():
+                estudiantes_distribuidos = []
+
+                for indice, grupo_poo in enumerate(grupos_poo, start=1):
+                    estudiantes_del_grupo = list(grupo_poo._estudiantes_matriculados)
+                    if not estudiantes_del_grupo:
+                        continue
+
+                    for unidad in unidades:
+                        paralelo_db = Paralelo.objects.create(
+                            periodo_de_nivelacion=periodo_db,
+                            unidad_curricular=unidad,
+                            codigo_de_paralelo=generar_identificador_siguiente(Paralelo, "PAR", "codigo_de_paralelo"),
+                            nombre=f"Grupo {indice}",
+                            jornada=jornada_valor,
+                            modalidad=malla.modalidad,
+                            capacidad_maxima=capacidad,
+                        )
+                        resumen["paralelos_creados"] += 1
+
+                        for estudiante_db in estudiantes_del_grupo:
+                            MatriculaParalelo.objects.create(
+                                estudiante=estudiante_db,
+                                paralelo=paralelo_db,
+                                cohorte_de_matricula=cohorte,
+                            )
+
+                    resumen["grupos_creados"] += 1
+                    estudiantes_distribuidos.extend(estudiantes_del_grupo)
+
+                for estudiante_db in estudiantes_distribuidos:
+                    if estudiante_db.registro_de_cupo == RegistroDeCupo.REGULAR.value:
+                        cohorte.total_primera_matricula += 1
+                    elif estudiante_db.registro_de_cupo == RegistroDeCupo.SEGUNDA_MATRICULA.value:
+                        cohorte.total_segunda_matricula += 1
+                    elif estudiante_db.registro_de_cupo == RegistroDeCupo.EXONERACION.value:
+                        cohorte.total_exonerados += 1
+                    resumen["estudiantes_distribuidos"] += 1
+
+                cohorte.save()
+
+    return resumen

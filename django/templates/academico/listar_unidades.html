@@ -1,10 +1,12 @@
 {% extends "base_listar.html" %}
 
 {% block boton_registrar %}
+    {% if not solo_lectura %}
     {% if malla %}
         <a href="{% url 'registrar_unidad' %}?malla={{ malla.id }}" class="boton boton-primario">Registrar</a>
     {% else %}
         <a href="{% url 'registrar_unidad' %}" class="boton boton-primario">Registrar</a>
+    {% endif %}
     {% endif %}
 {% endblock %}
 
@@ -52,10 +54,14 @@
         <td style="text-align: left; color: #1d1d1f;">{{ u.criterio_de_aprobacion }}</td>
         <td style="text-align: left; color: #1d1d1f;">{{ u.porcentaje_minimo_asistencia }}%</td>
         <td style="text-align: left; white-space: nowrap;">
+            {% if not solo_lectura %}
             <a href="{% url 'modificar_unidad' u.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
             <a href="{% url 'eliminar_unidad' u.id %}"
                onclick="return confirm('Confirmar acción');"
                class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+            {% else %}
+            <span style="color: #86868b;">—</span>
+            {% endif %}
         </td>
     </tr>
     {% empty %}

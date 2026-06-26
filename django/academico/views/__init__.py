@@ -10,3 +10,4 @@ from .v_carrera import *
 from .v_periodo_de_nivelacion import *
 from .v_malla_curricular import *
 from .v_unidad_curricular import *
+from .v_mtn import *

@@ -29,17 +29,20 @@ class FormularioUniversidad(BaseModelForm):
             field.required = False
 
     def clean(self):
+        from poo.clases.universidad import Universidad as UniversidadBase
         cleaned_data = super().clean()
-        errores = {}
-        
-        campos_requeridos = ["nombre", "abreviatura", "codigo_sniese", "direccion_matriz"]
-
-        for campo in campos_requeridos:
-            if not cleaned_data.get(campo):
-                errores[campo] = "Información requerida"
-
+        universidad_poo = UniversidadBase(
+            nombre=cleaned_data.get("nombre", ""),
+            abreviatura=cleaned_data.get("abreviatura", ""),
+            codigo_sniese=cleaned_data.get("codigo_sniese", ""),
+            direccion_matriz=cleaned_data.get("direccion_matriz", ""),
+            identificador_visual=cleaned_data.get("identificador_visual"),
+        )
+        errores = universidad_poo.validar_datos_de_registro()
         if errores:
             raise forms.ValidationError(errores)
+        return cleaned_data
+
 
 
 class FormularioCampus(forms.ModelForm):
@@ -67,24 +70,19 @@ class FormularioCampus(forms.ModelForm):
         })
 
     def clean(self):
+        from poo.clases.campus import Campus as CampusBase
         cleaned_data = super().clean()
-        nombre = cleaned_data.get("nombre")
-        direccion = cleaned_data.get("direccion_fisica")
-        provincia = cleaned_data.get("provincia")
-
-        errores = {}
-
-        if not nombre:
-            errores['nombre'] = "Información requerida"
-        if not direccion:
-            errores['direccion_fisica'] = "Información requerida"
-        if not provincia:
-            errores['provincia'] = "Información requerida"
-
+        campus_poo = CampusBase(
+            codigo_de_campus=cleaned_data.get("codigo_de_campus", ""),
+            nombre=cleaned_data.get("nombre", ""),
+            direccion_fisica=cleaned_data.get("direccion_fisica", ""),
+            provincia=cleaned_data.get("provincia", ""),
+        )
+        errores = campus_poo.validar_datos_de_registro()
         if errores:
             raise forms.ValidationError(errores)
-
         return cleaned_data
+
 
 
 class FormularioCarrera(forms.ModelForm):

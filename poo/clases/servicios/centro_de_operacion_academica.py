@@ -6,7 +6,6 @@ from poo.clases.servicios.procesador_de_informe import ProcesadorDeInforme
 
 #Clases
 from poo.clases.usuarios.estudiante import Estudiante
-from poo.clases.usuarios.usuario_academico import UsuarioAcademico
 from poo.clases.usuarios.docente import Docente
 from poo.clases.periodo_de_nivelacion import PeriodoDeNivelacion
 from poo.clases.evaluacion_academica import EvaluacionAcademica
@@ -41,26 +40,20 @@ class CentroDeOperacionAcademica:
     def solicitar_retiro(self, estudiante: Estudiante):
         return estudiante.solicitar_retiro()
 
-    def aprobar_retiro(self, estudiante: Estudiante):
-        return estudiante.aprobar_retiro()
-
     def anular_matricula(self, estudiante: Estudiante):
         estudiante.anular_matricula()
 
 
-    def obtener_registro_institucional(self, usuario_academico: UsuarioAcademico):
-        return usuario_academico.obtener_registro_institucional()
-
-
     #Docentes
     def inhabilitar_docente(self, docente: Docente):
-        docente.inhabilitar_perfil()
+        docente.inhabilitar()
+
+    def habilitar_docente(self, docente: Docente):
+        docente.habilitar()
 
     def obtener_carga_academica(self, docente: Docente):
         return docente.visualizar_carga_academica()
 
-    def verificar_disponibilidad_horaria(self, docente: Docente, horario):
-        return docente.verificar_disponibilidad_horaria(horario)
 
 
     #Distribución de estudiantes

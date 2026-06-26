@@ -56,7 +56,7 @@
     <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
 
     {% block boton_registrar %}
-    {% if url_registrar %}
+    {% if url_registrar and not solo_lectura %}
     <a href="{% url url_registrar %}" class="boton boton-primario">{{ texto_registrar|default:"Registrar" }}</a>
     {% endif %}
     {% endblock %}

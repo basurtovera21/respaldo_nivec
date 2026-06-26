@@ -12,9 +12,20 @@ from academico.services import (
     servicio_clonar_malla_curricular,
     servicio_cambiar_estado_malla,
 )
-from usuarios.utils import generar_identificador_siguiente
+from usuarios.utils import (
+    generar_identificador_siguiente,
+    requiere_perfil,
+    usuario_es_solo_lectura,
+    ROL_COORDINADOR_DAN,
+    ROL_DIRECTOR_DAN,
+    ROL_RECTOR,
+    ROL_VICERRECTOR,
+)
 
-@login_required
+ROLES_VISUALIZAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
+ROLES_MODIFICAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
+
+@requiere_perfil(*ROLES_VISUALIZAN)
 def listar_mallas(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -26,6 +37,7 @@ def listar_mallas(request):
     ).select_related("carrera")
 
     return render(request, "academico/listar_mallas.html", {
+        "solo_lectura": usuario_es_solo_lectura(request.user),
         "mallas": mallas,
         "titulo_pagina": "Malla curricular - NIVEC",
         "titulo": "Mallas curriculares",
@@ -34,7 +46,7 @@ def listar_mallas(request):
         "url_volver": "panel_dan"
     })
 
-@login_required
+@requiere_perfil(*ROLES_MODIFICAN)
 def descargar_plantilla_malla(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -60,7 +72,7 @@ def descargar_plantilla_malla(request):
     wb.save(response)
     return response
 
-@login_required
+@requiere_perfil(*ROLES_MODIFICAN)
 def registrar_malla(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -118,7 +130,7 @@ def registrar_malla(request):
         "url_plantilla": "descargar_plantilla_malla",
     })
 
-@login_required
+@requiere_perfil(*ROLES_MODIFICAN)
 def modificar_malla(request, malla_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -153,7 +165,7 @@ def modificar_malla(request, malla_id):
         "mostrar_carga_masiva": False,
     })
 
-@login_required
+@requiere_perfil(*ROLES_MODIFICAN)
 def eliminar_malla(request, malla_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -176,7 +188,7 @@ def eliminar_malla(request, malla_id):
         )
     return redirect("listar_mallas")
 
-@login_required
+@requiere_perfil(*ROLES_MODIFICAN)
 def clonar_malla(request, malla_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -213,7 +225,7 @@ def clonar_malla(request, malla_id):
         "url_cancelar": "listar_mallas",
     })
 
-@login_required
+@requiere_perfil(*ROLES_MODIFICAN)
 def cambiar_estado_malla(request, malla_id, accion):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
