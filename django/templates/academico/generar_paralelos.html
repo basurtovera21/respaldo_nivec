@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ titulo_pagina|default:"NIVEC" }}{% endblock %}
+
+{% block contenido %}
+<div class="tarjeta">
+    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
+    <p style="color: #515154; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
+        Creación de paralelo a partir de estudiantes registrados (por capacidad maxima definida)
+    </p>
+
+    <form method="post" novalidate style="max-width: 500px;">
+        {% csrf_token %}
+
+        <div class="campo">
+            <label for="periodo" style="font-weight: bold;">Periodo de nivelación</label>
+            <select name="periodo" id="periodo">
+                <option value=""></option>
+                {% for p in periodos %}
+                    <option value="{{ p.id }}">{{ p.periodo }} ({{ p.anio }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="campo">
+            <label for="capacidad" style="font-weight: bold;">Capacidad máxima por paralelo</label>
+            <input type="number" name="capacidad" id="capacidad" min="1" value="35">
+            <div class="ayuda">Número de estudiantes por paralelo (por defecto 35)</div>
+        </div>
+
+        <div style="margin-top: 30px; display: flex; gap: 15px;">
+            <button type="submit" class="boton boton-primario">Crear</button>
+            <a href="{% if url_cancelar %}{% url url_cancelar %}{% else %}#{% endif %}" class="boton boton-secundario">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+
+from academico.models import Paralelo
+from academico.services import (
+    servicio_evaluar_docentes_para_paralelo,
+    servicio_asignar_docente,
+    servicio_quitar_docente,
+)
+from usuarios.utils import (
+    requiere_perfil,
+    usuario_es_solo_lectura,
+    ROL_COORDINADOR_DAN,
+    ROL_DIRECTOR_DAN,
+    ROL_RECTOR,
+    ROL_VICERRECTOR,
+)
+
+ROLES_VISUALIZAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
+
+@requiere_perfil(*ROLES_VISUALIZAN)
+def asignar_docente_paralelo(request, paralelo_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    paralelo = get_object_or_404(
+        Paralelo, id=paralelo_id, periodo_de_nivelacion__universidad=universidad_usuario
+    )
+
+    solo_lectura = usuario_es_solo_lectura(request.user)
+
+    if request.method == "POST" and not solo_lectura:
+        accion = request.POST.get("accion")
+        if accion == "quitar":
+            ok, mensaje = servicio_quitar_docente(paralelo)
+            (messages.success if ok else messages.error)(request, mensaje)
+        else:
+            docente_id = request.POST.get("docente_id")
+            if not docente_id:
+                messages.error(request, "Debe seleccionar un docente.")
+            else:
+                from usuarios.models import PerfilDocente
+                docente = get_object_or_404(
+                    PerfilDocente, id=docente_id, universidad=universidad_usuario
+                )
+                ok, mensaje, advertencia = servicio_asignar_docente(paralelo, docente)
+                if ok:
+                    messages.success(request, mensaje)
+                    if advertencia:
+                        messages.warning(request, advertencia)
+                else:
+                    messages.error(request, mensaje)
+        return redirect("asignar_docente_paralelo", paralelo_id=paralelo.id)
+
+    evaluaciones = servicio_evaluar_docentes_para_paralelo(paralelo)
+
+    return render(request, "academico/asignar_docente.html", {
+        "paralelo": paralelo,
+        "evaluaciones": evaluaciones,
+        "solo_lectura": solo_lectura,
+        "titulo_pagina": "Docente - NIVEC",
+        "titulo": f"Asignar docente - {paralelo.nombre} ({paralelo.unidad_curricular.nombre})",
+    })

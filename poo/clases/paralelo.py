@@ -80,8 +80,41 @@ class Paralelo:
 
     def agregar_horario(self, horario: Horario):
         self.horarios.append(horario)
+        
+    def calcular_horas_agendadas(self):
+        total_de_horas = 0.0
+        for horario in self.horarios:
+            total_de_horas += horario.determinar_duracion_horas()
+        return round(total_de_horas, 2)
 
+    def encontrar_conflicto_horario(self, nuevo_horario, horarios_externos=None):
+        horarios_a_revisar = list(self.horarios)
+        if horarios_externos:
+            horarios_a_revisar.extend(horarios_externos)
 
+        for horario in horarios_a_revisar:
+            if nuevo_horario.verificar_conflicto_horario(horario):
+                return horario
+        return None
+
+    def validar_nuevo_horario(self, nuevo_horario, horas_sincronicas_requeridas, horarios_externos=None):
+        conflicto = self.encontrar_conflicto_horario(nuevo_horario, horarios_externos)
+        if conflicto is not None:
+            return {"ok": False, "motivo": "conflicto", "horario_en_conflicto": conflicto}
+
+        horas_actuales = self.calcular_horas_agendadas()
+        horas_nuevas = nuevo_horario.determinar_duracion_horas()
+        if horas_actuales + horas_nuevas > horas_sincronicas_requeridas:
+            return {
+                "ok": False,
+                "motivo": "horas",
+                "horas_actuales": horas_actuales,
+                "horas_nuevas": horas_nuevas,
+            }
+
+        return {"ok": True, "motivo": ""}
+ 
+ 
     def obtener_resumen_horario(self):
         lista_de_resumenes_horarios = []
 

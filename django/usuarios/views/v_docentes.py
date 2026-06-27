@@ -12,6 +12,7 @@ from usuarios.services import servicio_docente_registrar_masivo_desde_excel, _cr
 
 from poo.clases.enums.estado_de_usuario import EstadoDeUsuario as EnumEstadoDeUsuario
 from poo.clases.enums.estado_de_vinculacion import EstadoDeVinculacion as EnumEstadoDeVinculacion
+from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
 
 @login_required
 def listar_docentes(request):
@@ -172,9 +173,9 @@ def inhabilitar_docente(request, docente_id):
 
     docente_db = get_object_or_404(PerfilDocente, id=docente_id, universidad=universidad_usuario)
     
-    # CORRECTO: Usamos el puente para crear el objeto POO
     docente_poo = _crear_docente(docente_db)
-    docente_poo.inhabilitar() 
+    facade = CentroDeOperacionAcademica()
+    facade.inhabilitar_docente(docente_poo)
 
     with transaction.atomic():
         docente_db.estado_de_vinculacion = EnumEstadoDeVinculacion.INACTIVO.value
@@ -197,7 +198,8 @@ def habilitar_docente(request, docente_id):
     docente_db = get_object_or_404(PerfilDocente, id=docente_id, universidad=universidad_usuario)
     
     docente_poo = _crear_docente(docente_db)
-    docente_poo.habilitar()
+    facade = CentroDeOperacionAcademica()
+    facade.habilitar_docente(docente_poo)
 
     with transaction.atomic():
         docente_db.estado_de_vinculacion = EnumEstadoDeVinculacion.ACTIVO.value

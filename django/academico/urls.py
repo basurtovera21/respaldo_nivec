@@ -44,10 +44,18 @@ urlpatterns = [
     path("unidades/editar/<int:unidad_id>/", views.modificar_unidad, name="modificar_unidad"),
     path("unidades/eliminar/<int:unidad_id>/", views.eliminar_unidad, name="eliminar_unidad"),
     path("unidades/descargar-plantilla/", views.descargar_plantilla_unidad, name="descargar_plantilla_unidad"),
-
+    path("mallas/<int:malla_id>/unidades/", views.listar_unidades_de_malla, name="listar_unidades_de_malla"),
+    
     path("paralelos/", views.listar_paralelos, name="listar_paralelos"),
-    path("paralelos/registrar/", views.registrar_paralelo, name="registrar_paralelo"),
-    path("horarios/registrar/", views.registrar_horario, name="registrar_horario"),
+    path("paralelos/generar/", views.generar_paralelos, name="generar_paralelos"),
+    path("paralelos/eliminar/<int:paralelo_id>/", views.eliminar_paralelo, name="eliminar_paralelo"),
+    path("paralelos/<int:paralelo_id>/estudiantes/", views.listar_estudiantes_paralelo, name="listar_estudiantes_paralelo"),
+    path("paralelos/<int:paralelo_id>/mover-estudiante/", views.mover_estudiante, name="mover_estudiante"),
+    path("paralelos/<int:paralelo_id>/horarios/", views.listar_horarios_paralelo, name="listar_horarios_paralelo"),
+    path("paralelos/<int:paralelo_id>/horarios/registrar/", views.registrar_horario, name="registrar_horario"),
+    path("horarios/<int:horario_id>/eliminar/", views.eliminar_horario, name="eliminar_horario"),
+    path("horarios/matriz/", views.matriz_horarios, name="matriz_horarios"),
+    path("paralelos/<int:paralelo_id>/docente/", views.asignar_docente_paralelo, name="asignar_docente_paralelo"),
     #Procesos académicos
     path("cohortes/", views.listar_cohortes, name="listar_cohortes"),
     path("cohortes/registrar/", views.registrar_cohorte, name="registrar_cohorte"),

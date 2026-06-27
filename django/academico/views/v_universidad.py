@@ -1,9 +1,9 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from usuarios.utils import requiere_perfil, ROL_DIRECTOR_DAN
 from academico.forms import FormularioUniversidad
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def detalle_universidad(request):
     universidad = request.user.perfil_administrativo.universidad
     if not universidad:
@@ -14,7 +14,7 @@ def detalle_universidad(request):
         "titulo_pagina": "Universidad - NIVEC"
     })
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def registrar_universidad(request):
     if request.user.perfil_administrativo.universidad:
         return redirect("panel_principal")
@@ -41,7 +41,7 @@ def registrar_universidad(request):
         "mostrar_carga_masiva": False
     })
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def modificar_universidad(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:

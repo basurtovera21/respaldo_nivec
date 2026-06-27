@@ -735,7 +735,6 @@ def _obtener_o_crear_cohorte(periodo_db, carrera):
         fecha_de_cierre=periodo_db.fecha_fin,
         tipo_de_cohorte=TipoDeCohorte.PRIMERA_MATRICULA.value,
     )
-
 def servicio_generar_paralelos(periodo_db, capacidad=35):
     import math
     from poo.clases.paralelo import Paralelo as ParaleloBase
@@ -804,58 +803,96 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                 enum_jornada = obtener_enum_flexible(Jornada, jornada_valor)
             except ValueError:
                 resumen["advertencias"].append(
-                    f"El registro de Jornada ({jornada_valor}) fue omitido (Jornada no válida en {carrera.nombre})"
+                    f"El registro de Jornada fue omitido (Jornada no válida en {carrera.nombre})"
                 )
                 continue
 
-            numero_de_grupos = math.ceil(len(estudiantes) / capacidad)
-
-            grupos_poo = [
-                ParaleloBase(
-                    codigo_de_paralelo=f"G{indice}",
-                    nombre=f"Grupo {indice}",
-                    jornada=enum_jornada,
-                    modalidad=enum_modalidad,
-                    capacidad_maxima=capacidad,
-                )
-                for indice in range(1, numero_de_grupos + 1)
-            ]
-
-            facade.distribuir_estudiantes(grupos_poo, estudiantes)
-
             cohorte = _obtener_o_crear_cohorte(periodo_db, carrera)
+            estudiantes_a_contar = []
+
+            def _numero_de_grupo(nombre):
+                try:
+                    return int(str(nombre).split()[-1])
+                except (ValueError, IndexError):
+                    return 0
 
             with transaction.atomic():
-                estudiantes_distribuidos = []
+                paralelos_existentes = Paralelo.objects.filter(
+                    periodo_de_nivelacion=periodo_db,
+                    jornada=jornada_valor,
+                    unidad_curricular__in=unidades,
+                )
+                grupos_existentes = {}
+                for paralelo_db in paralelos_existentes:
+                    grupos_existentes.setdefault(paralelo_db.nombre, []).append(paralelo_db)
 
-                for indice, grupo_poo in enumerate(grupos_poo, start=1):
-                    estudiantes_del_grupo = list(grupo_poo._estudiantes_matriculados)
-                    if not estudiantes_del_grupo:
+                indice_max = 0
+                indice_pendiente = 0
+
+                for nombre_grupo in sorted(grupos_existentes.keys(), key=_numero_de_grupo):
+                    paralelos_grupo = grupos_existentes[nombre_grupo]
+                    indice_max = max(indice_max, _numero_de_grupo(nombre_grupo))
+
+                    representativo = paralelos_grupo[0]
+                    ocupacion = MatriculaParalelo.objects.filter(paralelo=representativo).count()
+                    cupo_libre = representativo.capacidad_maxima - ocupacion
+                    if cupo_libre <= 0:
                         continue
 
-                    for unidad in unidades:
-                        paralelo_db = Paralelo.objects.create(
-                            periodo_de_nivelacion=periodo_db,
-                            unidad_curricular=unidad,
-                            codigo_de_paralelo=generar_identificador_siguiente(Paralelo, "PAR", "codigo_de_paralelo"),
-                            nombre=f"Grupo {indice}",
-                            jornada=jornada_valor,
-                            modalidad=malla.modalidad,
-                            capacidad_maxima=capacidad,
-                        )
-                        resumen["paralelos_creados"] += 1
+                    a_matricular = estudiantes[indice_pendiente:indice_pendiente + cupo_libre]
+                    indice_pendiente += len(a_matricular)
 
-                        for estudiante_db in estudiantes_del_grupo:
+                    for paralelo_db in paralelos_grupo:
+                        for estudiante_db in a_matricular:
                             MatriculaParalelo.objects.create(
                                 estudiante=estudiante_db,
                                 paralelo=paralelo_db,
                                 cohorte_de_matricula=cohorte,
                             )
+                    estudiantes_a_contar.extend(a_matricular)
 
-                    resumen["grupos_creados"] += 1
-                    estudiantes_distribuidos.extend(estudiantes_del_grupo)
+                estudiantes_restantes = estudiantes[indice_pendiente:]
+                if estudiantes_restantes:
+                    numero_de_grupos = math.ceil(len(estudiantes_restantes) / capacidad)
+                    grupos_poo = [
+                        ParaleloBase(
+                            codigo_de_paralelo=f"G{indice}",
+                            nombre=f"Grupo {indice_max + indice}",
+                            jornada=enum_jornada,
+                            modalidad=enum_modalidad,
+                            capacidad_maxima=capacidad,
+                        )
+                        for indice in range(1, numero_de_grupos + 1)
+                    ]
 
-                for estudiante_db in estudiantes_distribuidos:
+                    facade.distribuir_estudiantes(grupos_poo, estudiantes_restantes)
+
+                    for indice, grupo_poo in enumerate(grupos_poo, start=1):
+                        miembros = list(grupo_poo._estudiantes_matriculados)
+                        if not miembros:
+                            continue
+                        nombre_nuevo = f"Grupo {indice_max + indice}"
+                        for unidad in unidades:
+                            paralelo_db = Paralelo.objects.create(
+                                periodo_de_nivelacion=periodo_db,
+                                unidad_curricular=unidad,
+                                codigo_de_paralelo=generar_identificador_siguiente(Paralelo, "PAR", "codigo_de_paralelo"),
+                                nombre=nombre_nuevo,
+                                jornada=jornada_valor,
+                                modalidad=malla.modalidad,
+                                capacidad_maxima=capacidad,
+                            )
+                            resumen["paralelos_creados"] += 1
+                            for estudiante_db in miembros:
+                                MatriculaParalelo.objects.create(
+                                    estudiante=estudiante_db,
+                                    paralelo=paralelo_db,
+                                    cohorte_de_matricula=cohorte,
+                                )
+                        resumen["grupos_creados"] += 1
+                        estudiantes_a_contar.extend(miembros)
+
+                for estudiante_db in estudiantes_a_contar:
                     if estudiante_db.registro_de_cupo == RegistroDeCupo.REGULAR.value:
                         cohorte.total_primera_matricula += 1
                     elif estudiante_db.registro_de_cupo == RegistroDeCupo.SEGUNDA_MATRICULA.value:
@@ -867,3 +904,296 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                 cohorte.save()
 
     return resumen
+
+def servicio_mover_estudiante(estudiante_db, paralelo_destino_db):
+    periodo = paralelo_destino_db.periodo_de_nivelacion
+    carrera = paralelo_destino_db.unidad_curricular.malla_curricular.carrera
+    nombre_destino = paralelo_destino_db.nombre
+    jornada = paralelo_destino_db.jornada
+
+    paralelos_destino = list(Paralelo.objects.filter(
+        periodo_de_nivelacion=periodo,
+        jornada=jornada,
+        nombre=nombre_destino,
+        unidad_curricular__malla_curricular__carrera=carrera,
+    ))
+    if not paralelos_destino:
+        return (False, "El paralelo de destino no es válido")
+
+    representativo = paralelos_destino[0]
+    ocupacion_destino = MatriculaParalelo.objects.filter(
+        paralelo=representativo
+    ).exclude(estudiante=estudiante_db).count()
+    if ocupacion_destino >= representativo.capacidad_maxima:
+        return (False, "El paralelo de destino no presenta cupo disponible")
+
+    matriculas_actuales = MatriculaParalelo.objects.filter(
+        estudiante=estudiante_db,
+        paralelo__periodo_de_nivelacion=periodo,
+        paralelo__unidad_curricular__malla_curricular__carrera=carrera,
+    )
+
+    primera_matricula = matriculas_actuales.first()
+    if primera_matricula and primera_matricula.paralelo.nombre == nombre_destino:
+        return (False, "El estudiante ya pertenece a ese paralelo")
+
+    cohorte = (
+        primera_matricula.cohorte_de_matricula
+        if primera_matricula else _obtener_o_crear_cohorte(periodo, carrera)
+    )
+
+    with transaction.atomic():
+        matriculas_actuales.delete()
+        for paralelo_db in paralelos_destino:
+            MatriculaParalelo.objects.get_or_create(
+                estudiante=estudiante_db,
+                paralelo=paralelo_db,
+                defaults={"cohorte_de_matricula": cohorte},
+            )
+
+    return (True, "El estudiante fue reasignado correctamente")
+
+
+# ==========================================
+# B.2 - Horarios
+# ==========================================
+def _construir_horario_poo(horario_db):
+    return HorarioPOO(
+        dia_semana=obtener_enum_flexible(DiaDeSemana, horario_db.dia_semana),
+        hora_inicio=horario_db.hora_inicio,
+        hora_fin=horario_db.hora_fin,
+        espacio_de_imparticion=horario_db.espacio_de_imparticion,
+        modalidad=obtener_enum_flexible(Modalidad, horario_db.modalidad),
+        numero_semana=horario_db.numero_semana,
+        tipo_de_sesion=obtener_enum_flexible(TipoDeSesion, horario_db.tipo_de_sesion),
+    )
+
+def _construir_paralelo_poo_con_horarios(paralelo_db):
+    from poo.clases.paralelo import Paralelo as ParaleloBase
+
+    paralelo_poo = ParaleloBase(
+        codigo_de_paralelo=paralelo_db.codigo_de_paralelo,
+        nombre=paralelo_db.nombre,
+        jornada=obtener_enum_flexible(Jornada, paralelo_db.jornada),
+        modalidad=obtener_enum_flexible(Modalidad, paralelo_db.modalidad),
+        capacidad_maxima=paralelo_db.capacidad_maxima,
+    )
+    for horario_db in Horario.objects.filter(paralelo=paralelo_db):
+        paralelo_poo.agregar_horario(_construir_horario_poo(horario_db))
+    return paralelo_poo
+
+def servicio_horas_agendadas_paralelo(paralelo_db):
+    return _construir_paralelo_poo_con_horarios(paralelo_db).calcular_horas_agendadas()
+
+def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, espacio, numero_semana, tipo_de_sesion):
+    try:
+        numero_semana = int(numero_semana)
+    except (TypeError, ValueError):
+        return (False, "El número de semana no es válido")
+
+    try:
+        enum_dia = obtener_enum_flexible(DiaDeSemana, dia_semana)
+        enum_tipo = obtener_enum_flexible(TipoDeSesion, tipo_de_sesion)
+        enum_modalidad = obtener_enum_flexible(Modalidad, paralelo_db.modalidad)
+    except ValueError:
+        return (False, "Día/Tipo de sesión o Modalidad no válido")
+
+    nuevo_horario_poo = HorarioPOO(
+        dia_semana=enum_dia,
+        hora_inicio=hora_inicio,
+        hora_fin=hora_fin,
+        espacio_de_imparticion=espacio,
+        modalidad=enum_modalidad,
+        numero_semana=numero_semana,
+        tipo_de_sesion=enum_tipo,
+    )
+
+    errores_horario = nuevo_horario_poo.validar_datos_de_registro()
+    if errores_horario:
+        return (False, list(errores_horario.values())[0])
+
+    carrera = paralelo_db.unidad_curricular.malla_curricular.carrera
+    paralelos_del_grupo = Paralelo.objects.filter(
+        periodo_de_nivelacion=paralelo_db.periodo_de_nivelacion,
+        jornada=paralelo_db.jornada,
+        nombre=paralelo_db.nombre,
+        unidad_curricular__malla_curricular__carrera=carrera,
+    )
+    horarios_externos = [
+        _construir_horario_poo(horario_db)
+        for horario_db in Horario.objects.filter(
+            paralelo__in=paralelos_del_grupo
+        ).exclude(paralelo=paralelo_db)
+    ]
+
+    paralelo_poo = _construir_paralelo_poo_con_horarios(paralelo_db)
+    horas_sincronicas = paralelo_db.unidad_curricular.horas_sincronicas
+    resultado = paralelo_poo.validar_nuevo_horario(
+        nuevo_horario_poo, horas_sincronicas, horarios_externos
+    )
+
+    if not resultado["ok"]:
+        if resultado["motivo"] == "conflicto":
+            conflicto = resultado["horario_en_conflicto"]
+            return (
+                False,
+                f"Conflicto horario en {conflicto.dia_semana.value} "
+                f"{conflicto.hora_inicio}–{conflicto.hora_fin} (semana {conflicto.numero_semana})"
+            )
+        return (
+            False,
+            f"La sesión ha excedido las horas sincrónicas registradas de la unidad curricular")
+
+    Horario.objects.create(
+        paralelo=paralelo_db,
+        dia_semana=dia_semana,
+        hora_inicio=hora_inicio,
+        hora_fin=hora_fin,
+        espacio_de_imparticion=espacio,
+        modalidad=paralelo_db.modalidad,
+        numero_semana=numero_semana,
+        tipo_de_sesion=tipo_de_sesion,
+    )
+    return (True, "El horario ha sido registrado correctamente")
+
+def servicio_obtener_matriz_de_horarios(periodo_db, paralelos_db):
+    from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
+
+    periodo_poo = _construir_periodo(periodo_db)
+    paralelos_poo = [_construir_paralelo_poo_con_horarios(p) for p in paralelos_db]
+
+    facade = CentroDeOperacionAcademica()
+    matriz = facade.obtener_matriz_de_horarios(periodo_poo, paralelos_poo)
+
+    mapa_unidad = {
+        p.codigo_de_paralelo: p.unidad_curricular.nombre for p in paralelos_db
+    }
+    for fila in matriz:
+        for bloque in fila["bloques"]:
+            bloque["unidad"] = mapa_unidad.get(bloque["codigo_de_paralelo"], "—")
+
+    return matriz
+
+
+def _construir_docente_poo_para_periodo(docente_db, periodo_db, paralelo_excluir_id=None):
+    from usuarios.services import _crear_docente
+    from poo.clases.enums.estado_de_vinculacion import EstadoDeVinculacion as EnumEstadoDeVinculacion
+
+    docente_poo = _crear_docente(docente_db)
+    docente_poo.establecer_estado_de_vinculacion(
+        obtener_enum_flexible(EnumEstadoDeVinculacion, docente_db.estado_de_vinculacion)
+    )
+    docente_poo.definir_especialidades(docente_db.especialidades or [])
+
+    paralelos_actuales = Paralelo.objects.filter(
+        periodo_de_nivelacion=periodo_db, docente_responsable=docente_db
+    ).select_related("unidad_curricular")
+    if paralelo_excluir_id:
+        paralelos_actuales = paralelos_actuales.exclude(id=paralelo_excluir_id)
+
+    carga_actual = 0.0
+    for paralelo_actual in paralelos_actuales:
+        carga_actual += paralelo_actual.unidad_curricular.horas_sincronicas
+        for horario_db in Horario.objects.filter(paralelo=paralelo_actual):
+            docente_poo.agregar_horario_ocupado(_construir_horario_poo(horario_db))
+
+    docente_poo.registrar_carga_actual(carga_actual)
+    return docente_poo, carga_actual
+
+def _texto_motivo_no_asignable(resultado):
+    motivo = resultado.get("motivo")
+    if motivo == "inactivo":
+        return "El docente no está activo"
+    if motivo == "conflicto":
+        conflicto = resultado["horario_en_conflicto"]
+        return (
+            f"Conflicto de Horario el día '{conflicto.dia_semana.value}'. {conflicto.hora_inicio}–{conflicto.hora_fin} (semana {conflicto.numero_semana})"
+        )
+    if motivo == "carga":
+        return (
+            f"El Docente excede la carga de horas máxima"
+        )
+    return "El Docente no puede ser asignado."
+
+def servicio_evaluar_docentes_para_paralelo(paralelo_db):
+    from usuarios.models import PerfilDocente
+    from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
+
+    periodo = paralelo_db.periodo_de_nivelacion
+    unidad = paralelo_db.unidad_curricular
+    areas = unidad.area_de_conocimiento or []
+    horas_unidad = unidad.horas_sincronicas
+
+    paralelo_poo = _construir_paralelo_poo_con_horarios(paralelo_db)
+    facade = CentroDeOperacionAcademica()
+
+    docentes = PerfilDocente.objects.filter(
+        universidad=periodo.universidad
+    ).select_related("usuario_de_sistema").order_by(
+        "usuario_de_sistema__apellidos", "usuario_de_sistema__nombres"
+    )
+
+    evaluaciones = []
+    for docente_db in docentes:
+        docente_poo, carga_actual = _construir_docente_poo_para_periodo(
+            docente_db, periodo, paralelo_excluir_id=paralelo_db.id
+        )
+        resultado = facade.validar_asignacion_docente(
+            docente_poo, paralelo_poo, horas_unidad, areas
+        )
+        evaluaciones.append({
+            "docente": docente_db,
+            "es_actual": paralelo_db.docente_responsable_id == docente_db.id,
+            "carga_actual": carga_actual,
+            "carga_maxima": docente_db.carga_horaria_maxima,
+            "horas_unidad": horas_unidad,
+            "asignable": resultado["ok"],
+            "motivo": "" if resultado["ok"] else _texto_motivo_no_asignable(resultado),
+            "especialidad_ok": docente_poo.tiene_especialidad_para(areas),
+            "activo": docente_poo.esta_activo(),
+        })
+    return evaluaciones
+
+def servicio_asignar_docente(paralelo_db, docente_db):
+    from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
+
+    periodo = paralelo_db.periodo_de_nivelacion
+    unidad = paralelo_db.unidad_curricular
+    areas = unidad.area_de_conocimiento or []
+    horas_unidad = unidad.horas_sincronicas
+
+    docente_poo, carga_actual = _construir_docente_poo_para_periodo(
+        docente_db, periodo, paralelo_excluir_id=paralelo_db.id
+    )
+    paralelo_poo = _construir_paralelo_poo_con_horarios(paralelo_db)
+
+    facade = CentroDeOperacionAcademica()
+    resultado = facade.validar_asignacion_docente(docente_poo, paralelo_poo, horas_unidad, areas)
+
+    if not resultado["ok"]:
+        return (False, _texto_motivo_no_asignable(resultado), None)
+
+    paralelo_db.docente_responsable = docente_db
+    paralelo_db.save(update_fields=["docente_responsable"])
+
+    docente_db.carga_horaria_actual = round(carga_actual + horas_unidad, 2)
+    docente_db.save(update_fields=["carga_horaria_actual"])
+
+    advertencia = None
+    if resultado.get("advertencia") == "especialidad":
+        advertencia = ("El área de conocimiento de la Unidad curricular no coincide con las especialidades registradas del Docente")
+    return (True, "El Docente ha sido asignado correctamente", advertencia)
+
+def servicio_quitar_docente(paralelo_db):
+    if not docente_db:
+        return (False, "El paralelo no tiene un docente designado actualmente")
+
+    horas_unidad = paralelo_db.unidad_curricular.horas_sincronicas
+    paralelo_db.docente_responsable = None
+    paralelo_db.save(update_fields=["docente_responsable"])
+
+    carga_restante = max(0.0, round((docente_db.carga_horaria_actual or 0) - horas_unidad, 2))
+    docente_db.carga_horaria_actual = carga_restante
+    docente_db.save(update_fields=["carga_horaria_actual"])
+
+    return (True, "El Docente ha sido desvinculado correctamente")

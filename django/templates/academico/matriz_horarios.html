@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ titulo_pagina|default:"NIVEC" }}{% endblock %}
+
+{% block contenido %}
+<style>
+    .dia-columna {
+        flex: 1; min-width: 200px;
+        background: #f7f7f9; border: 1px solid #e4e4e9; border-radius: 10px;
+        padding: 12px;
+    }
+    .dia-titulo {
+        font-weight: bold; font-size: 13px; color: #1d1d1f;
+        text-align: center; margin-bottom: 12px; padding-bottom: 8px;
+        border-bottom: 2px solid #d2d2d7;
+    }
+    .bloque-sesion {
+        background: white; border: 1px solid #e4e4e9; border-left: 4px solid #b45309;
+        border-radius: 8px; padding: 10px 12px; margin-bottom: 10px;
+    }
+    .bloque-hora { font-weight: bold; font-size: 13px; color: #b45309; }
+    .bloque-materia { font-weight: bold; font-size: 13px; color: #1d1d1f; margin: 2px 0; }
+    .bloque-detalle { font-size: 12px; color: #515154; }
+</style>
+
+<h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
+<p style="color: #515154; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
+    Horario semanal por Cohorte de matrícula
+</p>
+
+<form method="get" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
+    <label style="font-weight: bold; font-size: 13px; color: #515154;">Periodo:</label>
+    <select name="periodo" onchange="this.form.submit()"
+            style="padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 13px; background: white; color: #1d1d1f; outline: none;">
+        <option value=""></option>
+        {% for p in periodos %}
+            <option value="{{ p.id }}" {% if periodo_seleccionado.id == p.id %}selected{% endif %}>
+                {{ p.periodo }} ({{ p.anio }})
+            </option>
+        {% endfor %}
+    </select>
+
+    {% if periodo_seleccionado %}
+        <label style="font-weight: bold; font-size: 13px; color: #515154;">Grupo:</label>
+        <select name="grupo" onchange="this.form.submit()"
+                style="padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 13px; background: white; color: #1d1d1f; outline: none; min-width: 280px;">
+            <option value=""></option>
+            {% for g in grupos %}
+                <option value="{{ g.clave }}" {% if grupo_seleccionado == g.clave %}selected{% endif %}>
+                    {{ g.carrera }} — {{ g.jornada }} — {{ g.nombre }}
+                </option>
+            {% endfor %}
+        </select>
+    {% endif %}
+</form>
+
+{% if not periodo_seleccionado %}
+    <div class="tarjeta" style="text-align: center; color: #86868b; padding: 30px;">
+        Especifique un Periodo de nivelación para visualizar los horarios
+    </div>
+{% elif not grupo_seleccionado %}
+    <div class="tarjeta" style="text-align: center; color: #86868b; padding: 30px;">
+        Especifique un grupo para visualizar su horario semanal
+    </div>
+{% elif not matriz %}
+    <div class="tarjeta" style="text-align: center; color: #86868b; padding: 30px;">
+        El grupo especificado no tiene sesiones registradas
+    </div>
+{% else %}
+    <div style="display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start;">
+        {% for fila in matriz %}
+        <div class="dia-columna">
+            <div class="dia-titulo">{{ fila.dia }}</div>
+            {% for b in fila.bloques %}
+            <div class="bloque-sesion">
+                <div class="bloque-hora">{{ b.hora_inicio|time:"H:i" }} – {{ b.hora_fin|time:"H:i" }}</div>
+                <div class="bloque-materia">{{ b.unidad }}</div>
+                <div class="bloque-detalle">{{ b.espacio }}</div>
+                <div class="bloque-detalle">{{ b.tipo_de_sesion }} · Semana {{ b.numero_semana }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div style="margin-top: 20px;">
+    <a href="{% url 'panel_principal' %}" class="boton boton-secundario">Volver</a>
+</div>
+{% endblock %}

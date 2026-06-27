@@ -56,13 +56,14 @@ def procesar_mtn(request):
     )
 
     if not periodos.exists():
-        messages.warning(request, "No existen periodos de nivelación en planificación")
+        messages.warning(request, "No existen periodos de nivelación en Planificación")
         return redirect("panel_dan")
 
     if request.method == "POST":
-        periodo = periodos.filter(id=request.POST.get("periodo")).first()
+        periodo_id = request.POST.get("periodo") or None
+        periodo = periodos.filter(id=periodo_id).first() if periodo_id else None
         if not periodo:
-            messages.error(request, "Debe seleccionar un periodo de nivelación en planificación")
+            messages.error(request, "Debe seleccionar un Periodo de nivelación en Planificación")
             return redirect("procesar_mtn")
 
         if "archivo_excel" not in request.FILES:

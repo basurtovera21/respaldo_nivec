@@ -1,5 +1,4 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse
 import openpyxl
@@ -7,9 +6,9 @@ import openpyxl
 from academico.models import Carrera, Campus
 from academico.forms import FormularioCarrera
 from academico.services import servicio_carrera_registrar_masivo_desde_excel
-from usuarios.utils import generar_identificador_siguiente
+from usuarios.utils import generar_identificador_siguiente, requiere_perfil, ROL_DIRECTOR_DAN
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def listar_carreras(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -31,7 +30,7 @@ def listar_carreras(request):
         "url_volver": "panel_principal"
     })
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def descargar_plantilla_carrera(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -54,7 +53,7 @@ def descargar_plantilla_carrera(request):
     wb.save(response)
     return response
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def registrar_carrera(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -100,7 +99,7 @@ def registrar_carrera(request):
         "url_plantilla": "descargar_plantilla_carrera"
     })
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def modificar_carrera(request, carrera_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -128,7 +127,7 @@ def modificar_carrera(request, carrera_id):
         "mostrar_carga_masiva": False
     })
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def eliminar_carrera(request, carrera_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:

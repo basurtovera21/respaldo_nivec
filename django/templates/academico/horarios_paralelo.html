@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ titulo_pagina|default:"NIVEC" }}{% endblock %}
+
+{% block contenido %}
+<style>
+    .tarjeta table th, .tarjeta table td { padding: 12px 24px; white-space: nowrap; }
+    .etiqueta-eliminar {
+        padding: 4px 12px; border-radius: 6px; font-size: 12px; text-decoration: none;
+        display: inline-block; font-weight: bold;
+        background-color: #fdf2f2; color: #c81e1e; border: 1px solid rgba(200, 30, 30, 0.1);
+    }
+</style>
+
+<h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
+<p style="color: #515154; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
+    {{ paralelo.periodo_de_nivelacion.periodo }} —
+    {{ paralelo.unidad_curricular.malla_curricular.carrera.nombre }} —
+    {{ paralelo.get_jornada_display }}
+</p>
+
+<div class="tarjeta" style="margin-bottom: 20px;">
+    <span style="font-weight: bold; color: {% if horas_completas %}#2e7d32{% else %}#b45309{% endif %};">
+        Horas sincrónicas: {{ horas_agendadas }} de {{ horas_requeridas }}
+        {% if horas_completas %}(completo){% else %}(pendiente){% endif %}
+    </span>
+</div>
+
+{% if not solo_lectura %}
+<div class="tarjeta" style="margin-bottom: 20px;">
+    <h2 style="font-size: 15px; font-weight: bold; margin-bottom: 12px;">Agregar sesión</h2>
+    <form method="post" action="{% url 'registrar_horario' paralelo.id %}">
+        {% csrf_token %}
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
+            <div class="campo" style="margin-bottom: 0;">
+                <label style="font-weight: bold;">Día</label>
+                <select name="dia_semana">
+                    {% for d in dias %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="campo" style="margin-bottom: 0;">
+                <label style="font-weight: bold;">Hora de inicio</label>
+                <input type="time" name="hora_inicio">
+            </div>
+            <div class="campo" style="margin-bottom: 0;">
+                <label style="font-weight: bold;">Hora de finalización</label>
+                <input type="time" name="hora_fin">
+            </div>
+            <div class="campo" style="margin-bottom: 0;">
+                <label style="font-weight: bold;">Semana</label>
+                <input type="number" name="numero_semana" min="1" value="1" style="width: 90px;">
+            </div>
+            <div class="campo" style="margin-bottom: 0;">
+                <label style="font-weight: bold;">Tipo de sesión</label>
+                <select name="tipo_de_sesion">
+                    {% for t in tipos_de_sesion %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="campo" style="margin-bottom: 0; flex: 1; min-width: 180px;">
+                <label style="font-weight: bold;">Espacio de impartición</label>
+                <input type="text" name="espacio_de_imparticion" placeholder="Aula física o virtual">
+            </div>
+            <button type="submit" class="boton boton-primario">Agregar</button>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+<div class="tarjeta" style="padding: 0; overflow-x: auto;">
+    <table style="width: 100%;">
+        <thead>
+            <tr>
+                <th style="font-weight: bold; text-align: left; color: #515154">Semana</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Día</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Hora de inicio</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Hora de finalización</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Espacio de impartición</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Tipo de sesión</th>
+                {% if not solo_lectura %}
+                <th style="font-weight: bold; text-align: left; color: #515154">Acciones</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in horarios %}
+            <tr>
+                <td style="text-align: left; color: #1d1d1f;">{{ h.numero_semana }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ h.get_dia_semana_display }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ h.hora_inicio }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ h.hora_fin }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ h.espacio_de_imparticion }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ h.get_tipo_de_sesion_display }}</td>
+                {% if not solo_lectura %}
+                <td style="text-align: left;">
+                    <a href="{% url 'eliminar_horario' h.id %}"
+                       onclick="return confirm('Confirmar acción');"
+                       class="etiqueta-eliminar">Eliminar</a>
+                </td>
+                {% endif %}
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center; color: #86868b; padding: 30px;">
+                    No existen sesiones registradas actualmente
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top: 15px;">
+    <a href="{% url 'listar_paralelos' %}" class="boton boton-secundario">Volver</a>
+</div>
+{% endblock %}

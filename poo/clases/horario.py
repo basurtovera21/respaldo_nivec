@@ -49,3 +49,19 @@ class Horario:
 
         conflicto_horario = (self.hora_inicio < otro_horario.hora_fin) and (self.hora_fin > otro_horario.hora_inicio)
         return conflicto_horario
+    
+    def validar_datos_de_registro(self):
+        errores = {}
+
+        if self.hora_inicio is None or self.hora_fin is None:
+            errores["hora_inicio"] = "Las horas de inicio y finalización son requeridas"
+        elif self.hora_fin <= self.hora_inicio:
+            errores["hora_fin"] = "La hora de finalización debe ser posterior a la hora de inicio"
+
+        if not isinstance(self.numero_semana, int) or self.numero_semana <= 0:
+            errores["numero_semana"] = "El número de semana debe ser un entero mayor a cero"
+
+        if not self.espacio_de_imparticion or not str(self.espacio_de_imparticion).strip():
+            errores["espacio_de_imparticion"] = "El espacio de impartición es requerido"
+
+        return errores

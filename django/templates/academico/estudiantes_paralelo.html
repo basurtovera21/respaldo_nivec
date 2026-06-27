@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ titulo_pagina|default:"NIVEC" }}{% endblock %}
+
+{% block contenido %}
+<style>
+    .tarjeta table th, .tarjeta table td { padding: 12px 24px; white-space: nowrap; }
+</style>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div>
+        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
+        <p style="color: #515154; font-size: 13px; font-weight: bold; margin: 0;">
+            {{ paralelo.periodo_de_nivelacion.periodo }} —
+            {{ paralelo.unidad_curricular.malla_curricular.carrera.nombre }} —
+            {{ paralelo.get_jornada_display }}
+        </p>
+    </div>
+</div>
+
+<div class="tarjeta" style="padding: 0; overflow-x: auto;">
+    <table style="width: 100%;">
+        <thead>
+            <tr>
+                <th style="font-weight: bold; text-align: left; color: #515154">Identificación</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Estudiante</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Registro de cupo</th>
+                {% if not solo_lectura %}
+                <th style="font-weight: bold; text-align: left; color: #515154">Mover</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in matriculas %}
+            <tr>
+                <td style="font-family: monospace; text-align: left; color: #1d1d1f;">{{ m.estudiante.usuario_de_sistema.identificacion }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ m.estudiante.usuario_de_sistema.nombres }} {{ m.estudiante.usuario_de_sistema.apellidos }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ m.estudiante.get_registro_de_cupo_display }}</td>
+                {% if not solo_lectura %}
+                <td style="text-align: left;">
+                    {% if destinos %}
+                    <form method="post" action="{% url 'mover_estudiante' paralelo.id %}" style="display: flex; gap: 8px; align-items: center;">
+                        {% csrf_token %}
+                        <input type="hidden" name="estudiante" value="{{ m.estudiante.id }}">
+                        <select name="paralelo_destino"
+                                style="padding: 6px 10px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 13px; background: white; color: #1d1d1f;">
+                            {% for d in destinos %}
+                                <option value="{{ d.paralelo_id }}" {% if d.lleno %}disabled{% endif %}>
+                                    {{ d.nombre }} ({{ d.ocupacion }}/{{ d.capacidad }}){% if d.lleno %} - lleno{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="boton boton-secundario" style="cursor: pointer;">Mover</button>
+                    </form>
+                    {% else %}
+                    <span style="color: #86868b;">No existen registros actualmente</span>
+                    {% endif %}
+                </td>
+                {% endif %}
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center; color: #86868b; padding: 30px;">
+                    No existen registros actualmente
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top: 15px;">
+    <a href="{% url 'listar_paralelos' %}" class="boton boton-secundario">Volver</a>
+</div>
+{% endblock %}

@@ -455,6 +455,19 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
                 if periodos_chocan.exists():
                     errores["fecha_inicio"] = "La fecha especificada presenta conflicto con un periodo registrado previamente"
                     errores["fecha_fin"] = "La fecha especificada presenta conflicto con un periodo registrado previamente"
+                    anio_seleccionado = cleaned_data.get("anio")
+                    numero_seleccionado = cleaned_data.get("numero_periodo")
+                    if anio_seleccionado and numero_seleccionado and self.universidad:
+                        periodos_duplicados = PeriodoDeNivelacion.objects.filter(
+                            universidad=self.universidad,
+                            anio=anio_seleccionado,
+                            numero_periodo=numero_seleccionado,
+                        )
+                        if self.instance and self.instance.pk:
+                            periodos_duplicados = periodos_duplicados.exclude(pk=self.instance.pk)
+                        if periodos_duplicados.exists():
+                            errores["numero_periodo"] = "Ya existe un Periodo de nivelación registrado (Año-Número de periodo)"
+
             
         if errores:
             raise forms.ValidationError(errores)

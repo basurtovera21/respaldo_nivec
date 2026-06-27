@@ -1,5 +1,4 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse
 import openpyxl
@@ -7,9 +6,9 @@ import openpyxl
 from academico.models import Campus
 from academico.forms import FormularioCampus
 from academico.services import servicio_campus_registrar_masivo_desde_excel
-from usuarios.utils import generar_identificador_siguiente
+from usuarios.utils import generar_identificador_siguiente, requiere_perfil, ROL_DIRECTOR_DAN
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def listar_campus(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -27,7 +26,7 @@ def listar_campus(request):
         "url_volver": "panel_principal"
     })
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def descargar_plantilla_campus(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -45,7 +44,7 @@ def descargar_plantilla_campus(request):
     wb.save(response)
     return response
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def registrar_campus(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     
@@ -98,7 +97,7 @@ def registrar_campus(request):
         "url_plantilla": "descargar_plantilla_campus"
     })
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def modificar_campus(request, campus_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -125,7 +124,7 @@ def modificar_campus(request, campus_id):
         "mostrar_carga_masiva": False
     })
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def eliminar_campus(request, campus_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:

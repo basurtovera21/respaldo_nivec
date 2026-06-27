@@ -61,7 +61,7 @@ class Docente(UsuarioAcademico, IAsignableAHorario):
 
     def visualizar_carga_academica(self):
         horas_disponibles = self.carga_horaria_maxima - self._carga_horaria_actual
-        especialidades = ", ".join(self._especialidades) if self._especialidades else "No existen registros"
+        especialidades = ", ".join(self._especialidades) if self._especialidades else "No existen registros actualmente"
         
         return {
             "Docente": f"{self.nombres} {self.apellidos}",
@@ -83,3 +83,50 @@ class Docente(UsuarioAcademico, IAsignableAHorario):
             if horario_asignado.verificar_conflicto_horario(otro_horario):
                 return False
         return True
+
+    def establecer_estado_de_vinculacion(self, estado: EstadoDeVinculacion):
+        self._estado_de_vinculacion = estado
+
+    def definir_especialidades(self, especialidades):
+        self._especialidades = list(especialidades or [])
+
+    def registrar_carga_actual(self, horas: float):
+        self._carga_horaria_actual = round(float(horas or 0), 2)
+
+    def agregar_horario_ocupado(self, horario: Horario):
+        self._disponibilidad_semanal.append(horario)
+
+    def esta_activo(self):
+        return self._estado_de_vinculacion == EstadoDeVinculacion.ACTIVO
+
+    def tiene_especialidad_para(self, areas_de_unidad):
+        if not areas_de_unidad:
+            return True
+        especialidades_normalizadas = {
+            str(esp).strip().lower() for esp in self._especialidades
+        }
+        return any(
+            str(area).strip().lower() in especialidades_normalizadas
+            for area in areas_de_unidad
+        )
+
+    def validar_asignacion_a_paralelo(self, paralelo, horas_de_la_unidad, areas_de_unidad):
+        if not self.esta_activo():
+            return {"ok": False, "motivo": "inactivo"}
+
+        for horario in paralelo.horarios:
+            if not self.verificar_disponibilidad_horaria(horario):
+                return {"ok": False, "motivo": "conflicto", "horario_en_conflicto": horario}
+
+        horas_nuevas = round(float(horas_de_la_unidad or 0), 2)
+        if self._carga_horaria_actual + horas_nuevas > self.carga_horaria_maxima:
+            return {
+                "ok": False,
+                "motivo": "carga",
+                "carga_actual": self._carga_horaria_actual,
+                "horas_nuevas": horas_nuevas,
+                "carga_maxima": self.carga_horaria_maxima,
+            }
+
+        advertencia = None if self.tiene_especialidad_para(areas_de_unidad) else "especialidad"
+        return {"ok": True, "motivo": "", "advertencia": advertencia}
