@@ -18,11 +18,13 @@
         <td style="font-family: monospace; text-align: left;">{{ admin.identificador_administrativo }}</td>
         <td style="text-align: left;">{{ admin.perfil_administrativo }}</td>
         <td style="text-align: left;">
-            {% if admin.perfil_administrativo != "Director de dirección de admisión y nivelación" %}
+            {% if not solo_lectura and admin.perfil_administrativo != "Director de dirección de admisión y nivelación" %}
                 <a href="{% url 'modificar_administrativo' admin.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
                 <a href="{% url 'eliminar_administrativo' admin.id %}" 
                    onclick="return confirm('Confirmar acción');"
                    class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+            {% else %}
+                <span style="color: #86868b;">—</span>
             {% endif %}
         </td>
     </tr>

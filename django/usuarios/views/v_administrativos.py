@@ -10,7 +10,10 @@ from usuarios.forms import (
     FormularioUsuarioDeSistema, FormularioModificarUsuarioDeSistema, 
     FormularioRegistrarPerfilAdministrativo, FormularioModificarPerfilAdministrativo, FormularioDatosDocenteUA
 )
-from usuarios.utils import generar_identificador_siguiente
+from usuarios.utils import (
+    generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura,
+    ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
+)
 
 from poo.clases.enums.estado_de_usuario import EstadoDeUsuario as EnumEstadoDeUsuario
 from poo.clases.enums.perfil_administrativo import PerfilAdministrativo as EnumPerfilAdministrativo
@@ -19,12 +22,13 @@ from poo.clases.usuarios.usuario_de_sistema import UsuarioDeSistema as UsuarioDe
 
 from usuarios.services import _crear_usuario_administrativo, servicio_administrativo_registrar_masivo_desde_excel
 
+ROLES_USUARIOS_VEN = (ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
 
-@login_required
+@requiere_perfil(*ROLES_USUARIOS_VEN)
 def listar_administrativos(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     administrativos = PerfilAdministrativo.objects.filter(
@@ -42,10 +46,11 @@ def listar_administrativos(request):
         "titulo": "Usuarios administrativos",
         "url_registrar": "registrar_administrativo",
         "texto_registrar": "Registrar",
-        "url_volver": "panel_principal"
+        "url_volver": "panel_principal",
+        "solo_lectura": usuario_es_solo_lectura(request.user),
     })
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def descargar_plantilla_administrativo(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -66,7 +71,7 @@ def descargar_plantilla_administrativo(request):
     wb.save(response)
     return response
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def registrar_administrativo(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -135,8 +140,7 @@ def registrar_administrativo(request):
         "url_plantilla": "descargar_plantilla_administrativo"
     })
 
-
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def modificar_administrativo(request, admin_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -148,7 +152,7 @@ def modificar_administrativo(request, admin_id):
     
     admin_poo = _crear_usuario_administrativo(perfil)
     if not admin_poo.puede_ser_modificado_o_eliminado():
-        messages.error(request, "El usuario administrativo no puede ser modificado")
+        messages.error(request, "El Usuario administrativo no puede ser modificado")
         return redirect("listar_administrativos")
 
     perfil_docente = getattr(usuario, 'perfil_docente', None)
@@ -203,7 +207,7 @@ def modificar_administrativo(request, admin_id):
     else:
         url_cancelar = "listar_administrativos"
         titulo_pagina = "Administrativo - NIVEC"
-        titulo_seccion = "Modificar usuario administrativo"
+        titulo_seccion = "Modificar Usuario administrativo"
 
     contexto = {
         "form_usuario": formulario_usuario,
@@ -222,11 +226,11 @@ def modificar_administrativo(request, admin_id):
 
     return render(request, "usuarios/formulario_administrativo.html", contexto)
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def eliminar_administrativo(request, admin_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     perfil = get_object_or_404(PerfilAdministrativo, pk=admin_id, universidad=universidad_usuario)

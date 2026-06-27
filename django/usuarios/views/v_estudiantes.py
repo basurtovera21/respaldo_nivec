@@ -1,22 +1,26 @@
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 import openpyxl
 
 from usuarios.models import UsuarioDeSistema, PerfilEstudiante
 from usuarios.forms import FormularioUsuarioDeSistema, FormularioPerfilEstudiante
-from usuarios.utils import generar_identificador_siguiente
+from usuarios.utils import (
+    generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura,
+    ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
+)
 
-# Importamos el servicio y el puente (factory)
 from usuarios.services import servicio_estudiante_registrar_masivo_desde_excel, _crear_estudiante
 
 from poo.clases.enums.estado_de_usuario import EstadoDeUsuario as EnumEstadoDeUsuario
 from poo.clases.enums.estado_de_matricula import EstadoDeMatricula as EnumEstadoDeMatricula
 from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
 
-@login_required
+ROLES_USUARIOS_VEN = (ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
+
+@requiere_perfil(*ROLES_USUARIOS_VEN)
 def listar_estudiantes(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
 
@@ -34,10 +38,11 @@ def listar_estudiantes(request):
         "titulo": "Estudiantes",
         "url_registrar": "registrar_estudiante",
         "texto_registrar": "Registrar",
-        "url_volver": "panel_principal"
+        "url_volver": "panel_principal",
+        "solo_lectura": usuario_es_solo_lectura(request.user),
     })
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def descargar_plantilla_estudiante(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -60,7 +65,7 @@ def descargar_plantilla_estudiante(request):
     wb.save(response)
     return response
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def registrar_estudiante(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -115,7 +120,7 @@ def registrar_estudiante(request):
         "url_plantilla": "descargar_plantilla_estudiante"
     })
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def modificar_estudiante(request, estudiante_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -159,8 +164,7 @@ def modificar_estudiante(request, estudiante_id):
         "mostrar_carga_masiva": False
     })
 
-
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def eliminar_estudiante(request, estudiante_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -175,7 +179,7 @@ def eliminar_estudiante(request, estudiante_id):
     messages.success(request, "El Estudiante ha sido eliminado correctamente")
     return redirect("listar_estudiantes")
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def formalizar_matricula(request, estudiante_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -193,9 +197,17 @@ def formalizar_matricula(request, estudiante_id):
     messages.success(request, "La matrícula del Estudiante ha sido formalizada correctamente")
     return redirect("listar_estudiantes")
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def anular_matricula(request, estudiante_id):
-    est_db = get_object_or_404(PerfilEstudiante, id=estudiante_id)
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    est_db = get_object_or_404(
+        PerfilEstudiante, id=estudiante_id,
+        carrera_registrada__campus__universidad=universidad_usuario
+    )
 
     est_poo = _crear_estudiante(est_db)
     CentroDeOperacionAcademica().anular_matricula(est_poo)
@@ -207,9 +219,17 @@ def anular_matricula(request, estudiante_id):
     messages.success(request, "La matrícula del Estudiante ha sido anulada correctamente")
     return redirect("listar_estudiantes")
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def solicitar_retiro(request, estudiante_id):
-    est_db = get_object_or_404(PerfilEstudiante, id=estudiante_id)
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    est_db = get_object_or_404(
+        PerfilEstudiante, id=estudiante_id,
+        carrera_registrada__campus__universidad=universidad_usuario
+    )
     
     est_poo = _crear_estudiante(est_db)
     if CentroDeOperacionAcademica().solicitar_retiro(est_poo):

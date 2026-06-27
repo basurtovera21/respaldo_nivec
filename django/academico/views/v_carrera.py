@@ -7,9 +7,9 @@ import openpyxl
 from academico.models import Carrera, Campus
 from academico.forms import FormularioCarrera
 from academico.services import servicio_carrera_registrar_masivo_desde_excel
-from usuarios.utils import generar_identificador_siguiente, requiere_perfil, ROL_DIRECTOR_DAN
+from usuarios.utils import generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
 def listar_carreras(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -28,7 +28,8 @@ def listar_carreras(request):
         "titulo": "Carreras",
         "url_registrar": "registrar_carrera",
         "texto_registrar": "Registrar",
-        "url_volver": "panel_principal"
+        "url_volver": "panel_principal",
+        "solo_lectura": usuario_es_solo_lectura(request.user),
     })
 
 @requiere_perfil(ROL_DIRECTOR_DAN)

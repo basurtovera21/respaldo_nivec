@@ -7,13 +7,13 @@ import openpyxl
 from academico.models import Campus
 from academico.forms import FormularioCampus
 from academico.services import servicio_campus_registrar_masivo_desde_excel
-from usuarios.utils import generar_identificador_siguiente, requiere_perfil, ROL_DIRECTOR_DAN
+from usuarios.utils import generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
 def listar_campus(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     campus = Campus.objects.filter(universidad=universidad_usuario)
@@ -24,9 +24,10 @@ def listar_campus(request):
         "titulo": "Campus",
         "url_registrar": "registrar_campus",
         "texto_registrar": "Registrar",
-        "url_volver": "panel_principal"
+        "url_volver": "panel_principal",
+        "solo_lectura": usuario_es_solo_lectura(request.user),
     })
-
+    
 @requiere_perfil(ROL_DIRECTOR_DAN)
 def descargar_plantilla_campus(request):
     wb = openpyxl.Workbook()

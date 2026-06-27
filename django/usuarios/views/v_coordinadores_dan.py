@@ -7,7 +7,10 @@ import openpyxl
 
 from usuarios.models import UsuarioDeSistema, PerfilAdministrativo
 from usuarios.forms import FormularioUsuarioDeSistema, FormularioRegistrarCoordinadorDAN
-from usuarios.utils import generar_identificador_siguiente
+from usuarios.utils import (
+    generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura,
+    ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
+)
 
 from poo.clases.enums.estado_de_usuario import EstadoDeUsuario as EnumEstadoDeUsuario
 from poo.clases.enums.perfil_administrativo import PerfilAdministrativo as EnumPerfilAdministrativo
@@ -15,7 +18,9 @@ from poo.clases.usuarios.usuario_administrativo import UsuarioAdministrativo as 
 
 from usuarios.services import servicio_coordinador_dan_registrar_masivo_desde_excel
 
-@login_required
+ROLES_USUARIOS_VEN = (ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
+
+@requiere_perfil(*ROLES_USUARIOS_VEN)
 def listar_coordinadores_dan(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -33,10 +38,11 @@ def listar_coordinadores_dan(request):
         "titulo": "Coordinadores de dirección de admisión y nivelación",
         "url_registrar": "registrar_coordinador_dan",
         "texto_registrar": "Registrar",
-        "url_volver": "panel_director_dan"
+        "url_volver": "panel_director_dan",
+        "solo_lectura": usuario_es_solo_lectura(request.user),
     })
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def descargar_plantilla_coordinador_dan(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -59,7 +65,7 @@ def descargar_plantilla_coordinador_dan(request):
     wb.save(response)
     return response
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def registrar_coordinador_dan(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -114,7 +120,7 @@ def registrar_coordinador_dan(request):
                     )
                     perfil.save()
                 
-                messages.success(request, "El coordinador de dirección de admisión y nivelación ha sido registrado correctamente")
+                messages.success(request, "El Coordinador de dirección de admisión y nivelación ha sido registrado correctamente")
                 return redirect("listar_coordinadores_dan")
             
     else:

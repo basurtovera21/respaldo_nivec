@@ -6,10 +6,9 @@ from academico.models import PeriodoDeNivelacion
 from academico.forms import FormularioPeriodoDeNivelacion
 from academico import services
 
-# Utilidades específicas
-from usuarios.utils import generar_identificador_siguiente, requiere_perfil, ROL_DIRECTOR_DAN
+from usuarios.utils import generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
 def listar_periodos(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -24,7 +23,8 @@ def listar_periodos(request):
         "titulo": "Periodos de nivelación",
         "url_registrar": "registrar_periodo",
         "texto_registrar": "Registrar",
-        "url_volver": "panel_principal"
+        "url_volver": "panel_principal",
+        "solo_lectura": usuario_es_solo_lectura(request.user),
     })
 
 @requiere_perfil(ROL_DIRECTOR_DAN)

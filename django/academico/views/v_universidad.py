@@ -1,9 +1,9 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from usuarios.utils import requiere_perfil, ROL_DIRECTOR_DAN
+from usuarios.utils import requiere_perfil, usuario_es_solo_lectura, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR
 from academico.forms import FormularioUniversidad
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
 def detalle_universidad(request):
     universidad = request.user.perfil_administrativo.universidad
     if not universidad:
@@ -11,7 +11,8 @@ def detalle_universidad(request):
         
     return render(request, "entidades/detalle_universidad.html", {
         "universidad": universidad,
-        "titulo_pagina": "Universidad - NIVEC"
+        "titulo_pagina": "Universidad - NIVEC",
+        "solo_lectura": usuario_es_solo_lectura(request.user),
     })
 
 @requiere_perfil(ROL_DIRECTOR_DAN)
@@ -35,7 +36,7 @@ def registrar_universidad(request):
     return render(request, "entidades/formulario_universidad.html", {
         "formulario": formulario_universidad,
         "titulo_pagina": "Universidad - NIVEC",
-        "titulo": "Registrar universidad",
+        "titulo": "Registrar Universidad",
         "boton_texto": "Registrar",
         "url_cancelar": "panel_principal",
         "mostrar_carga_masiva": False
@@ -60,7 +61,7 @@ def modificar_universidad(request):
     return render(request, "entidades/formulario_universidad.html", {
         "formulario": formulario,
         "titulo_pagina": "Universidad - NIVEC",
-        "titulo": "Modificar universidad",
+        "titulo": "Modificar Universidad",
         "boton_texto": "Modificar",
         "url_cancelar": "detalle_universidad",
         "mostrar_carga_masiva": False

@@ -16,10 +16,14 @@
         <td style="text-align: left;">{{ c.direccion_fisica }}</td>
         <td style="text-align: left;">{{ c.provincia }}</td>
         <td style="text-align: left;">
+            {% if not solo_lectura %}
             <a href="{% url 'modificar_campus' c.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
             <a href="{% url 'eliminar_campus' c.id %}" 
                onclick="return confirm('Confirmar acción');"
                class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+            {% else %}
+            <span style="color: #86868b;">—</span>
+            {% endif %}
         </td>
     </tr>
     {% empty %}

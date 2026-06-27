@@ -18,14 +18,18 @@
         <td style="font-family: monospace; text-align: left;">{{ coordinador.usuario_de_sistema.identificacion }}</td>
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.apellidos }} {{ coordinador.usuario_de_sistema.nombres }}</td>
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.correo_institucional }}</td>
-        <td style="font-family: monospace; text-align: left;">{{ coordinador.identificador_coordinador_ua }}</td>
+        <td style="font-family: monospace; text-align: left;">{{ coordinador.identificador_coordinador_ua|default:coordinador.identificador_administrativo|default:"—" }}</td>
         <td style="text-align: left;">{{ coordinador.unidad_academica|default:"-" }}</td>
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.tipo_de_vinculacion|default:"-" }}</td>
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.tiempo_de_dedicacion|default:"-" }}</td>
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.carga_horaria_maxima|default:"0" }} horas</td>
         <td style="text-align: left;">
+            {% if not solo_lectura %}
             <a href="{% url 'modificar_administrativo' coordinador.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
             <a href="{% url 'eliminar_administrativo' coordinador.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+            {% else %}
+            <span style="color: #86868b;">—</span>
+            {% endif %}
         </td>
     </tr>
     {% empty %}
