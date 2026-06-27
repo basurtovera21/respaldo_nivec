@@ -9,17 +9,17 @@
 {% endblock %}
 
 {% block filtros %}
-<div style="margin-bottom: 16px;">
-    <form method="get" id="form-filtro-periodo">
-        <label style="font-weight: bold; font-size: 13px; color: #515154; margin-right: 8px;">Periodo de nivelación</label>
-        <select name="periodo" class="campo-select" style="max-width: 320px;" onchange="document.getElementById('form-filtro-periodo').submit();">
+<form method="get" id="form-filtro-periodo">
+    <div class="campo" style="max-width: 320px; margin-bottom: 20px;">
+        <label>Periodo de nivelación</label>
+        <select name="periodo" onchange="document.getElementById('form-filtro-periodo').submit();">
             <option value="">Todos los periodos</option>
             {% for p in periodos %}
             <option value="{{ p.id }}" {% if periodo_seleccionado and periodo_seleccionado.id == p.id %}selected{% endif %}>{{ p.anio }} - Periodo {{ p.numero_periodo }}</option>
             {% endfor %}
         </select>
-    </form>
-</div>
+    </div>
+</form>
 {% endblock %}
 
 {% block cabeceras_tabla %}
