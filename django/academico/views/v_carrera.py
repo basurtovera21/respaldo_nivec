@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.db.models import ProtectedError
 from django.http import HttpResponse
 import openpyxl
 
@@ -12,11 +13,11 @@ from usuarios.utils import generar_identificador_siguiente, requiere_perfil, ROL
 def listar_carreras(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     if not Campus.objects.filter(universidad=universidad_usuario).exists():
-        messages.warning(request, "No existen registros de campus actualmente")
+        messages.warning(request, "No existen registros de Campus actualmente")
         return redirect("panel_principal")
 
     carreras = Carrera.objects.filter(campus__universidad=universidad_usuario).select_related("campus")
@@ -37,8 +38,8 @@ def descargar_plantilla_carrera(request):
     ws.title = "Carreras"
 
     cabeceras = [
-        "Código de campus (CAM...)", 
-        "Nombre de la carrera", 
+        "Código de Campus (CAM...)", 
+        "Nombre de la Carrera", 
         "Modalidad (Virtual, Presencial, Semipresencial)",
         "Facultad", 
         "Vigencia SNIESE (AAAA-MM-DD)"
@@ -57,12 +58,12 @@ def descargar_plantilla_carrera(request):
 def registrar_carrera(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     campus_existente = Campus.objects.filter(universidad=universidad_usuario)
     if not campus_existente.exists():
-        messages.warning(request, "No hay registros de campus actualmente")
+        messages.warning(request, "No hay registros de Campus actualmente")
         return redirect("panel_principal")
 
     if request.method == "POST":
@@ -71,7 +72,7 @@ def registrar_carrera(request):
             
             if resultado["error"]: messages.error(request, resultado["error"])
             for adv in resultado["advertencias"]: messages.warning(request, adv)
-            if resultado["exitosos"] > 0: messages.success(request, f"{resultado['exitosos']} carreras han sido registradas correctamente")
+            if resultado["exitosos"] > 0: messages.success(request, f"{resultado['exitosos']} Carreras han sido registradas correctamente")
             return redirect("listar_carreras")
 
         else:
@@ -83,7 +84,7 @@ def registrar_carrera(request):
                 nueva_carrera = formulario.save(commit=False)
                 nueva_carrera.codigo_de_carrera = generar_identificador_siguiente(Carrera, 'CAR', 'codigo_de_carrera')
                 nueva_carrera.save()
-                messages.success(request, "La carrera ha sido registrada correctamente")
+                messages.success(request, "La Carrera ha sido registrada correctamente")
                 return redirect("listar_carreras")
     else:
         formulario = FormularioCarrera()
@@ -92,7 +93,7 @@ def registrar_carrera(request):
     return render(request, "entidades/formulario_carrera.html", {
         "formulario": formulario,
         "titulo_pagina": "Carrera - NIVEC",
-        "titulo": "Registrar carrera",
+        "titulo": "Registrar Carrera",
         "boton_texto": "Registrar",
         "url_cancelar": "listar_carreras",
         "mostrar_carga_masiva": True,
@@ -103,7 +104,7 @@ def registrar_carrera(request):
 def modificar_carrera(request, carrera_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     carrera = get_object_or_404(Carrera, id=carrera_id, campus__universidad=universidad_usuario)
@@ -112,7 +113,7 @@ def modificar_carrera(request, carrera_id):
         formulario = FormularioCarrera(request.POST, instance=carrera)
         if formulario.is_valid():
             formulario.save()
-            messages.success(request, "La carrera ha sido modificada correctamente")
+            messages.success(request, "La Carrera ha sido modificada correctamente")
             return redirect("listar_carreras")
     else:
         formulario = FormularioCarrera(instance=carrera)
@@ -121,7 +122,7 @@ def modificar_carrera(request, carrera_id):
     return render(request, "entidades/formulario_carrera.html", {
         "formulario": formulario,
         "titulo_pagina": "Carrera - NIVEC",
-        "titulo": "Modificar carrera",
+        "titulo": "Modificar Carrera",
         "boton_texto": "Modificar",
         "url_cancelar": "listar_carreras",
         "mostrar_carga_masiva": False
@@ -135,6 +136,12 @@ def eliminar_carrera(request, carrera_id):
         return redirect("panel_principal")
 
     carrera = get_object_or_404(Carrera, id=carrera_id, campus__universidad=universidad_usuario)
-    carrera.delete()
-    messages.success(request, "La carrera ha sido eliminada correctamente")
+    try:
+        carrera.delete()
+        messages.success(request, "La Carrera ha sido eliminada correctamente")
+    except ProtectedError:
+        messages.error(
+            request,
+            "No se ha podido eliminar la Carrera (registros asociados)"
+        )
     return redirect("listar_carreras")

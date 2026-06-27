@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.db.models import ProtectedError
 from django.http import HttpResponse
 import openpyxl
 
@@ -32,7 +33,7 @@ def descargar_plantilla_campus(request):
     ws = wb.active
     ws.title = "Campus"
 
-    cabeceras = ["Nombre del campus", "Dirección física", "Provincia"]
+    cabeceras = ["Nombre del Campus", "Dirección física", "Provincia"]
     ws.append(cabeceras)
 
     ws.column_dimensions['A'].width = 40
@@ -49,7 +50,7 @@ def registrar_campus(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     if request.method == "POST":
@@ -68,12 +69,12 @@ def registrar_campus(request):
                 messages.warning(request, adv)
                 
             if resultado["exitosos"] > 0:
-                messages.success(request, f"{resultado['exitosos']} campus han sido registrados correctamente")
+                messages.success(request, f"{resultado['exitosos']} Campus han sido registrados correctamente")
             
             return redirect("listar_campus")
 
         else:
-            formulario = FormularioCampus(request.POST)
+            formulario = FormularioCampus(request.POST, universidad=universidad_usuario)
             if 'codigo_de_campus' in formulario.fields:
                 formulario.fields['codigo_de_campus'].required = False
 
@@ -82,15 +83,15 @@ def registrar_campus(request):
                 nuevo_campus.universidad = universidad_usuario
                 nuevo_campus.codigo_de_campus = generar_identificador_siguiente(Campus, 'CAM', 'codigo_de_campus')
                 nuevo_campus.save()
-                messages.success(request, "El campus ha sido registrado correctamente")
+                messages.success(request, "El Campus ha sido registrado correctamente")
                 return redirect("listar_campus")
     else:
-        formulario = FormularioCampus()
+        formulario = FormularioCampus(universidad=universidad_usuario)
         
     return render(request, "entidades/formulario_campus.html", {
         "formulario": formulario,
         "titulo_pagina": "Campus - NIVEC",
-        "titulo": "Registrar campus",
+        "titulo": "Registrar Campus",
         "boton_texto": "Registrar",
         "url_cancelar": "listar_campus",
         "mostrar_carga_masiva": True,
@@ -101,24 +102,24 @@ def registrar_campus(request):
 def modificar_campus(request, campus_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     campus = get_object_or_404(Campus, id=campus_id, universidad=universidad_usuario)
 
     if request.method == "POST":
-        formulario = FormularioCampus(request.POST, instance=campus)
+        formulario = FormularioCampus(request.POST, instance=campus, universidad=universidad_usuario)
         if formulario.is_valid():
             formulario.save()
-            messages.success(request, "El campus ha sido modificado correctamente")
+            messages.success(request, "El Campus ha sido modificado correctamente")
             return redirect("listar_campus")
     else:
-        formulario = FormularioCampus(instance=campus)
+        formulario = FormularioCampus(instance=campus, universidad=universidad_usuario)
         
     return render(request, "entidades/formulario_campus.html", {
         "formulario": formulario,
         "titulo_pagina": "Campus - NIVEC",
-        "titulo": "Modificar campus",
+        "titulo": "Modificar Campus",
         "boton_texto": "Modificar",
         "url_cancelar": "listar_campus",
         "mostrar_carga_masiva": False
@@ -128,11 +129,16 @@ def modificar_campus(request, campus_id):
 def eliminar_campus(request, campus_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     campus = get_object_or_404(Campus, id=campus_id, universidad=universidad_usuario)
-    campus.delete()
-    
-    messages.success(request, "El campus ha sido eliminado correctamente")
+    try:
+        campus.delete()
+        messages.success(request, "El Campus ha sido eliminado correctamente")
+    except ProtectedError:
+        messages.error(
+            request,
+            "No se ha podido eliminar el Campus (registros asociados)"
+        )
     return redirect("listar_campus")

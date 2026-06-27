@@ -1,19 +1,19 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import ProtectedError
 
 from academico.models import PeriodoDeNivelacion
 from academico.forms import FormularioPeriodoDeNivelacion
 from academico import services
 
 # Utilidades específicas
-from usuarios.utils import generar_identificador_siguiente
+from usuarios.utils import generar_identificador_siguiente, requiere_perfil, ROL_DIRECTOR_DAN
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def listar_periodos(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario).order_by("-anio", "-numero_periodo")
@@ -27,11 +27,11 @@ def listar_periodos(request):
         "url_volver": "panel_principal"
     })
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def registrar_periodo(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente.")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente.")
         return redirect("panel_principal")
 
     if request.method == "POST":
@@ -43,7 +43,7 @@ def registrar_periodo(request):
             nuevo_periodo.periodo = f"{nuevo_periodo.anio}-{nuevo_periodo.numero_periodo}"
             nuevo_periodo.save()
             
-            messages.success(request, "El periodo de nivelación ha sido registrado correctamente")
+            messages.success(request, "El Periodo de nivelación ha sido registrado correctamente")
             return redirect("listar_periodos")
     else:
         formulario = FormularioPeriodoDeNivelacion(universidad=universidad_usuario)
@@ -51,17 +51,17 @@ def registrar_periodo(request):
     return render(request, "academico/formulario_periodo.html", {
         "formulario": formulario,
         "titulo_pagina": "Periodo de nivelación - NIVEC",
-        "titulo": "Registrar periodo de nivelación",
+        "titulo": "Registrar Periodo de nivelación",
         "boton_texto": "Registrar",
         "url_cancelar": "listar_periodos",
         "mostrar_carga_masiva": False,
     })
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def modificar_periodo(request, periodo_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     periodo = get_object_or_404(PeriodoDeNivelacion, id=periodo_id, universidad=universidad_usuario)
@@ -72,7 +72,7 @@ def modificar_periodo(request, periodo_id):
             periodo_modificado = formulario.save(commit=False)
             periodo_modificado.periodo = f"{periodo_modificado.anio}-{periodo_modificado.numero_periodo}"
             periodo_modificado.save()
-            messages.success(request, "El periodo de nivelación ha sido modificado correctamente")
+            messages.success(request, "El Periodo de nivelación ha sido modificado correctamente")
             return redirect("listar_periodos")
     else:
         formulario = FormularioPeriodoDeNivelacion(instance=periodo, universidad=universidad_usuario)
@@ -80,43 +80,49 @@ def modificar_periodo(request, periodo_id):
     return render(request, "academico/formulario_periodo.html", {
         "formulario": formulario,
         "titulo_pagina": "Periodo de nivelación - NIVEC",
-        "titulo": "Modificar periodo de nivelación", 
+        "titulo": "Modificar Periodo de nivelación", 
         "boton_texto": "Modificar",
         "url_cancelar": "listar_periodos",
         "mostrar_carga_masiva": False,
         "periodo": periodo
     })
     
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def eliminar_periodo(request, periodo_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     periodo = get_object_or_404(PeriodoDeNivelacion, id=periodo_id, universidad=universidad_usuario)
-    periodo.delete()
-    messages.success(request, "El periodo de nivelación ha sido eliminado correctamente")
+    try:
+        periodo.delete()
+        messages.success(request, "El Periodo de nivelación ha sido eliminado correctamente")
+    except ProtectedError:
+        messages.error(
+            request,
+            "No ha podido eliminar el Periodo de nivelación (registros asociados)"
+        )
     return redirect("listar_periodos")
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def iniciar_periodo(request, periodo_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     periodo_db = get_object_or_404(PeriodoDeNivelacion, pk=periodo_id, universidad=universidad_usuario)
     if services.servicio_iniciar_periodo_de_nivelacion(periodo_db):
-        messages.success(request, f"El periodo de nivelación {periodo_db.periodo} ha iniciado")
+        messages.success(request, f"El Periodo de nivelación {periodo_db.periodo} ha iniciado")
     else:
-        messages.error(request, "No se ha podido iniciar el periodo de nivelación")
+        messages.error(request, "No se ha podido iniciar el Periodo de nivelación")
         
     return redirect("listar_periodos")
 
-@login_required
+@requiere_perfil(ROL_DIRECTOR_DAN)
 def finalizar_periodo(request, periodo_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     periodo_db = get_object_or_404(PeriodoDeNivelacion, pk=periodo_id, universidad=universidad_usuario)
     if services.servicio_finalizar_periodo_de_nivelacion(periodo_db):
-        messages.success(request, f"El periodo de nivelación {periodo_db.periodo} ha finalizado")
+        messages.success(request, f"El Periodo de nivelación {periodo_db.periodo} ha finalizado")
     else:
-        messages.error(request, "No se ha podido finalizar el periodo de nivelación")
+        messages.error(request, "No se ha podido finalizar el Periodo de nivelación")
         
     return redirect("listar_periodos")

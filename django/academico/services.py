@@ -57,11 +57,20 @@ def obtener_enum_flexible(enum_class, valor_sucio):
 
 #Campus
 def servicio_campus_registrar_masivo_desde_excel(archivo, universidad_usuario):
+    from poo.clases.campus import Campus as CampusBase
+
     resultado = {"exitosos": 0, "advertencias": [], "error": None}
     try:
         wb = openpyxl.load_workbook(archivo)
         ws = wb.active
-        
+
+        nombres_registrados = {
+            CampusBase.normalizar_nombre(nombre_existente)
+            for nombre_existente in Campus.objects.filter(
+                universidad=universidad_usuario
+            ).values_list("nombre", flat=True)
+        }
+
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
                 nombre, direccion, provincia = fila[0], fila[1], fila[2]
@@ -69,7 +78,14 @@ def servicio_campus_registrar_masivo_desde_excel(archivo, universidad_usuario):
                 if not nombre or not direccion or not provincia:
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido por falta de información")
                     continue
-                
+
+                nombre_normalizado = CampusBase.normalizar_nombre(nombre)
+                if nombre_normalizado in nombres_registrados:
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido (el Campus ya existe)"
+                    )
+                    continue
+
                 with transaction.atomic():
                     Campus.objects.create(
                         universidad=universidad_usuario,
@@ -79,13 +95,15 @@ def servicio_campus_registrar_masivo_desde_excel(archivo, universidad_usuario):
                         provincia=provincia
                     )
                     resultado["exitosos"] += 1
+                    nombres_registrados.add(nombre_normalizado)
             except Exception as e:
-                resultado["advertencias"].append(f"Fila {numero_fila} omitida ({str(e)})")
+                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido({str(e)})")
                 
     except Exception:
         resultado["error"] = "Ha ocurrido un error al procesar el documento"
         
     return resultado
+
 
 #Carrera
 def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):

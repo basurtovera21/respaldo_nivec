@@ -50,13 +50,14 @@ class FormularioCampus(forms.ModelForm):
         model = Campus
         fields = ("codigo_de_campus", "nombre", "direccion_fisica", "provincia")
         labels = {
-            "codigo_de_campus": "Código de campus",
+            "codigo_de_campus": "Código de Campus",
             "nombre": "Nombre",
             "direccion_fisica": "Dirección física",
             "provincia": "Provincia",
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, universidad=None, **kwargs):
+        self.universidad = universidad
         super().__init__(*args, **kwargs)
         self.fields['nombre'].required = False
         self.fields['direccion_fisica'].required = False
@@ -71,18 +72,31 @@ class FormularioCampus(forms.ModelForm):
 
     def clean(self):
         from poo.clases.campus import Campus as CampusBase
+
         cleaned_data = super().clean()
+
         campus_poo = CampusBase(
             codigo_de_campus=cleaned_data.get("codigo_de_campus", ""),
             nombre=cleaned_data.get("nombre", ""),
             direccion_fisica=cleaned_data.get("direccion_fisica", ""),
             provincia=cleaned_data.get("provincia", ""),
         )
+
         errores = campus_poo.validar_datos_de_registro()
         if errores:
             raise forms.ValidationError(errores)
-        return cleaned_data
 
+        nombre = (cleaned_data.get("nombre") or "").strip()
+        if nombre and self.universidad is not None:
+            existentes = Campus.objects.filter(universidad=self.universidad, nombre__iexact=nombre)
+            if self.instance and self.instance.pk:
+                existentes = existentes.exclude(pk=self.instance.pk)
+            if existentes.exists():
+                raise forms.ValidationError(
+                    {"El Campus ya ha sido registrado"}
+                )
+
+        return cleaned_data
 
 
 class FormularioCarrera(forms.ModelForm):
@@ -91,7 +105,7 @@ class FormularioCarrera(forms.ModelForm):
         fields = ("campus", "codigo_de_carrera", "nombre", "modalidad", "facultad", "vigencia_sniese")
         labels = {
             "campus": "Campus registrado",
-            "codigo_de_carrera": "Código de carrera",
+            "codigo_de_carrera": "Código de Carrera",
             "nombre": "Nombre",
             "modalidad": "Modalidad",
             "facultad": "Facultad",
@@ -164,11 +178,11 @@ class FormularioMallaCurricular(forms.ModelForm):
         )
         labels = {
             "carrera": "Carrera registrada",
-            "codigo_de_malla": "Código de malla curricular",
+            "codigo_de_malla": "Código de Malla curricular",
             "nombre": "Nombre",
             "area_de_conocimiento": "Área de conocimiento",
             "duracion_semanas": "Duración (en semanas)",
-            "version_de_malla": "Versión de malla curricular",
+            "version_de_malla": "Versión de Malla curricular",
             "modalidad": "Modalidad",
         }
         widgets = {
@@ -234,7 +248,7 @@ class FormularioUnidadCurricular(forms.ModelForm):
         )
         labels = {
             "malla_curricular": "Malla curricular registrada",
-            "codigo_de_unidad": "Código de unidad curricular",
+            "codigo_de_unidad": "Código de Unidad curricular",
             "nombre": "Nombre",
             "horas_totales": "Horas totales",
             "horas_sincronicas": "Horas sincrónicas",
@@ -339,9 +353,9 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
             "fecha_inicio", "fecha_fin", "modalidad", "estado"
         )
         labels = {
-            "codigo_periodo": "Código de periodo",
+            "codigo_periodo": "Código de Periodo",
             "anio": "Año",
-            "numero_periodo": "Número de periodo",
+            "numero_periodo": "Número de Periodo",
             "fecha_inicio": "Fecha de inicio",
             "fecha_fin": "Fecha de finalización",
             "modalidad": "Modalidad",
@@ -492,7 +506,7 @@ class FormularioParalelo(forms.ModelForm):
         labels = {
             "periodo_de_nivelacion": "Periodo de nivelación registrado",
             "unidad_curricular": "Unidad curricular",
-            "codigo_de_paralelo": "Código de paralelo",
+            "codigo_de_paralelo": "Código de Paralelo",
             "nombre": "Nombre",
             "jornada": "Jornada",
             "modalidad": "Modalidad",
@@ -540,7 +554,7 @@ class FormularioParalelo(forms.ModelForm):
             enum_jornada = Jornada(cleaned_data.get("jornada"))
             enum_modalidad = Modalidad(cleaned_data.get("modalidad"))
         except ValueError:
-            raise forms.ValidationError("Jornada o modalidad no válida")
+            raise forms.ValidationError("Jornada o Modalidad no válida")
 
         paralelo_poo = ParaleloBase(
             codigo_de_paralelo="PENDIENTE",
@@ -586,7 +600,7 @@ class FormularioCohorteDeMatricula(forms.ModelForm):
             "codigo_de_registro": "Código de registro",
             "nombre_cohorte": "Nombre",
             "fecha_de_cierre": "Fecha de cierre",
-            "tipo_de_cohorte": "Tipo de cohorte de matrícula",
+            "tipo_de_cohorte": "Tipo de Cohorte de matrícula",
             "estado_de_cohorte": "Estado",
             "total_primera_matricula": "Número de primeras matrículas",
             "total_segunda_matricula": "Número de segundas matrículas",

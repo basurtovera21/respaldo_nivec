@@ -27,7 +27,7 @@ def registrar_universidad(request):
             perfil.universidad = nueva_universidad
             perfil.save()
             
-            messages.success(request, "La universidad ha sido registrada correctamente")
+            messages.success(request, "La Universidad ha sido registrada correctamente")
             return redirect("panel_principal")
     else:
         formulario_universidad = FormularioUniversidad()
@@ -45,14 +45,14 @@ def registrar_universidad(request):
 def modificar_universidad(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("registrar_universidad")
 
     if request.method == "POST":
         formulario = FormularioUniversidad(request.POST, request.FILES, instance=universidad_usuario)
         if formulario.is_valid():
             formulario.save()
-            messages.success(request, "La universidad ha sido modificada correctamente")
+            messages.success(request, "La Universidad ha sido modificada correctamente")
             return redirect("detalle_universidad")
     else:
         formulario = FormularioUniversidad(instance=universidad_usuario)
