@@ -22,14 +22,14 @@ ROLES_MODIFICAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
 def descargar_plantilla_mtn(request):
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "MTN"
+    ws.title = "Matriz de tercer nivel"
 
     cabeceras = [
         "Tipo de identificación (Cédula, Pasaporte, Cédula extranjera)",
         "Número de identificación", "Nombres", "Apellidos", "Correo institucional",
         "Jornada registrada (Matutina, Vespertina, Nocturna)",
         "Registro de cupo (Registro regular, Segunda matrícula, Proceso de exoneración)",
-        "Carrera registrada", "Campus registrado",
+        "Código de Carrera (CAR...)",
     ]
     ws.append(cabeceras)
 
@@ -47,7 +47,7 @@ def descargar_plantilla_mtn(request):
 def procesar_mtn(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     periodos = PeriodoDeNivelacion.objects.filter(
@@ -56,18 +56,18 @@ def procesar_mtn(request):
     )
 
     if not periodos.exists():
-        messages.warning(request, "No existen periodos de nivelación en Planificación")
+        messages.warning(request, "No existen Periodos de nivelación en planificación")
         return redirect("panel_dan")
 
     if request.method == "POST":
         periodo_id = request.POST.get("periodo") or None
         periodo = periodos.filter(id=periodo_id).first() if periodo_id else None
         if not periodo:
-            messages.error(request, "Debe seleccionar un Periodo de nivelación en Planificación")
+            messages.error(request, "Especifique un Periodo de nivelación en planificación")
             return redirect("procesar_mtn")
 
         if "archivo_excel" not in request.FILES:
-            messages.error(request, "Debe registrar el documento de la Matriz de Tercer Nivel (MTN)")
+            messages.error(request, "Registre el documento")
             return redirect("procesar_mtn")
 
         archivo = request.FILES["archivo_excel"]
@@ -88,10 +88,7 @@ def procesar_mtn(request):
             clasificacion = resultado["clasificacion"]
             messages.success(
                 request,
-                f"{resultado['exitosos']} partícipe(s) registrado(s) "
-                f"({clasificacion['regular']} regular, {clasificacion['segunda']} segunda matrícula, "
-                f"{clasificacion['exoneracion']} exoneración). "
-                f"{resultado['observados']} registro(s) observado(s)"
+                f"{resultado['exitosos']} partícipe(s) registrado(s) ({clasificacion['regular']} regulares, {clasificacion['segunda']} segunda matrícula, {clasificacion['exoneracion']} proceso de exoneración). {resultado['observados']} registro(s) observado(s)"
             )
         else:
             messages.warning(
@@ -103,7 +100,7 @@ def procesar_mtn(request):
 
     return render(request, "academico/procesar_mtn.html", {
         "periodos": periodos,
-        "titulo_pagina": "Procesar MTN - NIVEC",
+        "titulo_pagina": "Matriz de tercer nivel - NIVEC",
         "titulo": "Procesar Matriz de Tercer Nivel (MTN)",
         "url_plantilla": "descargar_plantilla_mtn",
         "url_cancelar": "panel_dan",
@@ -113,7 +110,7 @@ def procesar_mtn(request):
 def listar_consolidados(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     consolidados = ConsolidadoAcademico.objects.filter(
@@ -123,7 +120,7 @@ def listar_consolidados(request):
     return render(request, "academico/listar_consolidados.html", {
         "consolidados": consolidados,
         "solo_lectura": usuario_es_solo_lectura(request.user),
-        "titulo_pagina": "Consolidados académicos - NIVEC",
+        "titulo_pagina": "Matriz de tercer nivel - NIVEC",
         "titulo": "Consolidados académicos",
         "url_registrar": "procesar_mtn",
         "texto_registrar": "Procesar MTN",

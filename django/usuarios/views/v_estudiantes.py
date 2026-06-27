@@ -1,5 +1,6 @@
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
@@ -29,12 +30,24 @@ def listar_estudiantes(request):
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
+    periodos = PeriodoDeNivelacion.objects.filter(
+        universidad=universidad_usuario
+    ).order_by("-anio", "-numero_periodo")
+
+    periodo_id = request.GET.get("periodo") or None
+    periodo_seleccionado = periodos.filter(id=periodo_id).first() if periodo_id else None
+
     estudiantes = PerfilEstudiante.objects.filter(
         carrera_registrada__campus__universidad=universidad_usuario
-    ).select_related("usuario_de_sistema", "carrera_registrada", "campus_registrado")
+    )
+    if periodo_seleccionado:
+        estudiantes = estudiantes.filter(periodo_de_nivelacion=periodo_seleccionado)
+    estudiantes = estudiantes.select_related("usuario_de_sistema", "carrera_registrada", "campus_registrado")
     
     return render(request, "usuarios/listar_estudiantes.html", {
         "estudiantes": estudiantes,
+        "periodos": periodos,
+        "periodo_seleccionado": periodo_seleccionado,
         "titulo_pagina": "Estudiante - NIVEC",
         "titulo": "Estudiantes",
         "url_registrar": "registrar_estudiante",
@@ -54,7 +67,7 @@ def descargar_plantilla_estudiante(request):
         "Número de identificación", "Nombres", "Apellidos", "Correo institucional",
         "Jornada registrada (Matutina, Vespertina, Nocturna)", 
         "Registro de cupo (Registro regular, Segunda matrícula, Proceso de exoneración)", 
-        "Carrera registrada", "Campus registrado"
+        "Código de Carrera (CAR..)"
     ]
     ws.append(cabeceras)
     
@@ -77,20 +90,25 @@ def registrar_estudiante(request):
         messages.warning(request, "No existen registros de Periodos de nivelación actualmente")
         return redirect("panel_principal")
 
+    # El periodo se toma del contexto (filtro del listado): GET al entrar, campo oculto al enviar.
+    periodo_id = request.POST.get("periodo") or request.GET.get("periodo") or None
+    periodos = PeriodoDeNivelacion.objects.filter(
+        universidad=universidad_usuario
+    ).order_by("-anio", "-numero_periodo")
+    periodo = periodos.filter(id=periodo_id).first() if periodo_id else None
+    if not periodo:
+        # Respaldo: si no llegó un periodo, usa el más reciente (nunca reinicia).
+        periodo = periodos.first()
+
+    url_registrar = f"{reverse('registrar_estudiante')}?periodo={periodo.id}"
+    url_listar = f"{reverse('listar_estudiantes')}?periodo={periodo.id}"
+
     if request.method == "POST":
         if 'archivo_excel' in request.FILES:
             archivo = request.FILES['archivo_excel']
             if not archivo.name.endswith('.xlsx'):
                 messages.error(request, "Documento con formato no válido")
-                return redirect("registrar_estudiante")
-
-            periodo_id = request.POST.get("periodo_de_nivelacion") or None
-            periodo = PeriodoDeNivelacion.objects.filter(
-                id=periodo_id, universidad=universidad_usuario
-            ).first() if periodo_id else None
-            if not periodo:
-                messages.error(request, "Especifique un Periodo de nivelación")
-                return redirect("registrar_estudiante")
+                return redirect(url_registrar)
 
             resultado = servicio_estudiante_registrar_masivo_desde_excel(
                 archivo, universidad_usuario, periodo_de_nivelacion=periodo
@@ -99,7 +117,7 @@ def registrar_estudiante(request):
             if resultado["error"]: messages.error(request, resultado["error"])
             for adv in resultado["advertencias"]: messages.warning(request, adv)
             if resultado["exitosos"] > 0: messages.success(request, f"{resultado['exitosos']} Estudiantes registrados correctamente")
-            return redirect("listar_estudiantes")
+            return redirect(url_listar)
                 
         else:
             formulario_usuario = FormularioUsuarioDeSistema(request.POST)
@@ -116,10 +134,12 @@ def registrar_estudiante(request):
                     estudiante.identificador_institucional = generar_identificador_siguiente(PerfilEstudiante, "ES", 'identificador_institucional')
                     estudiante.numero_de_matricula = generar_identificador_siguiente(PerfilEstudiante, "MAT", 'numero_de_matricula')
                     estudiante.estado_de_matricula = EnumEstadoDeMatricula.MATRICULADO.value
+                    estudiante.campus_registrado = estudiante.carrera_registrada.campus
+                    estudiante.periodo_de_nivelacion = periodo
                     estudiante.save()
                 
                 messages.success(request, "El Estudiante ha sido registrado correctamente")
-                return redirect("listar_estudiantes")
+                return redirect(url_listar)
     else:
         formulario_usuario = FormularioUsuarioDeSistema()
         formulario_estudiante = FormularioPerfilEstudiante(universidad=universidad_usuario)
@@ -127,6 +147,7 @@ def registrar_estudiante(request):
     return render(request, "usuarios/formulario_estudiante.html", {
         "form_usuario": formulario_usuario,
         "form_estudiante": formulario_estudiante,
+        "periodo_contexto": periodo,
         "titulo_pagina": "Estudiante - NIVEC",
         "titulo": "Registrar Estudiante",
         "boton_texto": "Registrar",
@@ -163,7 +184,9 @@ def modificar_estudiante(request, estudiante_id):
                 if nueva_contrasena:
                     user_saved.set_password(nueva_contrasena)
                 user_saved.save()
-                form_e.save()
+                estudiante = form_e.save(commit=False)
+                estudiante.campus_registrado = estudiante.carrera_registrada.campus
+                estudiante.save()
             
             messages.success(request, "El Estudiante ha sido modificado correctamente")
             return redirect("listar_estudiantes")

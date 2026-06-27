@@ -261,10 +261,10 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
 
         registros = []
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-            tipo_id, ident, nom, ape, corr, jor, cupo, carr, camp = fila[:9]
-            if not any([tipo_id, ident, nom, ape, corr, jor, cupo, carr, camp]):
+            tipo_id, ident, nom, ape, corr, jor, cupo, cod_carr = fila[:8]
+            if not any([tipo_id, ident, nom, ape, corr, jor, cupo, cod_carr]):
                 continue
-            if not all([tipo_id, ident, nom, ape, corr, jor, cupo, carr, camp]):
+            if not all([tipo_id, ident, nom, ape, corr, jor, cupo, cod_carr]):
                 resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido por falta de información")
                 continue
             registros.append({
@@ -276,8 +276,7 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
                 "correo": str(corr).strip(),
                 "jornada": str(jor).strip(),
                 "cupo": str(cupo).strip(),
-                "carrera": str(carr).strip(),
-                "campus": str(camp).strip(),
+                "codigo_carrera": str(cod_carr).strip(),
             })
 
         depurador = DepuradorDeSincronizacion([CriterioCedulaFormato()])
@@ -311,15 +310,12 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
 
 
                 carrera = Carrera.objects.filter(
-                    nombre__iexact=registro["carrera"], campus__universidad=universidad_usuario
-                ).first()
-                campus = Campus.objects.filter(
-                    nombre__iexact=registro["campus"], universidad=universidad_usuario
-                ).first()
+                    codigo_de_carrera__iexact=registro["codigo_carrera"], campus__universidad=universidad_usuario
+                ).select_related("campus").first()
                 jor_val = jornadas_map.get(registro["jornada"].lower())
                 cupo_val = cupos_map.get(registro["cupo"].lower())
 
-                if not carrera or not campus or not jor_val or not cupo_val:
+                if not carrera or not jor_val or not cupo_val:
                     resultado["advertencias"].append(
                         f"El registro de la fila {registro['fila']} fue omitido (información no válida)"
                     )
@@ -342,8 +338,9 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
                         jornada=jor_val,
                         registro_de_cupo=cupo_val,
                         carrera_registrada=carrera,
-                        campus_registrado=campus,
-                        estado_de_matricula=EnumEstadoDeMatricula.MATRICULADO.value
+                        campus_registrado=carrera.campus,
+                        estado_de_matricula=EnumEstadoDeMatricula.MATRICULADO.value,
+                        periodo_de_nivelacion=periodo_de_nivelacion
                     )
                     resultado["exitosos"] += 1
                     resultado["identificaciones_validas"].append(ident_str)
