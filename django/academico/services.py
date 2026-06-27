@@ -114,6 +114,13 @@ def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
         
         campus_existente = Campus.objects.filter(universidad=universidad_usuario)
 
+        carreras_registradas = {
+            (campus_id, CarreraBase.normalizar_nombre(nombre_existente))
+            for campus_id, nombre_existente in Carrera.objects.filter(
+                campus__universidad=universidad_usuario
+            ).values_list("campus_id", "nombre")
+        }
+
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
                 codigo_campus, nombre, modalidad, facultad, vigencia = fila[:5]
@@ -128,7 +135,7 @@ def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
                 try:
                     enum_modalidad = obtener_enum_flexible(Modalidad, modalidad)
                 except ValueError:
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ('{modalidad}' no es una modalidad válida)")
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Modalidad no válida)")
                     continue
 
                 if isinstance(vigencia, (datetime, date)):
@@ -145,7 +152,7 @@ def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
 
                 campus_obj = campus_existente.filter(codigo_de_campus=codigo_campus).first()
                 if not campus_obj:
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (código de campus no válido)")
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (código de Campus no válido)")
                     continue
                 
                 carrera_poo = CarreraBase(
@@ -157,7 +164,14 @@ def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
                 )
 
                 if not carrera_poo.esta_activa():
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (la carrera '{nombre}' no está vigente)")
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Carrera no vigente)")
+                    continue
+
+                clave_carrera = (campus_obj.id, CarreraBase.normalizar_nombre(nombre))
+                if clave_carrera in carreras_registradas:
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido (la Carrera ya existe)"
+                    )
                     continue
 
                 with transaction.atomic():
@@ -170,6 +184,7 @@ def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
                         vigencia_sniese=vigencia_date
                     )
                     resultado["exitosos"] += 1
+                    carreras_registradas.add(clave_carrera)
             except Exception as e:
                 resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})")
                 
@@ -177,6 +192,7 @@ def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
         resultado["error"] = "Ha ocurrido un error al procesar el documento"
         
     return resultado
+
 
 
 #PeriodoDeNivelacion 

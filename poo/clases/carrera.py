@@ -9,5 +9,9 @@ class Carrera:
         self.facultad = facultad
         self.vigencia_sniese = vigencia_sniese
 
+    @staticmethod
+    def normalizar_nombre(nombre):
+        return str(nombre or "").strip().lower()
+
     def esta_activa(self):
         return date.today() <= self.vigencia_sniese
