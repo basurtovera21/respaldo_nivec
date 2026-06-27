@@ -21,7 +21,7 @@ def listar_estudiantes(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
 
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     estudiantes = PerfilEstudiante.objects.filter(
@@ -64,7 +64,7 @@ def descargar_plantilla_estudiante(request):
 def registrar_estudiante(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     if request.method == "POST":
@@ -78,7 +78,7 @@ def registrar_estudiante(request):
             
             if resultado["error"]: messages.error(request, resultado["error"])
             for adv in resultado["advertencias"]: messages.warning(request, adv)
-            if resultado["exitosos"] > 0: messages.success(request, f"{resultado['exitosos']} estudiantes registrados correctamente")
+            if resultado["exitosos"] > 0: messages.success(request, f"{resultado['exitosos']} Estudiantes registrados correctamente")
             return redirect("listar_estudiantes")
                 
         else:
@@ -98,7 +98,7 @@ def registrar_estudiante(request):
                     estudiante.estado_de_matricula = EnumEstadoDeMatricula.MATRICULADO.value
                     estudiante.save()
                 
-                messages.success(request, "El estudiante ha sido registrado correctamente")
+                messages.success(request, "El Estudiante ha sido registrado correctamente")
                 return redirect("listar_estudiantes")
     else:
         formulario_usuario = FormularioUsuarioDeSistema()
@@ -108,7 +108,7 @@ def registrar_estudiante(request):
         "form_usuario": formulario_usuario,
         "form_estudiante": formulario_estudiante,
         "titulo_pagina": "Estudiante - NIVEC",
-        "titulo": "Registrar estudiante",
+        "titulo": "Registrar Estudiante",
         "boton_texto": "Registrar",
         "url_cancelar": "listar_estudiantes",
         "mostrar_carga_masiva": True,
@@ -119,7 +119,7 @@ def registrar_estudiante(request):
 def modificar_estudiante(request, estudiante_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     est = get_object_or_404(PerfilEstudiante, id=estudiante_id, carrera_registrada__campus__universidad=universidad_usuario)
@@ -127,7 +127,7 @@ def modificar_estudiante(request, estudiante_id):
     
     if request.method == "POST":
         form_u = FormularioUsuarioDeSistema(request.POST, instance=usuario)
-        form_e = FormularioPerfilEstudiante(request.POST, instance=est)
+        form_e = FormularioPerfilEstudiante(request.POST, instance=est, universidad=universidad_usuario)
         
         if 'contrasena' in form_u.fields:
             form_u.fields['contrasena'].required = False 
@@ -141,16 +141,16 @@ def modificar_estudiante(request, estudiante_id):
                 user_saved.save()
                 form_e.save()
             
-            messages.success(request, "El estudiante ha sido modificado correctamente")
+            messages.success(request, "El Estudiante ha sido modificado correctamente")
             return redirect("listar_estudiantes")
     else:
         form_u = FormularioUsuarioDeSistema(instance=usuario)
-        form_e = FormularioPerfilEstudiante(instance=est)
+        form_e = FormularioPerfilEstudiante(instance=est, universidad=universidad_usuario)
         
     return render(request, "usuarios/formulario_estudiante.html", {
         "form_usuario": form_u, 
         "form_estudiante": form_e, 
-        "titulo": "Modificar estudiante",
+        "titulo": "Modificar Estudiante",
         "subtitulo": f"{usuario.nombres} {usuario.apellidos}",
         "boton_texto": "Modificar",
         "url_cancelar": "listar_estudiantes",
@@ -159,11 +159,12 @@ def modificar_estudiante(request, estudiante_id):
         "mostrar_carga_masiva": False
     })
 
+
 @login_required
 def eliminar_estudiante(request, estudiante_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     estudiante = get_object_or_404(PerfilEstudiante, id=estudiante_id, carrera_registrada__campus__universidad=universidad_usuario)
@@ -171,14 +172,14 @@ def eliminar_estudiante(request, estudiante_id):
     with transaction.atomic():
         estudiante.usuario_de_sistema.delete()
     
-    messages.success(request, "El estudiante ha sido eliminado correctamente")
+    messages.success(request, "El Estudiante ha sido eliminado correctamente")
     return redirect("listar_estudiantes")
 
 @login_required
 def formalizar_matricula(request, estudiante_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     est_db = get_object_or_404(PerfilEstudiante, id=estudiante_id, carrera_registrada__campus__universidad=universidad_usuario)
@@ -189,7 +190,7 @@ def formalizar_matricula(request, estudiante_id):
         est_db.estado_de_matricula = est_poo._estado_de_matricula.value
         est_db.save()
         
-    messages.success(request, "La matrícula del estudiante ha sido formalizada correctamente")
+    messages.success(request, "La matrícula del Estudiante ha sido formalizada correctamente")
     return redirect("listar_estudiantes")
 
 @login_required
@@ -203,7 +204,7 @@ def anular_matricula(request, estudiante_id):
         est_db.estado_de_matricula = est_poo._estado_de_matricula.value
         est_db.save()
         
-    messages.success(request, "La matrícula del estudiante ha sido anulada correctamente")
+    messages.success(request, "La matrícula del Estudiante ha sido anulada correctamente")
     return redirect("listar_estudiantes")
 
 @login_required
@@ -215,7 +216,7 @@ def solicitar_retiro(request, estudiante_id):
         with transaction.atomic():
             est_db.estado_de_matricula = est_poo._estado_de_matricula.value
             est_db.save()
-        messages.success(request, "El retiro del estudiante ha sido procesado correctamente")
+        messages.success(request, "El retiro del Estudiante ha sido procesado correctamente")
     else:
         messages.warning(request, "No se ha podido procesar el retiro")
     return redirect("listar_estudiantes")

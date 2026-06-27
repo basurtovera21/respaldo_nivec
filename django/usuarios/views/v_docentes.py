@@ -18,7 +18,7 @@ from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacion
 def listar_docentes(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     docentes = PerfilDocente.objects.filter(universidad=universidad_usuario).select_related("usuario_de_sistema")
@@ -51,7 +51,7 @@ def descargar_plantilla_docente(request):
 def registrar_docente(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     if request.method == "POST":
@@ -65,7 +65,7 @@ def registrar_docente(request):
             
             if resultado["error"]: messages.error(request, resultado["error"])
             for adv in resultado["advertencias"]: messages.warning(request, adv)
-            if resultado["exitosos"] > 0: messages.success(request, f"{resultado['exitosos']} docentes registrados correctamente")
+            if resultado["exitosos"] > 0: messages.success(request, f"{resultado['exitosos']} Docentes registrados correctamente")
             return redirect("listar_docentes")
                 
         else:
@@ -83,9 +83,10 @@ def registrar_docente(request):
                     docente.identificador_institucional = generar_identificador_siguiente(PerfilDocente, "DC", 'identificador_institucional')
                     docente.estado_de_vinculacion = EnumEstadoDeVinculacion.ACTIVO.value
                     docente.universidad = universidad_usuario
+                    docente.especialidades = formulario_docente.cleaned_data.get('especialidades', [])
                     docente.save()
 
-                messages.success(request, "El docente ha sido registrado correctamente")
+                messages.success(request, "El Docente ha sido registrado correctamente")
                 return redirect("listar_docentes")
     else:
         formulario_usuario = FormularioUsuarioDeSistema()
@@ -95,12 +96,13 @@ def registrar_docente(request):
         "form_usuario": formulario_usuario,
         "form_docente": formulario_docente,
         "titulo_pagina": "Docente - NIVEC",
-        "titulo": "Registrar docente",
+        "titulo": "Registrar Docente",
         "boton_texto": "Registrar",
         "url_cancelar": "listar_docentes",
         "mostrar_carga_masiva": True,
         "url_plantilla": "descargar_plantilla_docente"
     })
+
 
 @login_required
 def modificar_docente(request, docente_id):
@@ -140,7 +142,7 @@ def modificar_docente(request, docente_id):
         "form_usuario": formulario_usuario,
         "form_docente": formulario_docente, 
         "titulo_pagina": "Docente - NIVEC",
-        "titulo": "Modificar docente",
+        "titulo": "Modificar Docente",
         "subtitulo": f"{usuario.nombres} {usuario.apellidos}",
         "boton_texto": "Modificar",
         "url_cancelar": "listar_docentes",
@@ -152,23 +154,23 @@ def modificar_docente(request, docente_id):
 def eliminar_docente(request, docente_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     docente = get_object_or_404(PerfilDocente, id=docente_id, universidad=universidad_usuario)
     try:
         with transaction.atomic():
             docente.usuario_de_sistema.delete()
-        messages.success(request, "El docente ha sido eliminado correctamente")
+        messages.success(request, "El Docente ha sido eliminado correctamente")
     except Exception:
-        messages.error(request, "No se ha podido eliminar al docente")
+        messages.error(request, "No se ha podido eliminar al Docente")
     return redirect("listar_docentes")
 
 @login_required
 def inhabilitar_docente(request, docente_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     docente_db = get_object_or_404(PerfilDocente, id=docente_id, universidad=universidad_usuario)
@@ -185,14 +187,14 @@ def inhabilitar_docente(request, docente_id):
         usuario.is_active = False
         usuario.save()
 
-    messages.success(request, "El docente ha sido inhabilitado correctamente")
+    messages.success(request, "El Docente ha sido inhabilitado correctamente")
     return redirect("listar_docentes")
 
 @login_required
 def habilitar_docente(request, docente_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     docente_db = get_object_or_404(PerfilDocente, id=docente_id, universidad=universidad_usuario)
@@ -209,5 +211,5 @@ def habilitar_docente(request, docente_id):
         usuario.is_active = True
         usuario.save()
 
-    messages.success(request, "El docente ha sido habilitado correctamente")
+    messages.success(request, "El Docente ha sido habilitado correctamente")
     return redirect("listar_docentes")

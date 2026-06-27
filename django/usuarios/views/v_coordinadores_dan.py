@@ -19,7 +19,7 @@ from usuarios.services import servicio_coordinador_dan_registrar_masivo_desde_ex
 def listar_coordinadores_dan(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     coordinadores = PerfilAdministrativo.objects.filter(
@@ -63,7 +63,7 @@ def descargar_plantilla_coordinador_dan(request):
 def registrar_coordinador_dan(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     if request.method == "POST":
@@ -83,7 +83,7 @@ def registrar_coordinador_dan(request):
                 messages.warning(request, advertencia)
                 
             if resultado["exitosos"] > 0:
-                messages.success(request, f"{resultado['exitosos']} coordinadores de dirección de admisión y nivelación registrados correctamente")
+                messages.success(request, f"{resultado['exitosos']} Coordinadores de dirección de admisión y nivelación registrados correctamente")
             else:
                 messages.warning(request, "No se procesaron registros")
                 
@@ -104,7 +104,7 @@ def registrar_coordinador_dan(request):
                     perfil.universidad = universidad_usuario
                     
                     enum_perfil = EnumPerfilAdministrativo(perfil.perfil_administrativo)
-                    prefijo = UsuarioAdministrativoBase.obtener_prefijo_identificador(enum_perfil)
+                    prefijo = UsuarioAdministrativoBase.definir_prefijo_identificador(enum_perfil)
                     
                     perfil.identificador_administrativo = generar_identificador_siguiente(
                         PerfilAdministrativo, prefijo, 'identificador_administrativo'
@@ -125,7 +125,7 @@ def registrar_coordinador_dan(request):
         "form_usuario": formulario_usuario,
         "form_perfil": formulario_perfil,
         "titulo_pagina": "Coordinador de dirección de admisión y nivelación - NIVEC",
-        "titulo": "Registrar coordinador de dirección de admisión y nivelación",
+        "titulo": "Registrar Coordinador de dirección de admisión y nivelación",
         "boton_texto": "Registrar",
         "url_cancelar": "listar_coordinadores_dan",
         "mostrar_carga_masiva": True,

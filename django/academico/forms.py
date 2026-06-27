@@ -375,9 +375,9 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
             "fecha_inicio", "fecha_fin", "modalidad", "estado"
         )
         labels = {
-            "codigo_periodo": "Código de Periodo",
+            "codigo_periodo": "Código de periodo",
             "anio": "Año",
-            "numero_periodo": "Número de Periodo",
+            "numero_periodo": "Número de periodo",
             "fecha_inicio": "Fecha de inicio",
             "fecha_fin": "Fecha de finalización",
             "modalidad": "Modalidad",
@@ -385,7 +385,8 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
         }
         widgets = {
             "fecha_inicio": forms.DateInput(attrs={"type": "date"}), 
-            "fecha_fin": forms.DateInput(attrs={"type": "date"})
+            "fecha_fin": forms.DateInput(attrs={"type": "date"}),
+            "numero_periodo": forms.NumberInput(attrs={"min": 1, "max": 2})
         }
 
     def __init__(self, *args, **kwargs):
@@ -489,26 +490,31 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
                     periodos_chocan = periodos_chocan.exclude(pk=self.instance.pk)
                     
                 if periodos_chocan.exists():
-                    errores["fecha_inicio"] = "La fecha especificada presenta conflicto con un periodo registrado previamente"
-                    errores["fecha_fin"] = "La fecha especificada presenta conflicto con un periodo registrado previamente"
-                    anio_seleccionado = cleaned_data.get("anio")
-                    numero_seleccionado = cleaned_data.get("numero_periodo")
-                    if anio_seleccionado and numero_seleccionado and self.universidad:
-                        periodos_duplicados = PeriodoDeNivelacion.objects.filter(
-                            universidad=self.universidad,
-                            anio=anio_seleccionado,
-                            numero_periodo=numero_seleccionado,
-                        )
-                        if self.instance and self.instance.pk:
-                            periodos_duplicados = periodos_duplicados.exclude(pk=self.instance.pk)
-                        if periodos_duplicados.exists():
-                            errores["numero_periodo"] = "Ya existe un Periodo de nivelación registrado (Año-Número de periodo)"
+                    errores["fecha_inicio"] = "La fecha especificada presenta conflicto con un Periodo registrado previamente"
+                    errores["fecha_fin"] = "La fecha especificada presenta conflicto con un Periodo registrado previamente"
 
+        anio_seleccionado = cleaned_data.get("anio")
+        numero_seleccionado = cleaned_data.get("numero_periodo")
+
+        if numero_seleccionado is not None and numero_seleccionado not in (1, 2):
+            errores["numero_periodo"] = "Registro no válido (1 o 2)"
+
+        if anio_seleccionado and numero_seleccionado and self.universidad:
+            periodos_duplicados = PeriodoDeNivelacion.objects.filter(
+                universidad=self.universidad,
+                anio=anio_seleccionado,
+                numero_periodo=numero_seleccionado,
+            )
+            if self.instance and self.instance.pk:
+                periodos_duplicados = periodos_duplicados.exclude(pk=self.instance.pk)
+            if periodos_duplicados.exists():
+                errores["numero_periodo"] = "El Periodo de nivelación ya ha sido registrado"
             
         if errores:
             raise forms.ValidationError(errores)
             
         return cleaned_data
+
     
     
 # Reemplazar FormularioParalelo en django/academico/forms.py

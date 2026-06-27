@@ -70,7 +70,7 @@ def descargar_plantilla_administrativo(request):
 def registrar_administrativo(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     if request.method == "POST":
@@ -90,7 +90,7 @@ def registrar_administrativo(request):
                 messages.warning(request, advertencia)
                 
             if resultado["exitosos"] > 0:
-                messages.success(request, f"{resultado['exitosos']} usuarios administrativos registrados correctamente")
+                messages.success(request, f"{resultado['exitosos']} Usuarios administrativos registrados correctamente")
             else:
                 messages.warning(request, "No se procesaron registros")
                 
@@ -101,23 +101,24 @@ def registrar_administrativo(request):
             formulario_perfil = FormularioRegistrarPerfilAdministrativo(request.POST)
 
             if formulario_usuario.is_valid() and formulario_perfil.is_valid():
-                usuario = formulario_usuario.save(commit=False)
-                usuario.set_password(usuario.identificacion)
-                usuario.save()
-                
-                perfil = formulario_perfil.save(commit=False)
-                perfil.usuario_de_sistema = usuario
-                perfil.universidad = universidad_usuario
-                
-                enum_perfil = EnumPerfilAdministrativo(perfil.perfil_administrativo)
-                prefijo = UsuarioAdministrativoBase.definir_prefijo_identificador(enum_perfil)
-                
-                perfil.identificador_administrativo = generar_identificador_siguiente(
-                    PerfilAdministrativo, prefijo, 'identificador_administrativo'
-                )
-                
-                perfil.save()
-                messages.success(request, "El usuario administrativo ha sido registrado correctamente")
+                with transaction.atomic():
+                    usuario = formulario_usuario.save(commit=False)
+                    usuario.set_password(usuario.identificacion)
+                    usuario.save()
+
+                    perfil = formulario_perfil.save(commit=False)
+                    perfil.usuario_de_sistema = usuario
+                    perfil.universidad = universidad_usuario
+
+                    enum_perfil = EnumPerfilAdministrativo(perfil.perfil_administrativo)
+                    prefijo = UsuarioAdministrativoBase.definir_prefijo_identificador(enum_perfil)
+
+                    perfil.identificador_administrativo = generar_identificador_siguiente(
+                        PerfilAdministrativo, prefijo, 'identificador_administrativo'
+                    )
+
+                    perfil.save()
+                messages.success(request, "El Usuario administrativo ha sido registrado correctamente")
                 return redirect("listar_administrativos")
             
     else:
@@ -127,18 +128,19 @@ def registrar_administrativo(request):
     return render(request, "usuarios/formulario_administrativo.html", {
         "form_usuario": formulario_usuario,
         "form_perfil": formulario_perfil,
-        "titulo": "Registrar usuario administrativo",
+        "titulo": "Registrar Usuario administrativo",
         "boton_texto": "Registrar",
         "url_cancelar": "listar_administrativos",
         "mostrar_carga_masiva": True,
         "url_plantilla": "descargar_plantilla_administrativo"
     })
 
+
 @login_required
 def modificar_administrativo(request, admin_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     perfil = get_object_or_404(PerfilAdministrativo, pk=admin_id, universidad=universidad_usuario)
@@ -177,13 +179,13 @@ def modificar_administrativo(request, admin_id):
                     formulario_docente.save()
             
             if es_coordinador_ua:
-                messages.success(request, "El coordinador de unidad académica ha sido modificado correctamente")
+                messages.success(request, "El Coordinador de unidad académica ha sido modificado correctamente")
                 return redirect("listar_coordinadores_ua")
             elif perfil.perfil_administrativo == EnumPerfilAdministrativo.COORDINADOR_DAN.value:
-                messages.success(request, "El coordinador de dirección de admisión y nivelación ha sido modificado correctamente")
+                messages.success(request, "El Coordinador de dirección de admisión y nivelación ha sido modificado correctamente")
                 return redirect("listar_coordinadores_dan")
             else:
-                messages.success(request, "El usuario administrativo ha sido modificado correctamente")
+                messages.success(request, "El Usuario administrativo ha sido modificado correctamente")
                 return redirect("listar_administrativos")
     else:
         formulario_usuario = FormularioModificarUsuarioDeSistema(instance=usuario)
@@ -193,11 +195,11 @@ def modificar_administrativo(request, admin_id):
     if es_coordinador_ua:
         url_cancelar = "listar_coordinadores_ua"
         titulo_pagina = "Coordinador de unidad académica - NIVEC"
-        titulo_seccion = "Modificar coordinador de unidad académica"
+        titulo_seccion = "Modificar Coordinador de unidad académica"
     elif perfil.perfil_administrativo == EnumPerfilAdministrativo.COORDINADOR_DAN.value:
         url_cancelar = "listar_coordinadores_dan"
         titulo_pagina = "Coordinador de dirección de admisión y nivelación - NIVEC"
-        titulo_seccion = "Modificar coordinador de dirección de admisión y nivelación"
+        titulo_seccion = "Modificar Coordinador de dirección de admisión y nivelación"
     else:
         url_cancelar = "listar_administrativos"
         titulo_pagina = "Administrativo - NIVEC"
@@ -224,14 +226,14 @@ def modificar_administrativo(request, admin_id):
 def eliminar_administrativo(request, admin_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     perfil = get_object_or_404(PerfilAdministrativo, pk=admin_id, universidad=universidad_usuario)
     
     admin_poo = _crear_usuario_administrativo(perfil)
     if not admin_poo.puede_ser_modificado_o_eliminado():
-        messages.error(request, "El usuario administrativo no puede ser eliminado")
+        messages.error(request, "El Usuario administrativo no puede ser eliminado")
         return redirect("listar_administrativos")
 
     rol_eliminado = perfil.perfil_administrativo
@@ -239,11 +241,11 @@ def eliminar_administrativo(request, admin_id):
     usuario.delete()
     
     if rol_eliminado == EnumPerfilAdministrativo.COORDINADOR_DAN.value:
-        messages.success(request, "El coordinador de dirección de admisión y nivelación ha sido eliminado correctamente")
+        messages.success(request, "El Coordinador de dirección de admisión y nivelación ha sido eliminado correctamente")
         return redirect("listar_coordinadores_dan")
     elif rol_eliminado == EnumPerfilAdministrativo.COORDINADOR_UA.value:
-        messages.success(request, "El coordinador de unidad académica ha sido eliminado correctamente")
+        messages.success(request, "El Coordinador de unidad académica ha sido eliminado correctamente")
         return redirect("listar_coordinadores_ua")
     else:
-        messages.success(request, "El usuario administrativo ha sido eliminado correctamente")
+        messages.success(request, "El Usuario administrativo ha sido eliminado correctamente")
         return redirect("listar_administrativos")

@@ -59,34 +59,40 @@ def servicio_administrativo_registrar_masivo_desde_excel(archivo, universidad_us
     resultado = {"exitosos": 0, "advertencias": [], "error": None}
     try:
         wb = openpyxl.load_workbook(archivo); ws = wb.active
-        perfiles_validos_diccionario = {str(e.value).strip().lower(): e.value for e in EnumPerfilAdministrativo}
+        perfiles_permitidos = [
+            EnumPerfilAdministrativo.RECTOR,
+            EnumPerfilAdministrativo.VICERRECTOR_ACADEMICO,
+        ]
+        perfiles_validos_diccionario = {str(e.value).strip().lower(): e.value for e in perfiles_permitidos}
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
                 tipo_id, identificacion, nombres, apellidos, correo, perfil_str = fila[:6]
                 if not any([tipo_id, identificacion, nombres, apellidos, correo, perfil_str]): continue
                 if not all([tipo_id, identificacion, nombres, apellidos, correo, perfil_str]):
-                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido por falta de información"); continue
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido por falta de información"); continue
                 tipo_id_str, identificacion_str = str(tipo_id).strip().capitalize(), str(identificacion).strip()
                 perfil_ingresado_limpio = str(perfil_str).strip().lower()
                 if perfil_ingresado_limpio not in perfiles_validos_diccionario:
-                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (tipo de perfil no válido)"); continue
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Tipo de perfil no válido)"); continue
                 perfil_exacto = perfiles_validos_diccionario[perfil_ingresado_limpio]
                 try: UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
-                except ValueError as e: resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido ({str(e)})"); continue
+                except ValueError as e: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})"); continue
                 if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
-                    resultado["advertencias"].append(f"Fila {numero_fila} omitida (usuario administrativo ya registrado)"); continue
-                usuario = UsuarioDeSistema.objects.create(tipo_de_identificacion=tipo_id_str, identificacion=identificacion_str, nombres=str(nombres).strip(), apellidos=str(apellidos).strip(), correo_institucional=str(correo).strip(), estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value)
-                usuario.set_password(identificacion_str); usuario.save()
-                enum_perfil = EnumPerfilAdministrativo(perfil_exacto)
-                prefijo = UsuarioAdministrativoBase.definir_prefijo_identificador(enum_perfil)
-                nuevo_identificador = generar_identificador_siguiente(PerfilAdministrativo, prefijo, 'identificador_administrativo')
-                PerfilAdministrativo.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_administrativo=nuevo_identificador, perfil_administrativo=perfil_exacto)
-                resultado["exitosos"] += 1
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Usuario administrativo ya registrado)"); continue
+                with transaction.atomic():
+                    usuario = UsuarioDeSistema.objects.create(tipo_de_identificacion=tipo_id_str, identificacion=identificacion_str, nombres=str(nombres).strip(), apellidos=str(apellidos).strip(), correo_institucional=str(correo).strip(), estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value)
+                    usuario.set_password(identificacion_str); usuario.save()
+                    enum_perfil = EnumPerfilAdministrativo(perfil_exacto)
+                    prefijo = UsuarioAdministrativoBase.definir_prefijo_identificador(enum_perfil)
+                    nuevo_identificador = generar_identificador_siguiente(PerfilAdministrativo, prefijo, 'identificador_administrativo')
+                    PerfilAdministrativo.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_administrativo=nuevo_identificador, perfil_administrativo=perfil_exacto)
+                    resultado["exitosos"] += 1
             except Exception as error_de_fila:
                 resultado["advertencias"].append(f"Fila {numero_fila} omitida ({str(error_de_fila)})")
     except Exception:
         resultado["error"] = "Ha ocurrido un error al procesar el documento"
     return resultado
+
 
 def servicio_coordinador_dan_registrar_masivo_desde_excel(archivo, universidad_usuario):
     resultado = {"exitosos": 0, "advertencias": [], "error": None}
@@ -99,19 +105,19 @@ def servicio_coordinador_dan_registrar_masivo_desde_excel(archivo, universidad_u
                 tipo_id, identificacion, nombres, apellidos, correo = fila[:5]
                 if not any([tipo_id, identificacion, nombres, apellidos, correo]): continue
                 if not all([tipo_id, identificacion, nombres, apellidos, correo]):
-                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido por falta de información"); continue
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido por falta de información"); continue
                 tipo_id_str, identificacion_str = str(tipo_id).strip().capitalize(), str(identificacion).strip()
                 try: UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
-                except ValueError as e: resultado["advertencias"].append(f"FRegistro de la fila {numero_fila} omitido ({str(e)})"); continue
+                except ValueError as e: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})"); continue
                 if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
-                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (coordinador de dirección de admisión y nivelación ya registrado)"); continue
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Coordinador de dirección de admisión y nivelación ya registrado)"); continue
                 with transaction.atomic():
                     usuario = UsuarioDeSistema.objects.create(tipo_de_identificacion=tipo_id_str, identificacion=identificacion_str, nombres=str(nombres).strip(), apellidos=str(apellidos).strip(), correo_institucional=str(correo).strip(), estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value)
                     usuario.set_password(identificacion_str); usuario.save()
                     PerfilAdministrativo.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_administrativo=generar_identificador_siguiente(PerfilAdministrativo, prefijo, 'identificador_administrativo'), identificador_coordinador_dan=generar_identificador_siguiente(PerfilAdministrativo, prefijo, 'identificador_coordinador_dan'), perfil_administrativo=rol_fijo)
                     resultado["exitosos"] += 1
             except Exception as error_de_fila:
-                resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido ({str(error_de_fila)})")
+                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(error_de_fila)})")
     except Exception:
         resultado["error"] = "Ha ocurrido un error al procesar el documento"
     return resultado
@@ -129,27 +135,28 @@ def servicio_coordinador_ua_registrar_masivo_desde_excel(archivo, universidad_us
                 tipo_id, identificacion, nombres, apellidos, correo, ua, tipo_vinc, tiempo_dedic, carga_max = fila[:9]
                 if not any([tipo_id, identificacion, nombres, apellidos, correo, ua, tipo_vinc, tiempo_dedic, carga_max]): continue
                 if not all([tipo_id, identificacion, nombres, apellidos, correo, ua, tipo_vinc, tiempo_dedic, carga_max]):
-                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido por falta de información"); continue
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido por falta de información"); continue
                 tipo_id_str, identificacion_str, ua_str = str(tipo_id).strip().capitalize(), str(identificacion).strip(), str(ua).strip()
                 tipo_vinc_limpio, tiempo_dedic_limpio = str(tipo_vinc).strip().lower(), str(tiempo_dedic).strip().lower()
                 if tipo_vinc_limpio not in vinc_validas or tiempo_dedic_limpio not in dedic_validas:
-                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (información no válida)"); continue
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (información no válida)"); continue
                 vinc_exacta, dedic_exacta = vinc_validas[tipo_vinc_limpio], dedic_validas[tiempo_dedic_limpio]
                 try: carga_max_float = float(carga_max)
-                except ValueError: resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (carga horaria no válida)"); continue
+                except ValueError: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Carga horaria no válida)"); continue
                 try: UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
-                except ValueError as e: resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido ({str(e)})"); continue
+                except ValueError as e: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})"); continue
                 if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
-                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (coordinador de unidad académica ya registrado)"); continue
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Coordinador de unidad académica ya registrado)"); continue
                 with transaction.atomic():
                     usuario = UsuarioDeSistema.objects.create(tipo_de_identificacion=tipo_id_str, identificacion=identificacion_str, nombres=str(nombres).strip(), apellidos=str(apellidos).strip(), correo_institucional=str(correo).strip(), estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value)
                     usuario.set_password(identificacion_str); usuario.save()
                     PerfilAdministrativo.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_administrativo=generar_identificador_siguiente(PerfilAdministrativo, prefijo_ua, 'identificador_administrativo'), identificador_coordinador_ua=generar_identificador_siguiente(PerfilAdministrativo, prefijo_ua, 'identificador_coordinador_ua'), unidad_academica=ua_str, perfil_administrativo=rol_fijo)
-                    PerfilDocente.objects.create(usuario_de_sistema=usuario, identificador_institucional=generar_identificador_siguiente(PerfilDocente, "DC", 'identificador_institucional'), tipo_de_vinculacion=vinc_exacta, tiempo_de_dedicacion=dedic_exacta, carga_horaria_maxima=carga_max_float, estado_de_vinculacion=EnumEstadoDeVinculacion.ACTIVO.value)
+                    PerfilDocente.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_institucional=generar_identificador_siguiente(PerfilDocente, "DC", 'identificador_institucional'), tipo_de_vinculacion=vinc_exacta, tiempo_de_dedicacion=dedic_exacta, carga_horaria_maxima=carga_max_float, estado_de_vinculacion=EnumEstadoDeVinculacion.ACTIVO.value)
                     resultado["exitosos"] += 1
             except Exception as e: resultado["advertencias"].append(f"Fila {numero_fila} omitida ({str(e)})")
     except Exception: resultado["error"] = "Ha ocurrido un error al procesar el documento"
     return resultado
+
 
 def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
     resultado = {"exitosos": 0, "advertencias": [], "error": None}
@@ -169,7 +176,7 @@ def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
                     continue
                 
                 if not all([tipo_id, identificacion, nombres, apellidos, correo, tipo_vinc, tiempo_dedic, carga_max]):
-                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido por falta de información")
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido por falta de información")
                     continue
                     
                 tipo_id_str = str(tipo_id).strip().capitalize()
@@ -178,26 +185,26 @@ def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
                 tiempo_dedic_limpio = str(tiempo_dedic).strip().lower()
 
                 if tipo_vinc_limpio not in vinc_validas:
-                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (tipo de vinculación no válido)")
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Tipo de vinculación no válido)")
                     continue
                 if tiempo_dedic_limpio not in dedic_validas:
-                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (tiempo de dedicación no válido)")
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Tiempo de dedicación no válido)")
                     continue
                     
                 try:
                     carga_max_float = float(carga_max)
                 except ValueError:
-                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (carga horaria no válida)")
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Carga horaria no válida)")
                     continue
 
                 try: 
                     UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
                 except ValueError as e: 
-                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido ({str(e)})")
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})")
                     continue
 
                 if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
-                    resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido (el docente ya se encuentra registrado)")
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (el Docente ya se encuentra registrado)")
                     continue
                 
                 lista_especialidades = [esp.strip() for esp in str(especialidades_str).split(',') if esp.strip()] if especialidades_str else []
@@ -258,7 +265,7 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
             if not any([tipo_id, ident, nom, ape, corr, jor, cupo, carr, camp]):
                 continue
             if not all([tipo_id, ident, nom, ape, corr, jor, cupo, carr, camp]):
-                resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido por falta de información")
+                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido por falta de información")
                 continue
             registros.append({
                 "fila": numero_fila,
@@ -278,7 +285,7 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
 
         for registro in depurador.registros_con_observaciones:
             resultado["advertencias"].append(
-                f"Registro de la fila {registro['fila']} omitido (número de cédula no válido)"
+                f"El registro de la fila {registro['fila']} fue omitido (Número de cédula no válido)"
             )
 
         for registro in depurador.registros_validos:
@@ -286,7 +293,7 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
                 ident_str = registro["cedula"]
                 if UsuarioDeSistema.objects.filter(identificacion=ident_str).exists():
                     resultado["advertencias"].append(
-                        f"Registro de la fila {registro['fila']} omitido (el estudiante ya se encuentra registrado)"
+                        f"El registro de la fila {registro['fila']} fue omitido (el Estudiante ya se encuentra registrado)"
                     )
                     continue
 
@@ -301,7 +308,7 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
 
                 if not carrera or not campus or not jor_val or not cupo_val:
                     resultado["advertencias"].append(
-                        f"Registro de la fila {registro['fila']} omitido (Carrera/Campus/Jornada/Registro de cupo no válido)"
+                        f"El registro de la fila {registro['fila']} fue omitido (información no válida)"
                     )
                     continue
 

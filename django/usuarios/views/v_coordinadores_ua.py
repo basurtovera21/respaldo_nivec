@@ -20,7 +20,7 @@ from usuarios.services import servicio_coordinador_ua_registrar_masivo_desde_exc
 def listar_coordinadores_ua(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     coordinadores = PerfilAdministrativo.objects.filter(
@@ -68,7 +68,7 @@ def descargar_plantilla_coordinador_ua(request):
 def registrar_coordinador_ua(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     if request.method == "POST":
@@ -88,7 +88,7 @@ def registrar_coordinador_ua(request):
                 messages.warning(request, advertencia)
                 
             if resultado["exitosos"] > 0:
-                messages.success(request, f"{resultado['exitosos']} coordinadores de unidad académica registrados correctamente")
+                messages.success(request, f"{resultado['exitosos']} Coordinadores de unidad académica registrados correctamente")
             else:
                 messages.warning(request, "No se procesaron registros")
                 
@@ -122,7 +122,7 @@ def registrar_coordinador_ua(request):
                     docente.estado_de_vinculacion = EstadoDeVinculacion.ACTIVO.value
                     docente.save()
 
-                messages.success(request, "El coordinador de unidad académica ha sido registrado correctamente")
+                messages.success(request, "El Coordinador de unidad académica ha sido registrado correctamente")
                 return redirect("listar_coordinadores_ua")
                 
     else:
@@ -135,7 +135,7 @@ def registrar_coordinador_ua(request):
         "form_perfil": formulario_perfil,
         "form_docente": formulario_docente, 
         "titulo_pagina": "Coordinador de unidad académica - NIVEC",
-        "titulo": "Registrar coordinador de unidad académica",
+        "titulo": "Registrar Coordinador de unidad académica",
         "boton_texto": "Registrar",
         "url_cancelar": "listar_coordinadores_ua",
         "mostrar_carga_masiva": True,

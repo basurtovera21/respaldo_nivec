@@ -21,7 +21,7 @@ def listar_periodos(request):
     return render(request, "academico/listar_periodos.html", {
         "periodos": periodos,
         "titulo_pagina": "Periodo de nivelación - NIVEC",
-        "titulo": "Periodos de Nivelación",
+        "titulo": "Periodos de nivelación",
         "url_registrar": "registrar_periodo",
         "texto_registrar": "Registrar",
         "url_volver": "panel_principal"
