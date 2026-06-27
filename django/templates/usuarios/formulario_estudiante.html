@@ -33,6 +33,14 @@
         <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f;">Información institucional</h3>
     </div>
 
+    {% if periodo_contexto %}
+    <input type="hidden" name="periodo" value="{{ periodo_contexto.id }}">
+    <div class="campo">
+        <label style="font-weight: bold;">Periodo de nivelación</label>
+        <input type="text" value="{{ periodo_contexto.anio }} - Periodo {{ periodo_contexto.numero_periodo }}" readonly style="background-color: #f5f5f7; color: #86868b; pointer-events: none;">
+    </div>
+    {% endif %}
+
     {% for field in form_estudiante %}
         <div class="campo">
             <label for="{{ field.id_for_label }}" style="font-weight: bold;">{{ field.label }}</label>

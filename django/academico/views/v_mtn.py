@@ -29,7 +29,7 @@ def descargar_plantilla_mtn(request):
         "Número de identificación", "Nombres", "Apellidos", "Correo institucional",
         "Jornada registrada (Matutina, Vespertina, Nocturna)",
         "Registro de cupo (Registro regular, Segunda matrícula, Proceso de exoneración)",
-        "Carrera registrada", "Campus registrado",
+        "Código de carrera",
     ]
     ws.append(cabeceras)
 
