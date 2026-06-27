@@ -86,59 +86,57 @@ def registrar_estudiante(request):
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
     
-    if not PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario).exists():
+    periodos = PeriodoDeNivelacion.objects.filter(
+        universidad=universidad_usuario
+    ).order_by("-anio", "-numero_periodo")
+    if not periodos.exists():
         messages.warning(request, "No existen registros de Periodos de nivelación actualmente")
         return redirect("panel_principal")
 
-    # El periodo se toma del contexto (filtro del listado): GET al entrar, campo oculto al enviar.
+    # Periodo preseleccionado: viene del filtro del listado (GET) o del formulario (POST).
     periodo_id = request.POST.get("periodo") or request.GET.get("periodo") or None
-    periodo = PeriodoDeNivelacion.objects.filter(
-        id=periodo_id, universidad=universidad_usuario
-    ).first() if periodo_id else None
-    if not periodo:
-        messages.warning(request, "Seleccione un Periodo de nivelación para registrar Estudiantes")
-        return redirect("listar_estudiantes")
+    periodo = periodos.filter(id=periodo_id).first() if periodo_id else None
 
-    url_registrar = f"{reverse('registrar_estudiante')}?periodo={periodo.id}"
-    url_listar = f"{reverse('listar_estudiantes')}?periodo={periodo.id}"
+    if request.method == "POST" and 'archivo_excel' in request.FILES:
+        if not periodo:
+            messages.error(request, "Seleccione un Periodo de nivelación")
+            return redirect(reverse("registrar_estudiante"))
+        archivo = request.FILES['archivo_excel']
+        if not archivo.name.endswith('.xlsx'):
+            messages.error(request, "Documento con formato no válido")
+            return redirect(f"{reverse('registrar_estudiante')}?periodo={periodo.id}")
+
+        resultado = servicio_estudiante_registrar_masivo_desde_excel(
+            archivo, universidad_usuario, periodo_de_nivelacion=periodo
+        )
+        if resultado["error"]: messages.error(request, resultado["error"])
+        for adv in resultado["advertencias"]: messages.warning(request, adv)
+        if resultado["exitosos"] > 0: messages.success(request, f"{resultado['exitosos']} Estudiantes registrados correctamente")
+        return redirect(f"{reverse('listar_estudiantes')}?periodo={periodo.id}")
 
     if request.method == "POST":
-        if 'archivo_excel' in request.FILES:
-            archivo = request.FILES['archivo_excel']
-            if not archivo.name.endswith('.xlsx'):
-                messages.error(request, "Documento con formato no válido")
-                return redirect(url_registrar)
+        formulario_usuario = FormularioUsuarioDeSistema(request.POST)
+        formulario_estudiante = FormularioPerfilEstudiante(request.POST, universidad=universidad_usuario)
 
-            resultado = servicio_estudiante_registrar_masivo_desde_excel(
-                archivo, universidad_usuario, periodo_de_nivelacion=periodo
-            )
+        if not periodo:
+            messages.error(request, "Seleccione un Periodo de nivelación")
+        elif formulario_usuario.is_valid() and formulario_estudiante.is_valid():
+            with transaction.atomic():
+                usuario = formulario_usuario.save(commit=False)
+                usuario.set_password(usuario.identificacion)
+                usuario.save()
 
-            if resultado["error"]: messages.error(request, resultado["error"])
-            for adv in resultado["advertencias"]: messages.warning(request, adv)
-            if resultado["exitosos"] > 0: messages.success(request, f"{resultado['exitosos']} Estudiantes registrados correctamente")
-            return redirect(url_listar)
-                
-        else:
-            formulario_usuario = FormularioUsuarioDeSistema(request.POST)
-            formulario_estudiante = FormularioPerfilEstudiante(request.POST, universidad=universidad_usuario)
+                estudiante = formulario_estudiante.save(commit=False)
+                estudiante.usuario_de_sistema = usuario
+                estudiante.identificador_institucional = generar_identificador_siguiente(PerfilEstudiante, "ES", 'identificador_institucional')
+                estudiante.numero_de_matricula = generar_identificador_siguiente(PerfilEstudiante, "MAT", 'numero_de_matricula')
+                estudiante.estado_de_matricula = EnumEstadoDeMatricula.MATRICULADO.value
+                estudiante.campus_registrado = estudiante.carrera_registrada.campus
+                estudiante.periodo_de_nivelacion = periodo
+                estudiante.save()
 
-            if formulario_usuario.is_valid() and formulario_estudiante.is_valid():
-                with transaction.atomic():
-                    usuario = formulario_usuario.save(commit=False)
-                    usuario.set_password(usuario.identificacion)
-                    usuario.save()
-                    
-                    estudiante = formulario_estudiante.save(commit=False)
-                    estudiante.usuario_de_sistema = usuario
-                    estudiante.identificador_institucional = generar_identificador_siguiente(PerfilEstudiante, "ES", 'identificador_institucional')
-                    estudiante.numero_de_matricula = generar_identificador_siguiente(PerfilEstudiante, "MAT", 'numero_de_matricula')
-                    estudiante.estado_de_matricula = EnumEstadoDeMatricula.MATRICULADO.value
-                    estudiante.campus_registrado = estudiante.carrera_registrada.campus
-                    estudiante.periodo_de_nivelacion = periodo
-                    estudiante.save()
-                
-                messages.success(request, "El Estudiante ha sido registrado correctamente")
-                return redirect(url_listar)
+            messages.success(request, "El Estudiante ha sido registrado correctamente")
+            return redirect(f"{reverse('listar_estudiantes')}?periodo={periodo.id}")
     else:
         formulario_usuario = FormularioUsuarioDeSistema()
         formulario_estudiante = FormularioPerfilEstudiante(universidad=universidad_usuario)
@@ -146,6 +144,7 @@ def registrar_estudiante(request):
     return render(request, "usuarios/formulario_estudiante.html", {
         "form_usuario": formulario_usuario,
         "form_estudiante": formulario_estudiante,
+        "periodos": periodos,
         "periodo_contexto": periodo,
         "titulo_pagina": "Estudiante - NIVEC",
         "titulo": "Registrar Estudiante",
