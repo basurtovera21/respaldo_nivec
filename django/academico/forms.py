@@ -158,6 +158,13 @@ class FormularioCarrera(forms.ModelForm):
             if not carrera_poo.esta_activa():
                 errores['vigencia_sniese'] = "La vigencia SNIESE ha expirado"
 
+        if campus and nombre:
+            existentes = Carrera.objects.filter(campus=campus, nombre__iexact=nombre.strip())
+            if self.instance and self.instance.pk:
+                existentes = existentes.exclude(pk=self.instance.pk)
+            if existentes.exists():
+                errores['nombre'] = "La Carrera ya ha sido registrada"
+
         if errores:
             raise forms.ValidationError(errores)
 
