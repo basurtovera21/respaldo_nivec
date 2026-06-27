@@ -241,24 +241,23 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
 
         carreras_existentes = Carrera.objects.filter(campus__universidad=universidad_usuario)
 
+        mallas_registradas = {
+            (carrera_id, str(nombre_existente).strip().lower())
+            for carrera_id, nombre_existente in MallaCurricular.objects.filter(
+                carrera__campus__universidad=universidad_usuario
+            ).values_list("carrera_id", "nombre")
+        }
+
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
-                codigo_carrera, nombre, area, duracion, version, modalidad_str = fila[:6]
+                codigo_carrera, nombre, duracion = fila[:3]
 
-                if not any([codigo_carrera, nombre, area, duracion, version, modalidad_str]):
+                if not any([codigo_carrera, nombre, duracion]):
                     continue
 
-                if not all([codigo_carrera, nombre, area, duracion, version, modalidad_str]):
+                if not all([codigo_carrera, nombre, duracion]):
                     resultado["advertencias"].append(
                         f"El registro de la fila {numero_fila} fue omitido por falta de información"
-                    )
-                    continue
-
-                try:
-                    enum_modalidad = obtener_enum_flexible(Modalidad, modalidad_str)
-                except ValueError:
-                    resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (modalidad no válida)"
                     )
                     continue
 
@@ -266,7 +265,7 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     duracion_int = int(duracion)
                 except (ValueError, TypeError):
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (duración no válida)"
+                        f"El registro de la fila {numero_fila} fue omitido (Duración no válida)"
                     )
                     continue
 
@@ -275,17 +274,15 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
                 ).first()
                 if not carrera_obj:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (código de carrera no válido)"
+                        f"El registro de la fila {numero_fila} fue omitido (Código de Carrera no válido)"
                     )
                     continue
 
                 malla_poo = MallaCurricularBase(
                     codigo_de_malla="PENDIENTE",
                     nombre=str(nombre).strip(),
-                    area_de_conocimiento=str(area).strip(),
                     duracion_semanas=duracion_int,
-                    version_de_malla=str(version).strip(),
-                    modalidad=enum_modalidad,
+                    version_de_malla="PENDIENTE",
                 )
 
                 errores_poo = malla_poo.validar_datos_de_registro()
@@ -296,6 +293,13 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     )
                     continue
 
+                clave_malla = (carrera_obj.id, malla_poo.nombre.strip().lower())
+                if clave_malla in mallas_registradas:
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido (La Malla curricular ya existe)"
+                    )
+                    continue
+
                 with transaction.atomic():
                     MallaCurricular.objects.create(
                         carrera=carrera_obj,
@@ -303,13 +307,12 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
                             MallaCurricular, "MC", "codigo_de_malla"
                         ),
                         nombre=malla_poo.nombre,
-                        area_de_conocimiento=malla_poo.area_de_conocimiento,
                         duracion_semanas=malla_poo.duracion_semanas,
-                        version_de_malla=malla_poo.version_de_malla,
-                        modalidad=malla_poo.modalidad.value,
+                        version_de_malla=servicio_generar_version_malla(carrera_obj),
                         estado=EstadoDeMalla.DISENO.value,
                     )
                     resultado["exitosos"] += 1
+                    mallas_registradas.add(clave_malla)
 
             except Exception as e:
                 resultado["advertencias"].append(
@@ -322,7 +325,6 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
     return resultado
 
 
-# Agregar en django/academico/services.py
 
 def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
     from poo.clases.unidad_curricular import UnidadCurricular as UnidadCurricularBase
@@ -641,17 +643,24 @@ def _construir_unidad_poo(unidad_db):
         criterio_de_aprobacion=unidad_db.criterio_de_aprobacion,
         porcentaje_minimo_asistencia=unidad_db.porcentaje_minimo_asistencia,
     )
-
+    
+def servicio_generar_version_malla(carrera):
+    import re
+    maximo = 0
+    for version in MallaCurricular.objects.filter(carrera=carrera).values_list("version_de_malla", flat=True):
+        coincidencia = re.search(r"\d+", str(version or ""))
+        if coincidencia:
+            maximo = max(maximo, int(coincidencia.group()))
+    return f"V{maximo + 1}"
+    
 def _construir_malla_poo(malla_db, cargar_unidades=False):
     from poo.clases.malla_curricular import MallaCurricular as MallaCurricularBase
 
     malla_poo = MallaCurricularBase(
         codigo_de_malla=malla_db.codigo_de_malla,
         nombre=malla_db.nombre,
-        area_de_conocimiento=malla_db.area_de_conocimiento,
         duracion_semanas=malla_db.duracion_semanas,
         version_de_malla=malla_db.version_de_malla,
-        modalidad=obtener_enum_flexible(Modalidad, malla_db.modalidad),
     )
 
     if cargar_unidades:
@@ -684,29 +693,28 @@ def servicio_cambiar_estado_malla(malla_db, accion):
         if otra_activa:
             return (
                 False,
-                f"La carrera tiene una malla curricular activa ({otra_activa.codigo_de_malla} - "
-                f"{otra_activa.version_de_malla}). Marcarla como histórica o inactiva"
+                f"La Carrera tiene una Malla curricular activa ({otra_activa.codigo_de_malla} - {otra_activa.version_de_malla})"
             )
 
         if not malla_poo.activar():
-            return (False, "La malla curricular no puede activarse desde su estado actual")
+            return (False, "La Malla curricular no se ha podido habilitar")
 
     elif accion == "historica":
         if not malla_poo.marcar_historica():
-            return (False, "Sólo una malla curricular activa puede cambiar su estado a histórico")
+            return (False, "La Malla curricular no se ha podido descontinuar")
 
     elif accion == "inactivar":
         if not malla_poo.inactivar():
-            return (False, "La malla curricular no puede deshabilitarse desde su estado actual")
+            return (False, "La Malla curricular no se ha podido deshabilitar")
 
     else:
         return (False, "No válido")
 
     malla_db.estado = malla_poo.estado.value
     malla_db.save(update_fields=["estado"])
-    return (True, "El estado de la malla curricular ha sido actualizado correctamente.")
+    return (True, "El estado de la Malla curricular ha sido actualizado correctamente")
 
-def servicio_clonar_malla_curricular(id_malla_curricular_bd, nueva_version_de_malla, nuevo_nombre=None):
+def servicio_clonar_malla_curricular(id_malla_curricular_bd, nuevo_nombre=None):
     from academico.models import UnidadCurricular
 
     malla_curricular_db = MallaCurricular.objects.get(id=id_malla_curricular_bd)
@@ -714,7 +722,8 @@ def servicio_clonar_malla_curricular(id_malla_curricular_bd, nueva_version_de_ma
     malla_poo = _construir_malla_poo(malla_curricular_db, cargar_unidades=True)
 
     nuevo_codigo = generar_identificador_siguiente(MallaCurricular, "MC", "codigo_de_malla")
-    clon_poo = malla_poo.clonar(nuevo_codigo, str(nueva_version_de_malla).strip())
+    nueva_version = servicio_generar_version_malla(malla_curricular_db.carrera)
+    clon_poo = malla_poo.clonar(nuevo_codigo, nueva_version)
 
     if nuevo_nombre and str(nuevo_nombre).strip():
         clon_poo.nombre = str(nuevo_nombre).strip()
@@ -724,18 +733,16 @@ def servicio_clonar_malla_curricular(id_malla_curricular_bd, nueva_version_de_ma
             carrera=malla_curricular_db.carrera,
             codigo_de_malla=clon_poo.codigo_de_malla,
             nombre=clon_poo.nombre,
-            area_de_conocimiento=clon_poo.area_de_conocimiento,
             duracion_semanas=clon_poo.duracion_semanas,
             version_de_malla=clon_poo.version_de_malla,
-            modalidad=clon_poo.modalidad.value,
-            estado=clon_poo.estado.value,
+            estado=clon_poo.estado.value,  # Diseño
             total_horas_nivelacion=clon_poo.total_horas_nivelacion,
         )
 
         for unidad_poo in clon_poo.obtener_unidades_curriculares():
             UnidadCurricular.objects.create(
                 malla_curricular=nueva_malla_curricular_db,
-                codigo_de_unidad=generar_identificador_siguente(
+                codigo_de_unidad=generar_identificador_siguiente(
                     UnidadCurricular, "UC", "codigo_de_unidad"
                 ),
                 nombre=unidad_poo.nombre,
@@ -749,7 +756,6 @@ def servicio_clonar_malla_curricular(id_malla_curricular_bd, nueva_version_de_ma
             )
 
     return nueva_malla_curricular_db
-
 
 
 def _obtener_o_crear_cohorte(periodo_db, carrera):
@@ -810,11 +816,6 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                 f"El registro de la Malla curricular activa de {carrera.nombre} fue omitido (no presenta Unidades curriculares)"
             )
             continue
-
-        try:
-            enum_modalidad = obtener_enum_flexible(EnumModalidad, malla.modalidad)
-        except ValueError:
-            enum_modalidad = EnumModalidad.PRESENCIAL
 
         jornadas_presentes = (
             PerfilEstudiante.objects.filter(carrera_registrada=carrera)
@@ -913,7 +914,7 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                                 codigo_de_paralelo=generar_identificador_siguiente(Paralelo, "PAR", "codigo_de_paralelo"),
                                 nombre=nombre_nuevo,
                                 jornada=jornada_valor,
-                                modalidad=malla.modalidad,
+                                modalidad=periodo_db.modalidad,
                                 capacidad_maxima=capacidad,
                             )
                             resumen["paralelos_creados"] += 1

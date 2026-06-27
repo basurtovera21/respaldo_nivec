@@ -75,9 +75,9 @@ class CarreraAdmin(admin.ModelAdmin):
 
 @admin.register(MallaCurricular)
 class MallaCurricularAdmin(admin.ModelAdmin):
-    list_display = ("nombre", "carrera", "version_de_malla", "modalidad", "estado", "total_horas_nivelacion")
+    list_display = ("nombre", "carrera", "version_de_malla", "estado", "total_horas_nivelacion")
     search_fields = ("nombre", "codigo_de_malla")
-    list_filter = ("modalidad", "estado", "carrera")
+    list_filter = ("estado", "carrera")
     ordering = ("estado", "carrera", "nombre")
 
     fieldsets = (
@@ -86,15 +86,14 @@ class MallaCurricularAdmin(admin.ModelAdmin):
                 "carrera", 
                 "codigo_de_malla", 
                 "nombre", 
-                "area_de_conocimiento", 
                 "duracion_semanas", 
                 "version_de_malla", 
-                "modalidad", 
                 "estado", 
                 "total_horas_nivelacion"
             )
         }),
     )
+
 
 @admin.register(UnidadCurricular)
 class UnidadCurricularAdmin(admin.ModelAdmin):

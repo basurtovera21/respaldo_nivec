@@ -71,12 +71,10 @@ class Carrera(models.Model):
 
 class MallaCurricular(models.Model):
     carrera = models.ForeignKey(Carrera, on_delete=models.PROTECT, related_name="mallas_curriculares", verbose_name="Carrera registrada")
-    codigo_de_malla = models.CharField(max_length=50, unique=True, verbose_name="Código de malla curricular")
+    codigo_de_malla = models.CharField(max_length=50, unique=True, verbose_name="Código de Malla curricular")
     nombre = models.CharField(max_length=200, verbose_name="Nombre")
-    area_de_conocimiento = models.CharField(max_length=200, verbose_name="Área de conocimiento")
     duracion_semanas = models.IntegerField(verbose_name="Duración (en semanas)")
-    version_de_malla = models.CharField(max_length=20, verbose_name="Versión de malla curricular")
-    modalidad = models.CharField(max_length=50, choices=cambiar_enum_a_choices(Modalidad), verbose_name="Modalidad")
+    version_de_malla = models.CharField(max_length=20, verbose_name="Versión de Malla curricular")
     estado = models.CharField(max_length=50, choices=cambiar_enum_a_choices(EstadoDeMalla), default=EstadoDeMalla.DISENO.value, verbose_name="Estado")
     total_horas_nivelacion = models.FloatField(default=0.0, verbose_name="Total de horas de nivelación")
 
@@ -85,7 +83,8 @@ class MallaCurricular(models.Model):
         verbose_name_plural = "Mallas curriculares"
 
     def __str__(self):
-        return f"{self.nombre} ({self.version_de_malla})"
+        return f"{self.codigo_de_malla} ({self.nombre})"
+
 
 
 class UnidadCurricular(models.Model):

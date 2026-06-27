@@ -11,7 +11,9 @@ from academico.services import (
     servicio_malla_registrar_masivo_desde_excel,
     servicio_clonar_malla_curricular,
     servicio_cambiar_estado_malla,
+    servicio_generar_version_malla,
 )
+
 from usuarios.utils import (
     generar_identificador_siguiente,
     requiere_perfil,
@@ -29,7 +31,7 @@ ROLES_MODIFICAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
 def listar_mallas(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     mallas = MallaCurricular.objects.filter(
@@ -53,12 +55,9 @@ def descargar_plantilla_malla(request):
     ws.title = "Mallas curriculares"
 
     cabeceras = [
-        "Código de carrera (CAR...)",
-        "Nombre de la malla curricular",
-        "Área de conocimiento",
+        "Código de Carrera (CAR...)",
+        "Nombre de la Malla curricular",
         "Duración en semanas (número entero)",
-        "Versión de malla curricular",
-        "Modalidad (Virtual, Presencial, Semipresencial)",
     ]
     ws.append(cabeceras)
 
@@ -72,16 +71,17 @@ def descargar_plantilla_malla(request):
     wb.save(response)
     return response
 
+
 @requiere_perfil(*ROLES_MODIFICAN)
 def registrar_malla(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     carreras_existentes = Carrera.objects.filter(campus__universidad=universidad_usuario)
     if not carreras_existentes.exists():
-        messages.warning(request, "No existen registros de carreras actualmente")
+        messages.warning(request, "No existen registros de Carrera actualmente")
         return redirect("panel_dan")
 
     if request.method == "POST":
@@ -100,7 +100,7 @@ def registrar_malla(request):
             if resultado["exitosos"] > 0:
                 messages.success(
                     request,
-                    f"{resultado['exitosos']} mallas curriculares registradas correctamente"
+                    f"{resultado['exitosos']} Mallas curriculares registradas correctamente"
                 )
             return redirect("listar_mallas")
 
@@ -113,8 +113,9 @@ def registrar_malla(request):
                 nueva_malla.codigo_de_malla = generar_identificador_siguiente(
                     MallaCurricular, "MC", "codigo_de_malla"
                 )
+                nueva_malla.version_de_malla = servicio_generar_version_malla(nueva_malla.carrera)
                 nueva_malla.save()
-                messages.success(request, "La malla curricular ha sido registrada correctamente")
+                messages.success(request, "La Malla curricular ha sido registrada correctamente")
                 return redirect("listar_mallas")
     else:
         formulario = FormularioMallaCurricular()
@@ -123,18 +124,19 @@ def registrar_malla(request):
     return render(request, "academico/formulario_malla.html", {
         "formulario": formulario,
         "titulo_pagina": "Malla curricular - NIVEC",
-        "titulo": "Registrar malla curricular",
+        "titulo": "Registrar Malla curricular",
         "boton_texto": "Registrar",
         "url_cancelar": "listar_mallas",
         "mostrar_carga_masiva": True,
         "url_plantilla": "descargar_plantilla_malla",
     })
 
+
 @requiere_perfil(*ROLES_MODIFICAN)
 def modificar_malla(request, malla_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     malla = get_object_or_404(
@@ -148,7 +150,7 @@ def modificar_malla(request, malla_id):
         )
         if formulario.is_valid():
             formulario.save()
-            messages.success(request, "La malla curricular ha sido modificada correctamente")
+            messages.success(request, "La Malla curricular ha sido modificada correctamente")
             return redirect("listar_mallas")
     else:
         formulario = FormularioMallaCurricular(instance=malla)
@@ -159,7 +161,7 @@ def modificar_malla(request, malla_id):
     return render(request, "academico/formulario_malla.html", {
         "formulario": formulario,
         "titulo_pagina": "Malla curricular - NIVEC",
-        "titulo": "Modificar malla curricular",
+        "titulo": "Modificar Malla curricular",
         "boton_texto": "Modificar",
         "url_cancelar": "listar_mallas",
         "mostrar_carga_masiva": False,
@@ -169,7 +171,7 @@ def modificar_malla(request, malla_id):
 def eliminar_malla(request, malla_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     malla = get_object_or_404(
@@ -178,13 +180,12 @@ def eliminar_malla(request, malla_id):
 
     try:
         malla.delete()
-        messages.success(request, "La malla curricular ha sido eliminada correctamente")
+        messages.success(request, "La Malla curricular ha sido eliminada correctamente")
     except ProtectedError:
         total_unidades = malla.unidades_curriculares.count()
         messages.error(
             request,
-            f"La malla curricular no se ha podido eliminar ({total_unidades} unidad(es) "
-            f"curricular(es) presente(s)). Deshabilitarla"
+            f"La Malla curricular no se ha podido eliminar ({total_unidades} Unidad(es) curricular(es) presente(s))"
         )
     return redirect("listar_mallas")
 
@@ -192,7 +193,7 @@ def eliminar_malla(request, malla_id):
 def clonar_malla(request, malla_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     malla = get_object_or_404(
@@ -200,36 +201,30 @@ def clonar_malla(request, malla_id):
     )
 
     if request.method == "POST":
-        nueva_version = (request.POST.get("version_de_malla") or "").strip()
         nuevo_nombre = (request.POST.get("nombre") or "").strip()
 
-        if not nueva_version:
-            messages.error(request, "La versión de la nueva malla curricular es requerida")
-            return redirect("clonar_malla", malla_id=malla.id)
-
-        nueva_malla = servicio_clonar_malla_curricular(
-            malla.id, nueva_version, nuevo_nombre or None
-        )
+        nueva_malla = servicio_clonar_malla_curricular(malla.id, nuevo_nombre or None)
         total_unidades = nueva_malla.unidades_curriculares.count()
         messages.success(
             request,
-            f"La malla curricular fue clonada correctamente ({nueva_malla.codigo_de_malla})"
+            f"La Malla curricular fue copiada correctamente"
         )
         return redirect("listar_mallas")
 
     return render(request, "academico/formulario_clonar_malla.html", {
         "malla": malla,
         "titulo_pagina": "Malla curricular - NIVEC",
-        "titulo": "Copiar malla curricular",
+        "titulo": "Copiar Malla curricular",
         "boton_texto": "Copiar",
         "url_cancelar": "listar_mallas",
     })
+
 
 @requiere_perfil(*ROLES_MODIFICAN)
 def cambiar_estado_malla(request, malla_id, accion):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     malla = get_object_or_404(

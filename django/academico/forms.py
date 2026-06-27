@@ -193,19 +193,13 @@ class FormularioMallaCurricular(forms.ModelForm):
             "carrera",
             "codigo_de_malla",
             "nombre",
-            "area_de_conocimiento",
             "duracion_semanas",
-            "version_de_malla",
-            "modalidad",
         )
         labels = {
             "carrera": "Carrera registrada",
             "codigo_de_malla": "Código de Malla curricular",
             "nombre": "Nombre",
-            "area_de_conocimiento": "Área de conocimiento",
             "duracion_semanas": "Duración (en semanas)",
-            "version_de_malla": "Versión de Malla curricular",
-            "modalidad": "Modalidad",
         }
         widgets = {
             "codigo_de_malla": forms.TextInput(attrs={
@@ -221,27 +215,39 @@ class FormularioMallaCurricular(forms.ModelForm):
             field.required = False
 
     def clean(self):
+        from poo.clases.malla_curricular import MallaCurricular as MallaCurricularBase
+
         cleaned_data = super().clean()
         errores = {}
 
-        campos_requeridos = [
-            "carrera",
-            "nombre",
-            "area_de_conocimiento",
-            "duracion_semanas",
-            "version_de_malla",
-            "modalidad",
-        ]
+        carrera = cleaned_data.get("carrera")
+        nombre = cleaned_data.get("nombre")
+        duracion = cleaned_data.get("duracion_semanas")
 
-        for campo in campos_requeridos:
-            if not cleaned_data.get(campo):
-                errores[campo] = "Información requerida"
+        if not carrera:
+            errores["carrera"] = "Información requerida"
+
+        malla_poo = MallaCurricularBase(
+            codigo_de_malla="PENDIENTE",
+            nombre=nombre or "",
+            duracion_semanas=duracion if isinstance(duracion, int) else 0,
+            version_de_malla="PENDIENTE",
+        )
+        errores.update(malla_poo.validar_datos_de_registro())
+
+        if carrera and nombre and "nombre" not in errores:
+            existentes = MallaCurricular.objects.filter(
+                carrera=carrera, nombre__iexact=nombre.strip()
+            )
+            if self.instance and self.instance.pk:
+                existentes = existentes.exclude(pk=self.instance.pk)
+            if existentes.exists():
+                errores["nombre"] = "La Malla curricular ya ha sido registrada"
 
         if errores:
             raise forms.ValidationError(errores)
 
         return cleaned_data
-
 
 
 # Reemplazar FormularioUnidadCurricular en django/academico/forms.py
