@@ -298,7 +298,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
         for field in self.fields.values():
             field.required = False
 
-        # Si es edición, cargar las áreas actuales en el campo de texto
         if self.instance and self.instance.pk and self.instance.area_de_conocimiento:
             self.fields["areas_de_conocimiento_texto"].initial = ", ".join(
                 self.instance.area_de_conocimiento
@@ -333,7 +332,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
         if errores:
             raise forms.ValidationError(errores)
 
-        # Validación a través de la capa POO
         try:
             enum_tipo = TipoDeComponente(cleaned_data.get("tipo_de_componente"))
         except (ValueError, KeyError):
@@ -356,6 +354,19 @@ class FormularioUnidadCurricular(forms.ModelForm):
         errores_poo = unidad_poo.validar_datos_de_registro()
         if errores_poo:
             raise forms.ValidationError(errores_poo)
+
+        malla = cleaned_data.get("malla_curricular")
+        nombre = cleaned_data.get("nombre")
+        if malla and nombre:
+            existentes = UnidadCurricular.objects.filter(
+                malla_curricular=malla, nombre__iexact=nombre.strip()
+            )
+            if self.instance and self.instance.pk:
+                existentes = existentes.exclude(pk=self.instance.pk)
+            if existentes.exists():
+                raise forms.ValidationError(
+                    {"La Unidad curricular ya ha sido registrada en la Malla curricular especificada"}
+                )
 
         cleaned_data["area_de_conocimiento"] = areas_lista
         return cleaned_data

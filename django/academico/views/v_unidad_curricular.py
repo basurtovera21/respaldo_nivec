@@ -30,7 +30,7 @@ ESTADOS_MALLA_EDITABLE = [EstadoDeMalla.DISENO.value, EstadoDeMalla.ACTIVA.value
 def listar_unidades(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     carrera_id = request.GET.get("carrera")
@@ -66,7 +66,7 @@ def listar_unidades(request):
 def listar_unidades_de_malla(request, malla_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     malla = get_object_or_404(
@@ -96,7 +96,7 @@ def descargar_plantilla_unidad(request):
 
     cabeceras = [
         "Código de malla (MC...)",
-        "Nombre de la unidad curricular",
+        "Nombre de la Unidad curricular",
         "Áreas de conocimiento (separadas por comas)",
         "Horas totales (número decimal)",
         "Horas sincrónicas (número decimal)",
@@ -121,7 +121,7 @@ def descargar_plantilla_unidad(request):
 def registrar_unidad(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     mallas_existentes = MallaCurricular.objects.filter(
@@ -131,7 +131,7 @@ def registrar_unidad(request):
     if not mallas_existentes.exists():
         messages.warning(
             request,
-            "No existen mallas curriculares registradas en estado Diseño/Activa"
+            "No existen registros de Mallas curriculares (diseño o activa) actualmente"
         )
         return redirect("listar_mallas")
 
@@ -158,7 +158,7 @@ def registrar_unidad(request):
                     servicio_recalcular_total_horas_malla(malla)
                 messages.success(
                     request,
-                    f"{resultado['exitosos']} unidades curriculares registradas correctamente"
+                    f"{resultado['exitosos']} Unidades curriculares registradas correctamente"
                 )
             return redirect("listar_unidades")
 
@@ -174,7 +174,7 @@ def registrar_unidad(request):
                 nueva_unidad.save()
                 servicio_recalcular_total_horas_malla(nueva_unidad.malla_curricular)
                 messages.success(
-                    request, "La unidad curricular ha sido registrada correctamente"
+                    request, "La Unidad curricular ha sido registrada correctamente"
                 )
                 if malla_contexto:
                     return redirect("listar_unidades_de_malla", malla_id=malla_contexto.id)
@@ -188,7 +188,7 @@ def registrar_unidad(request):
     return render(request, "academico/formulario_unidad.html", {
         "formulario": formulario,
         "titulo_pagina": "Unidad curricular - NIVEC",
-        "titulo": "Registrar unidad curricular",
+        "titulo": "Registrar Unidad curricular",
         "boton_texto": "Registrar",
         "url_cancelar": "listar_unidades",
         "mostrar_carga_masiva": True,
@@ -199,7 +199,7 @@ def registrar_unidad(request):
 def modificar_unidad(request, unidad_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     unidad = get_object_or_404(
@@ -223,7 +223,7 @@ def modificar_unidad(request, unidad_id):
                 if malla_anterior:
                     servicio_recalcular_total_horas_malla(malla_anterior)
             messages.success(
-                request, "La unidad curricular ha sido modificada correctamente"
+                request, "La Unidad curricular ha sido modificada correctamente"
             )
             return redirect("listar_unidades")
     else:
@@ -236,7 +236,7 @@ def modificar_unidad(request, unidad_id):
     return render(request, "academico/formulario_unidad.html", {
         "formulario": formulario,
         "titulo_pagina": "Unidad curricular - NIVEC",
-        "titulo": "Modificar unidad curricular",
+        "titulo": "Modificar Unidad curricular",
         "boton_texto": "Modificar",
         "url_cancelar": "listar_unidades",
         "mostrar_carga_masiva": False,
@@ -246,7 +246,7 @@ def modificar_unidad(request, unidad_id):
 def eliminar_unidad(request, unidad_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     unidad = get_object_or_404(
@@ -258,10 +258,10 @@ def eliminar_unidad(request, unidad_id):
     try:
         unidad.delete()
         servicio_recalcular_total_horas_malla(malla)
-        messages.success(request, "La unidad curricular ha sido eliminada correctamente")
+        messages.success(request, "La Unidad curricular ha sido eliminada correctamente")
     except ProtectedError:
         messages.error(
             request,
-            "La unidad curricular no se ha podido eliminar (Paralelo(s) o Evaluacione(s) académica(s) presente(s))"
+            "La Unidad curricular no se ha podido eliminar (registros presentes)"
         )
     return redirect("listar_unidades")

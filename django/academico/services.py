@@ -329,8 +329,11 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
 def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
     from poo.clases.unidad_curricular import UnidadCurricular as UnidadCurricularBase
     from poo.clases.enums.tipo_de_componente import TipoDeComponente
+    from poo.clases.enums.estado_de_malla import EstadoDeMalla
     from academico.models import UnidadCurricular, MallaCurricular
     from usuarios.utils import generar_identificador_siguiente
+
+    estados_editables = (EstadoDeMalla.DISENO.value, EstadoDeMalla.ACTIVA.value)
 
     resultado = {"exitosos": 0, "advertencias": [], "error": None}
     try:
@@ -340,6 +343,13 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
         mallas_existentes = MallaCurricular.objects.filter(
             carrera__campus__universidad=universidad_usuario
         )
+
+        unidades_registradas = {
+            (malla_id, str(nombre_u).strip().lower())
+            for malla_id, nombre_u in UnidadCurricular.objects.filter(
+                malla_curricular__carrera__campus__universidad=universidad_usuario
+            ).values_list("malla_curricular_id", "nombre")
+        }
 
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
@@ -362,8 +372,7 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     enum_tipo = obtener_enum_flexible(TipoDeComponente, tipo_componente_str)
                 except ValueError:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido "
-                        f"(tipo de componente no válido)"
+                        f"El registro de la fila {numero_fila} fue omitido (Tipo de componente no válido)"
                     )
                     continue
 
@@ -375,7 +384,7 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     porcentaje_f = float(porcentaje_asistencia) if porcentaje_asistencia is not None else 70.0
                 except (ValueError, TypeError):
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (registro de valor no válido)"
+                        f"El registro de la fila {numero_fila} fue omitido (registro(s) no válido(s))"
                     )
                     continue
 
@@ -384,13 +393,25 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                 ).first()
                 if not malla_obj:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (código de malla no válido)"
+                        f"El registro de la fila {numero_fila} fue omitido (Código de Malla no válido)"
+                    )
+                    continue
+
+                if malla_obj.estado not in estados_editables:
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido (Estado no válido)"
+                    )
+                    continue
+
+                clave_unidad = (malla_obj.id, str(nombre).strip().lower())
+                if clave_unidad in unidades_registradas:
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido (la Unidad curricular ya existe en la Malla especificada)"
                     )
                     continue
 
                 areas_lista = [a.strip() for a in str(areas_str).split(",") if a.strip()]
 
-                # Validación a través de la capa POO
                 unidad_poo = UnidadCurricularBase(
                     codigo_de_unidad="PENDIENTE",
                     nombre=str(nombre).strip(),
@@ -427,6 +448,7 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                         porcentaje_minimo_asistencia=unidad_poo.porcentaje_minimo_asistencia,
                     )
                     resultado["exitosos"] += 1
+                    unidades_registradas.add(clave_unidad)
 
             except Exception as e:
                 resultado["advertencias"].append(
@@ -437,6 +459,7 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
         resultado["error"] = "Ha ocurrido un error al procesar el documento"
 
     return resultado
+
 
 
 

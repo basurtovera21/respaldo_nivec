@@ -37,19 +37,17 @@ class UnidadCurricular(IUnidadEvaluable):
         errores = {}
 
         if self.horas_totales <= 0:
-            errores["horas_totales"] = "Las horas totales deben ser mayor a cero"
+            errores["horas_totales"] = "el registro debe ser mayor a cero"
 
         if self.horas_sincronicas < 0:
-            errores["horas_sincronicas"] = "Las horas sincrónicas no pueden ser negativas"
+            errores["horas_sincronicas"] = "el registro no puede ser negativo"
 
         if self.horas_asincronicas < 0:
-            errores["horas_asincronicas"] = "Las horas asincrónicas no pueden ser negativas"
+            errores["horas_asincronicas"] = "el registro no puede ser negativo"
 
         if not self.validar_distribucion_de_horas_totales():
             errores["horas_totales"] = (
-                f"La suma de horas sincrónicas ({self.horas_sincronicas}) y "
-                f"asincrónicas ({self.horas_asincronicas}) no coincide con "
-                f"el total registrado ({self.horas_totales})"
+                f"el total de horas sincrónicas y horas asincrónicas no coincide con el total registrado"
             )
 
         return errores
@@ -58,10 +56,10 @@ class UnidadCurricular(IUnidadEvaluable):
         errores = {}
 
         if not (0.0 <= self.criterio_de_aprobacion <= 10.0):
-            errores["criterio_de_aprobacion"] = "El criterio de aprobación debe estar entre 0.0 y 10.0"
+            errores["criterio_de_aprobacion"] = "el registro debe estar entre 0.0 y 10.0"
 
         if not (0.0 <= self.porcentaje_minimo_asistencia <= 100.0):
-            errores["porcentaje_minimo_asistencia"] = "El porcentaje mínimo de asistencia debe estar entre 0.0 y 100.0"
+            errores["porcentaje_minimo_asistencia"] = "el registro debe estar entre 0.0 y 100.0"
 
         return errores
 
