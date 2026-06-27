@@ -101,7 +101,6 @@ def descargar_plantilla_unidad(request):
         "Horas totales (número decimal)",
         "Horas sincrónicas (número decimal)",
         "Horas asincrónicas (número decimal)",
-        "Tipo de componente (Teórico, Práctico, Tutorial)",
         "Criterio de aprobación (0.0 - 10.0)",
         "Porcentaje mínimo de asistencia (0.0 - 100.0)",
     ]

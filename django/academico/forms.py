@@ -270,7 +270,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
             "horas_totales",
             "horas_sincronicas",
             "horas_asincronicas",
-            "tipo_de_componente",
             "criterio_de_aprobacion",
             "porcentaje_minimo_asistencia",
         )
@@ -281,7 +280,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
             "horas_totales": "Horas totales",
             "horas_sincronicas": "Horas sincrónicas",
             "horas_asincronicas": "Horas asincrónicas",
-            "tipo_de_componente": "Tipo de componente",
             "criterio_de_aprobacion": "Criterio de aprobación",
             "porcentaje_minimo_asistencia": "Porcentaje mínimo de asistencia",
         }
@@ -305,7 +303,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
 
     def clean(self):
         from poo.clases.unidad_curricular import UnidadCurricular as UnidadCurricularBase
-        from poo.clases.enums.tipo_de_componente import TipoDeComponente
 
         cleaned_data = super().clean()
         errores = {}
@@ -332,11 +329,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
         if errores:
             raise forms.ValidationError(errores)
 
-        try:
-            enum_tipo = TipoDeComponente(cleaned_data.get("tipo_de_componente"))
-        except (ValueError, KeyError):
-            raise forms.ValidationError({"tipo_de_componente": "Tipo de componente no válido"})
-
         areas_lista = [a.strip() for a in areas_texto.split(",") if a.strip()]
 
         unidad_poo = UnidadCurricularBase(
@@ -346,7 +338,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
             horas_totales=cleaned_data.get("horas_totales", 0),
             horas_sincronicas=cleaned_data.get("horas_sincronicas", 0),
             horas_asincronicas=cleaned_data.get("horas_asincronicas", 0),
-            tipo_de_componente=enum_tipo,
             criterio_de_aprobacion=cleaned_data.get("criterio_de_aprobacion", 7.0),
             porcentaje_minimo_asistencia=cleaned_data.get("porcentaje_minimo_asistencia", 70.0),
         )

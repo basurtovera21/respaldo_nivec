@@ -97,9 +97,9 @@ class MallaCurricularAdmin(admin.ModelAdmin):
 
 @admin.register(UnidadCurricular)
 class UnidadCurricularAdmin(admin.ModelAdmin):
-    list_display = ("codigo_de_unidad", "nombre", "malla_curricular", "tipo_de_componente", "horas_totales", "criterio_de_aprobacion", "porcentaje_minimo_asistencia")
+    list_display = ("codigo_de_unidad", "nombre", "malla_curricular", "horas_totales", "criterio_de_aprobacion", "porcentaje_minimo_asistencia")
     search_fields = ("codigo_de_unidad", "nombre")
-    list_filter = ("tipo_de_componente", "malla_curricular")
+    list_filter = ("malla_curricular",)
     ordering = ("malla_curricular", "nombre")
 
     fieldsets = (
@@ -111,8 +111,7 @@ class UnidadCurricularAdmin(admin.ModelAdmin):
                 "area_de_conocimiento", 
                 "horas_totales", 
                 "horas_sincronicas", 
-                "horas_asincronicas", 
-                "tipo_de_componente", 
+                "horas_asincronicas",  
                 "criterio_de_aprobacion", 
                 "porcentaje_minimo_asistencia"
             )

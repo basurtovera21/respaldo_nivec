@@ -2,7 +2,6 @@ from django.db import models
 
 from poo.clases.enums.modalidad import Modalidad
 from poo.clases.enums.estado_de_malla import EstadoDeMalla
-from poo.clases.enums.tipo_de_componente import TipoDeComponente
 from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
 from poo.clases.enums.jornada import Jornada
 from poo.clases.enums.dia_de_semana import DiaDeSemana
@@ -95,7 +94,6 @@ class UnidadCurricular(models.Model):
     horas_totales = models.FloatField(verbose_name="Horas totales")
     horas_sincronicas = models.FloatField(verbose_name="Horas sincrónicas")
     horas_asincronicas = models.FloatField(verbose_name="Horas asincrónicas")
-    tipo_de_componente = models.CharField(max_length=50, choices=cambiar_enum_a_choices(TipoDeComponente), verbose_name="Tipo de componente")
     criterio_de_aprobacion = models.FloatField(default=7.0, verbose_name="Criterio de aprobación")
     porcentaje_minimo_asistencia = models.FloatField(default=70.0, verbose_name="Porcentaje mínimo de asistencia")
 

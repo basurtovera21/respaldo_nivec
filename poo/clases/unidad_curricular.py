@@ -5,14 +5,13 @@ from poo.clases.enums.tipo_de_componente import TipoDeComponente
 from poo.clases.interfaces.i_unidad_evaluable import IUnidadEvaluable
 
 class UnidadCurricular(IUnidadEvaluable):
-    def __init__(self, codigo_de_unidad: str, nombre: str, area_de_conocimiento: list, horas_totales: float, horas_sincronicas: float, horas_asincronicas: float, tipo_de_componente: TipoDeComponente, criterio_de_aprobacion: float = 7.0, porcentaje_minimo_asistencia: float = 70.0):
+    def __init__(self, codigo_de_unidad: str, nombre: str, area_de_conocimiento: list, horas_totales: float, horas_sincronicas: float, horas_asincronicas: float, criterio_de_aprobacion: float = 7.0, porcentaje_minimo_asistencia: float = 70.0):
         self.codigo_de_unidad = codigo_de_unidad
         self.nombre = nombre
         self.area_de_conocimiento = area_de_conocimiento
         self.horas_totales = horas_totales
         self.horas_sincronicas = horas_sincronicas
         self.horas_asincronicas = horas_asincronicas
-        self.tipo_de_componente = tipo_de_componente
         self.criterio_de_aprobacion = criterio_de_aprobacion
         self.porcentaje_minimo_asistencia = porcentaje_minimo_asistencia
 
@@ -71,9 +70,6 @@ class UnidadCurricular(IUnidadEvaluable):
 
         if not self.area_de_conocimiento:
             errores["area_de_conocimiento"] = "Información requerida"
-
-        if not isinstance(self.tipo_de_componente, TipoDeComponente):
-            errores["tipo_de_componente"] = "Tipo de componente no válido"
 
         errores.update(self.validar_horas())
         errores.update(self.validar_criterios())

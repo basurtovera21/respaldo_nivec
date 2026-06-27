@@ -16,7 +16,6 @@ from poo.clases.enums.formato_de_exportacion import FormatoDeExportacion
 from poo.clases.enums.modalidad import Modalidad
 from poo.clases.enums.jornada import Jornada
 from poo.clases.enums.tipo_de_cohorte import TipoDeCohorte
-from poo.clases.enums.tipo_de_componente import TipoDeComponente
 from poo.clases.enums.dia_de_semana import DiaDeSemana
 from poo.clases.enums.tipo_de_sesion import TipoDeSesion
 
@@ -328,7 +327,6 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
 
 def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
     from poo.clases.unidad_curricular import UnidadCurricular as UnidadCurricularBase
-    from poo.clases.enums.tipo_de_componente import TipoDeComponente
     from poo.clases.enums.estado_de_malla import EstadoDeMalla
     from academico.models import UnidadCurricular, MallaCurricular
     from usuarios.utils import generar_identificador_siguiente
@@ -354,25 +352,17 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
                 (codigo_malla, nombre, areas_str, horas_totales,
-                 horas_sincronicas, horas_asincronicas, tipo_componente_str,
-                 criterio, porcentaje_asistencia) = fila[:9]
+                 horas_sincronicas, horas_asincronicas,
+                 criterio, porcentaje_asistencia) = fila[:8]
 
                 if not any([codigo_malla, nombre, areas_str, horas_totales,
-                            horas_sincronicas, horas_asincronicas, tipo_componente_str]):
+                            horas_sincronicas, horas_asincronicas]):
                     continue
 
                 if not all([codigo_malla, nombre, areas_str, horas_totales,
-                            horas_sincronicas, horas_asincronicas, tipo_componente_str]):
+                            horas_sincronicas, horas_asincronicas]):
                     resultado["advertencias"].append(
                         f"El registro de la fila {numero_fila} fue omitido por falta de información"
-                    )
-                    continue
-
-                try:
-                    enum_tipo = obtener_enum_flexible(TipoDeComponente, tipo_componente_str)
-                except ValueError:
-                    resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (Tipo de componente no válido)"
                     )
                     continue
 
@@ -419,7 +409,6 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     horas_totales=horas_totales_f,
                     horas_sincronicas=horas_sincronicas_f,
                     horas_asincronicas=horas_asincronicas_f,
-                    tipo_de_componente=enum_tipo,
                     criterio_de_aprobacion=criterio_f,
                     porcentaje_minimo_asistencia=porcentaje_f,
                 )
@@ -443,7 +432,6 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                         horas_totales=unidad_poo.horas_totales,
                         horas_sincronicas=unidad_poo.horas_sincronicas,
                         horas_asincronicas=unidad_poo.horas_asincronicas,
-                        tipo_de_componente=unidad_poo.tipo_de_componente.value,
                         criterio_de_aprobacion=unidad_poo.criterio_de_aprobacion,
                         porcentaje_minimo_asistencia=unidad_poo.porcentaje_minimo_asistencia,
                     )
@@ -475,7 +463,6 @@ def servicio_registrar_evaluacion_academica(evaluacion_academica: EvaluacionAcad
         horas_totales = evaluacion_academica.unidad_curricular.horas_totales,
         horas_sincronicas = evaluacion_academica.unidad_curricular.horas_sincronicas,
         horas_asincronicas = evaluacion_academica.unidad_curricular.horas_asincronicas,
-        tipo_de_componente = obtener_enum_flexible(TipoDeComponente, evaluacion_academica.unidad_curricular.tipo_de_componente),
         criterio_de_aprobacion = evaluacion_academica.unidad_curricular.criterio_de_aprobacion,
         porcentaje_minimo_asistencia = evaluacion_academica.unidad_curricular.porcentaje_minimo_asistencia
     )
@@ -662,7 +649,6 @@ def _construir_unidad_poo(unidad_db):
         horas_totales=unidad_db.horas_totales,
         horas_sincronicas=unidad_db.horas_sincronicas,
         horas_asincronicas=unidad_db.horas_asincronicas,
-        tipo_de_componente=obtener_enum_flexible(TipoDeComponente, unidad_db.tipo_de_componente),
         criterio_de_aprobacion=unidad_db.criterio_de_aprobacion,
         porcentaje_minimo_asistencia=unidad_db.porcentaje_minimo_asistencia,
     )
@@ -773,7 +759,6 @@ def servicio_clonar_malla_curricular(id_malla_curricular_bd, nuevo_nombre=None):
                 horas_totales=unidad_poo.horas_totales,
                 horas_sincronicas=unidad_poo.horas_sincronicas,
                 horas_asincronicas=unidad_poo.horas_asincronicas,
-                tipo_de_componente=unidad_poo.tipo_de_componente.value,
                 criterio_de_aprobacion=unidad_poo.criterio_de_aprobacion,
                 porcentaje_minimo_asistencia=unidad_poo.porcentaje_minimo_asistencia,
             )
