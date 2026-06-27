@@ -1,5 +1,5 @@
 from django import forms
-from academico.models import Campus, Carrera
+from academico.models import Campus, Carrera, PeriodoDeNivelacion
 from .models import UsuarioDeSistema, PerfilDocente, PerfilEstudiante, PerfilAdministrativo
 from poo.clases.usuarios.usuario_de_sistema import UsuarioDeSistema as UsuarioDeSistemaBase
 from poo.clases.enums.estado_de_usuario import EstadoDeUsuario
@@ -73,7 +73,7 @@ class FormularioPerfilEstudiante(forms.ModelForm):
     class Meta:
         model = PerfilEstudiante
         fields = ("identificador_institucional", "numero_de_matricula", "jornada", 
-                  "registro_de_cupo", "carrera_registrada", "campus_registrado", "estado_de_matricula")
+                  "registro_de_cupo", "carrera_registrada", "campus_registrado", "estado_de_matricula", "periodo_de_nivelacion")
         widgets = {
             "identificador_institucional": forms.TextInput(attrs={'readonly': True, 'placeholder': 'El identificador será definido de forma automática', 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'}), 
             "numero_de_matricula": forms.TextInput(attrs={'readonly': True, 'placeholder': 'El número de matrícula será definido de forma automática', 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'}), 
@@ -81,7 +81,8 @@ class FormularioPerfilEstudiante(forms.ModelForm):
             "registro_de_cupo": forms.Select(attrs={'class': 'campo-select'}), 
             "carrera_registrada": forms.Select(attrs={'class': 'campo-select'}), 
             "campus_registrado": forms.Select(attrs={'class': 'campo-select'}), 
-            "estado_de_matricula": forms.Select(attrs={'class': 'campo-select'})
+            "estado_de_matricula": forms.Select(attrs={'class': 'campo-select'}),
+            "periodo_de_nivelacion": forms.Select(attrs={'class': 'campo-select'})
         }
 
     def __init__(self, *args, **kwargs):
@@ -92,11 +93,17 @@ class FormularioPerfilEstudiante(forms.ModelForm):
         if universidad:
             self.fields['campus_registrado'].queryset = Campus.objects.filter(universidad=universidad)
             self.fields['carrera_registrada'].queryset = Carrera.objects.filter(campus__universidad=universidad)
+            self.fields['periodo_de_nivelacion'].queryset = PeriodoDeNivelacion.objects.filter(
+                universidad=universidad
+            ).order_by("-anio", "-numero_periodo")
 
         for field in self.fields.values():
             field.error_messages.update({'required': ''})
         self.fields['identificador_institucional'].required = False
         self.fields['numero_de_matricula'].required = False
+        self.fields['periodo_de_nivelacion'].required = True
+        self.fields['periodo_de_nivelacion'].error_messages['required'] = "Especifique un Periodo de nivelación"
+
 
 class FormularioRegistrarDocente(forms.ModelForm):
     especialidades_texto = forms.CharField(label="Especialidades", required=False, widget=forms.TextInput(attrs={'class': 'campo-input'}), help_text="Registre la información separada por comas")

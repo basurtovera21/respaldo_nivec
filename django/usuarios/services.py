@@ -50,7 +50,7 @@ def servicio_iniciar_sesion(request, correo_institucional, contrasena):
         exito, mensaje = UsuarioDeSistemaBase.validar_estado_de_usuario(usuario_de_sistema_django.estado_de_usuario)
         if exito: login(request, usuario_de_sistema_django)
         return {"exito": exito, "mensaje": mensaje}
-    return {"exito": False, "mensaje": "Las credenciales registradas no son válidas."}
+    return {"exito": False, "mensaje": "Las credenciales registradas no son válidas"}
 
 def servicio_cerrar_sesion(request):
     logout(request)
@@ -242,7 +242,7 @@ def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
         
     return resultado
 
-def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuario):
+def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuario, periodo_de_nivelacion=None):
     from poo.clases.criterios_filtro.criterio_cedula_formato import CriterioCedulaFormato
     from poo.clases.servicios.depurador_de_sincronizacion import DepuradorDeSincronizacion
 
@@ -292,10 +292,23 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
             try:
                 ident_str = registro["cedula"]
                 if UsuarioDeSistema.objects.filter(identificacion=ident_str).exists():
+                    if periodo_de_nivelacion is not None:
+                        perfil_existente = PerfilEstudiante.objects.filter(
+                            usuario_de_sistema__identificacion=ident_str,
+                            carrera_registrada__campus__universidad=universidad_usuario,
+                        ).first()
+                        if perfil_existente:
+                            perfil_existente.periodo_de_nivelacion = periodo_de_nivelacion
+                            perfil_existente.save(update_fields=["periodo_de_nivelacion"])
+                            resultado["advertencias"].append(
+                                f"El registro de la fila {registro['fila']} ha vinculado el registro al Periodo de nivelación especificado"
+                            )
+                            continue
                     resultado["advertencias"].append(
                         f"El registro de la fila {registro['fila']} fue omitido (el Estudiante ya se encuentra registrado)"
                     )
                     continue
+
 
                 carrera = Carrera.objects.filter(
                     nombre__iexact=registro["carrera"], campus__universidad=universidad_usuario

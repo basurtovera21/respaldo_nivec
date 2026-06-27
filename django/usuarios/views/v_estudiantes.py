@@ -17,6 +17,7 @@ from usuarios.services import servicio_estudiante_registrar_masivo_desde_excel, 
 from poo.clases.enums.estado_de_usuario import EstadoDeUsuario as EnumEstadoDeUsuario
 from poo.clases.enums.estado_de_matricula import EstadoDeMatricula as EnumEstadoDeMatricula
 from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
+from academico.models import PeriodoDeNivelacion
 
 ROLES_USUARIOS_VEN = (ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
 
@@ -71,6 +72,10 @@ def registrar_estudiante(request):
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
+    
+    if not PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario).exists():
+        messages.warning(request, "No existen registros de Periodos de nivelación actualmente")
+        return redirect("panel_principal")
 
     if request.method == "POST":
         if 'archivo_excel' in request.FILES:
@@ -78,9 +83,19 @@ def registrar_estudiante(request):
             if not archivo.name.endswith('.xlsx'):
                 messages.error(request, "Documento con formato no válido")
                 return redirect("registrar_estudiante")
-            
-            resultado = servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuario)
-            
+
+            periodo_id = request.POST.get("periodo_de_nivelacion") or None
+            periodo = PeriodoDeNivelacion.objects.filter(
+                id=periodo_id, universidad=universidad_usuario
+            ).first() if periodo_id else None
+            if not periodo:
+                messages.error(request, "Especifique un Periodo de nivelación")
+                return redirect("registrar_estudiante")
+
+            resultado = servicio_estudiante_registrar_masivo_desde_excel(
+                archivo, universidad_usuario, periodo_de_nivelacion=periodo
+            )
+
             if resultado["error"]: messages.error(request, resultado["error"])
             for adv in resultado["advertencias"]: messages.warning(request, adv)
             if resultado["exitosos"] > 0: messages.success(request, f"{resultado['exitosos']} Estudiantes registrados correctamente")
@@ -125,6 +140,10 @@ def modificar_estudiante(request, estudiante_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+    
+    if not PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario).exists():
+        messages.warning(request, "No existen registros de Periodos de nivelación actualmente")
         return redirect("panel_principal")
 
     est = get_object_or_404(PerfilEstudiante, id=estudiante_id, carrera_registrada__campus__universidad=universidad_usuario)

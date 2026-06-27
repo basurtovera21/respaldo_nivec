@@ -70,6 +70,8 @@ class PerfilEstudiante(models.Model):
     carrera_registrada = models.ForeignKey('academico.Carrera', on_delete=models.PROTECT, related_name="estudiantes")
     campus_registrado = models.ForeignKey('academico.Campus', on_delete=models.PROTECT, related_name="estudiantes")
     estado_de_matricula = models.CharField(max_length=50, choices=cambiar_enum_a_choices(EstadoDeMatricula), default=EstadoDeMatricula.MATRICULADO.value, verbose_name="Estado de matrícula")
+    periodo_de_nivelacion = models.ForeignKey('academico.PeriodoDeNivelacion', on_delete=models.SET_NULL, related_name="estudiantes_de_periodo", null=True, blank=True, verbose_name="Periodo de nivelación")
+
     class Meta:
         verbose_name = "Perfil estudiante"; verbose_name_plural = "Perfiles estudiantes"
     def __str__(self): return f"ESTUDIANTE: {self.usuario_de_sistema.nombres} {self.usuario_de_sistema.apellidos}"

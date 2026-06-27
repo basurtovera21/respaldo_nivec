@@ -541,8 +541,9 @@ def servicio_procesar_mtn(archivo, periodo_de_nivelacion: PeriodoDeNivelacion):
     from poo.clases.consolidado_academico import ConsolidadoAcademico as ConsolidadoAcademicoPOO
 
     resultado = servicio_estudiante_registrar_masivo_desde_excel(
-        archivo, periodo_de_nivelacion.universidad
+        archivo, periodo_de_nivelacion.universidad, periodo_de_nivelacion=periodo_de_nivelacion
     )
+
 
     if resultado.get("error"):
         return resultado
@@ -826,15 +827,19 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
             continue
 
         jornadas_presentes = (
-            PerfilEstudiante.objects.filter(carrera_registrada=carrera)
+            PerfilEstudiante.objects.filter(
+                carrera_registrada=carrera, periodo_de_nivelacion=periodo_db
+            )
             .values_list("jornada", flat=True).distinct()
         )
+
 
         for jornada_valor in jornadas_presentes:
             estudiantes = list(
                 PerfilEstudiante.objects.filter(
                     carrera_registrada=carrera,
                     jornada=jornada_valor,
+                    periodo_de_nivelacion=periodo_db,
                 ).exclude(
                     estudiantes_matriculados__paralelo__periodo_de_nivelacion=periodo_db
                 ).distinct()

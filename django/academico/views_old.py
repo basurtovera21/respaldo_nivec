@@ -19,87 +19,6 @@ from .forms import (FormularioUniversidad, FormularioCampus, FormularioCarrera,
 from . import services
 from datetime import datetime, date
 
-#Estructura académica
-@login_required
-def listar_mallas(request):
-    mallas = MallaCurricular.objects.all().select_related("carrera")
-    return render(request, "academico/listar_mallas.html", {"mallas": mallas})
-
-
-@login_required
-def registrar_malla(request):
-    if request.method == "POST":
-        formulario = FormularioMallaCurricular(request.POST)
-        if formulario.is_valid():
-            formulario.save()
-            messages.success(request, "Malla curricular registrada correctamente.")
-            return redirect("listar_mallas")
-    else:
-        formulario = FormularioMallaCurricular()
-    return render(request, "academico/formulario_malla.html", {
-        "formulario": formulario,
-        "titulo": "Registrar malla curricular",
-    })
-
-
-@login_required
-def listar_unidades(request):
-    unidades = UnidadCurricular.objects.all().select_related("malla_curricular")
-    return render(request, "academico/listar_unidades.html", {"unidades": unidades})
-
-
-@login_required
-def registrar_unidad(request):
-    if request.method == "POST":
-        formulario = FormularioUnidadCurricular(request.POST)
-        if formulario.is_valid():
-            formulario.save()
-            messages.success(request, "Unidad curricular registrada correctamente.")
-            return redirect("listar_unidades")
-    else:
-        formulario = FormularioUnidadCurricular()
-    return render(request, "academico/formulario_unidad.html", {
-        "formulario": formulario,
-        "titulo": "Registrar unidad curricular",
-    })
-
-@login_required
-def listar_paralelos(request):
-    paralelos = Paralelo.objects.all().select_related(
-        "periodo_de_nivelacion", "unidad_curricular", "docente_responsable"
-    )
-    return render(request, "academico/listar_paralelos.html", {"paralelos": paralelos})
-
-@login_required
-def registrar_paralelo(request):
-    if request.method == "POST":
-        formulario = FormularioParalelo(request.POST)
-        if formulario.is_valid():
-            formulario.save()
-            messages.success(request, "Paralelo registrado correctamente.")
-            return redirect("listar_paralelos")
-    else:
-        formulario = FormularioParalelo()
-    return render(request, "academico/formulario_paralelo.html", {
-        "formulario": formulario,
-        "titulo": "Registrar paralelo",
-    })
-
-
-@login_required
-def registrar_horario(request):
-    if request.method == "POST":
-        formulario = FormularioHorario(request.POST)
-        if formulario.is_valid():
-            formulario.save()
-            messages.success(request, "Horario registrado correctamente.")
-            return redirect("listar_paralelos")
-    else:
-        formulario = FormularioHorario()
-    return render(request, "academico/formulario_horario.html", {
-        "formulario": formulario,
-        "titulo": "Registrar horario",
-    })
 
 
 #Procesos académicos
@@ -143,26 +62,6 @@ def registrar_matricula(request):
     })
 
 
-@login_required
-def procesar_mtn(request):
-    from academico.forms import FormularioConsolidadoAcademico
-    if request.method == "POST" and request.FILES.get("documento_mtn"):
-        periodo_id = request.POST.get("periodo")
-        periodo = get_object_or_404(PeriodoDeNivelacion, pk=periodo_id)
-        resultado = services.servicio_procesar_mtn(request.FILES["documento_mtn"], periodo)
-        messages.success(
-            request,
-            f"MTN procesada: {resultado['registros_validos']} válidos, "
-            f"{resultado['registros_observados']} observados de {resultado['registros_totales']}."
-        )
-        for observacion in resultado["filas_observadas"]:
-            messages.warning(request, observacion)
-        return redirect("listar_estudiantes")
-    periodos = PeriodoDeNivelacion.objects.filter(estado="Planificación")
-    return render(request, "dan/cargar_mtn.html", {
-        "periodos": periodos,
-        "titulo": "Procesar Matriz de Tercer Nivel (MTN)",
-    })
 
 
 @login_required
