@@ -30,7 +30,9 @@ class FormularioUniversidad(BaseModelForm):
 
     def clean(self):
         from poo.clases.universidad import Universidad as UniversidadBase
+
         cleaned_data = super().clean()
+
         universidad_poo = UniversidadBase(
             nombre=cleaned_data.get("nombre", ""),
             abreviatura=cleaned_data.get("abreviatura", ""),
@@ -38,10 +40,23 @@ class FormularioUniversidad(BaseModelForm):
             direccion_matriz=cleaned_data.get("direccion_matriz", ""),
             identificador_visual=cleaned_data.get("identificador_visual"),
         )
+
         errores = universidad_poo.validar_datos_de_registro()
         if errores:
             raise forms.ValidationError(errores)
+
+        codigo_sniese = (cleaned_data.get("codigo_sniese") or "").strip()
+        if codigo_sniese:
+            existentes = Universidad.objects.filter(codigo_sniese__iexact=codigo_sniese)
+            if self.instance and self.instance.pk:
+                existentes = existentes.exclude(pk=self.instance.pk)
+            if existentes.exists():
+                raise forms.ValidationError(
+                    {"codigo_sniese": "La institución ya ha sido registrada"}
+                )
+
         return cleaned_data
+
 
 
 
