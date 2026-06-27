@@ -2,6 +2,26 @@
 
 {% block titulo %}Estudiante - NIVEC{% endblock %}
 
+{% block boton_registrar %}
+    {% if url_registrar and not solo_lectura %}
+    <a href="{% url 'registrar_estudiante' %}{% if periodo_seleccionado %}?periodo={{ periodo_seleccionado.id }}{% endif %}" class="boton boton-primario">{{ texto_registrar|default:"Registrar" }}</a>
+    {% endif %}
+{% endblock %}
+
+{% block filtros %}
+<div style="margin-bottom: 16px;">
+    <form method="get" id="form-filtro-periodo">
+        <label style="font-weight: bold; font-size: 13px; color: #515154; margin-right: 8px;">Periodo de nivelación</label>
+        <select name="periodo" class="campo-select" style="max-width: 320px;" onchange="document.getElementById('form-filtro-periodo').submit();">
+            <option value="">Todos los periodos</option>
+            {% for p in periodos %}
+            <option value="{{ p.id }}" {% if periodo_seleccionado and periodo_seleccionado.id == p.id %}selected{% endif %}>{{ p.anio }} - Periodo {{ p.numero_periodo }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+{% endblock %}
+
 {% block cabeceras_tabla %}
     <th style="font-weight: bold; text-align: left; color: #515154">Número de identificación</th>
     <th style="font-weight: bold; text-align: left; color: #515154">Apellidos y Nombres</th>

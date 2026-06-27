@@ -73,16 +73,14 @@ class FormularioPerfilEstudiante(forms.ModelForm):
     class Meta:
         model = PerfilEstudiante
         fields = ("identificador_institucional", "numero_de_matricula", "jornada", 
-                  "registro_de_cupo", "carrera_registrada", "campus_registrado", "estado_de_matricula", "periodo_de_nivelacion")
+                  "registro_de_cupo", "carrera_registrada", "estado_de_matricula")
         widgets = {
             "identificador_institucional": forms.TextInput(attrs={'readonly': True, 'placeholder': 'El identificador será definido de forma automática', 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'}), 
             "numero_de_matricula": forms.TextInput(attrs={'readonly': True, 'placeholder': 'El número de matrícula será definido de forma automática', 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'}), 
             "jornada": forms.Select(attrs={'class': 'campo-select'}), 
             "registro_de_cupo": forms.Select(attrs={'class': 'campo-select'}), 
             "carrera_registrada": forms.Select(attrs={'class': 'campo-select'}), 
-            "campus_registrado": forms.Select(attrs={'class': 'campo-select'}), 
-            "estado_de_matricula": forms.Select(attrs={'class': 'campo-select'}),
-            "periodo_de_nivelacion": forms.Select(attrs={'class': 'campo-select'})
+            "estado_de_matricula": forms.Select(attrs={'class': 'campo-select'})
         }
 
     def __init__(self, *args, **kwargs):
@@ -91,18 +89,12 @@ class FormularioPerfilEstudiante(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if universidad:
-            self.fields['campus_registrado'].queryset = Campus.objects.filter(universidad=universidad)
             self.fields['carrera_registrada'].queryset = Carrera.objects.filter(campus__universidad=universidad)
-            self.fields['periodo_de_nivelacion'].queryset = PeriodoDeNivelacion.objects.filter(
-                universidad=universidad
-            ).order_by("-anio", "-numero_periodo")
 
         for field in self.fields.values():
             field.error_messages.update({'required': ''})
         self.fields['identificador_institucional'].required = False
         self.fields['numero_de_matricula'].required = False
-        self.fields['periodo_de_nivelacion'].required = True
-        self.fields['periodo_de_nivelacion'].error_messages['required'] = "Especifique un Periodo de nivelación"
 
 
 class FormularioRegistrarDocente(forms.ModelForm):
