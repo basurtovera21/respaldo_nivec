@@ -9,17 +9,21 @@
 {% endblock %}
 
 {% block filtros %}
-<form method="get" id="form-filtro-periodo">
-    <div class="campo" style="max-width: 320px; margin-bottom: 20px;">
-        <label>Periodo de nivelación</label>
-        <select name="periodo" onchange="document.getElementById('form-filtro-periodo').submit();">
-            <option value="">Todos los periodos</option>
+    <form method="get" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <label style="font-weight: bold; font-size: 13px; color: #515154;">Filtrar por Periodo de nivelación:</label>
+        <select name="periodo" onchange="this.form.submit()"
+                style="padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 13px; background: white; color: #1d1d1f; outline: none;">
+            <option value=""></option>
             {% for p in periodos %}
-            <option value="{{ p.id }}" {% if periodo_seleccionado and periodo_seleccionado.id == p.id %}selected{% endif %}>{{ p.anio }} - Periodo {{ p.numero_periodo }}</option>
+                <option value="{{ p.id }}" {% if periodo_seleccionado.id == p.id %}selected{% endif %}>
+                    {{ p.anio }} - Periodo {{ p.numero_periodo }}
+                </option>
             {% endfor %}
         </select>
-    </div>
-</form>
+        {% if periodo_seleccionado %}
+            <a href="{% url 'listar_estudiantes' %}" class="boton boton-secundario">Reiniciar</a>
+        {% endif %}
+    </form>
 {% endblock %}
 
 {% block cabeceras_tabla %}
