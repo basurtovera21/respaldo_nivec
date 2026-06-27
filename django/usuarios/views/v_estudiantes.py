@@ -92,12 +92,13 @@ def registrar_estudiante(request):
 
     # El periodo se toma del contexto (filtro del listado): GET al entrar, campo oculto al enviar.
     periodo_id = request.POST.get("periodo") or request.GET.get("periodo") or None
-    periodo = PeriodoDeNivelacion.objects.filter(
-        id=periodo_id, universidad=universidad_usuario
-    ).first() if periodo_id else None
+    periodos = PeriodoDeNivelacion.objects.filter(
+        universidad=universidad_usuario
+    ).order_by("-anio", "-numero_periodo")
+    periodo = periodos.filter(id=periodo_id).first() if periodo_id else None
     if not periodo:
-        messages.warning(request, "Seleccione un Periodo de nivelación para registrar Estudiantes")
-        return redirect("listar_estudiantes")
+        # Respaldo: si no llegó un periodo, usa el más reciente (nunca reinicia).
+        periodo = periodos.first()
 
     url_registrar = f"{reverse('registrar_estudiante')}?periodo={periodo.id}"
     url_listar = f"{reverse('listar_estudiantes')}?periodo={periodo.id}"
