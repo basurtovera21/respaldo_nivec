@@ -1275,15 +1275,24 @@ def servicio_evaluar_docentes_para_paralelo(paralelo_db):
         resultado = facade.validar_asignacion_docente(
             docente_poo, paralelo_poo, horas_unidad, areas
         )
+        es_actual = paralelo_db.docente_responsable_id == docente_db.id
+        jornada_ok = paralelo_db.jornada in (docente_db.jornadas or [])
+        asignable = resultado["ok"] and jornada_ok
+        if not jornada_ok:
+            motivo = "El Docente no atiende la jornada del paralelo"
+        elif not resultado["ok"]:
+            motivo = _texto_motivo_no_asignable(resultado)
+        else:
+            motivo = ""
         evaluaciones.append({
             "docente": docente_db,
-            "es_actual": paralelo_db.docente_responsable_id == docente_db.id,
+            "es_actual": es_actual,
             "carga_actual": carga_actual,
-            "carga_proyectada": round(carga_actual + horas_unidad, 2),
+            "carga_real": round(carga_actual + (horas_unidad if es_actual else 0), 2),
             "carga_maxima": docente_db.carga_horaria_maxima,
             "horas_unidad": horas_unidad,
-            "asignable": resultado["ok"],
-            "motivo": "" if resultado["ok"] else _texto_motivo_no_asignable(resultado),
+            "asignable": asignable,
+            "motivo": motivo,
             "especialidad_ok": docente_poo.tiene_especialidad_para(areas),
             "activo": docente_poo.esta_activo(),
         })
@@ -1301,6 +1310,9 @@ def servicio_asignar_docente(paralelo_db, docente_db):
         docente_db, periodo, paralelo_excluir_id=paralelo_db.id
     )
     paralelo_poo = _construir_paralelo_poo_con_horarios(paralelo_db)
+
+    if paralelo_db.jornada not in (docente_db.jornadas or []):
+        return (False, "El Docente no atiende la jornada del paralelo", None)
 
     facade = CentroDeOperacionAcademica()
     resultado = facade.validar_asignacion_docente(docente_poo, paralelo_poo, horas_unidad, areas)
