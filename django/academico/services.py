@@ -548,28 +548,38 @@ def servicio_procesar_mtn(archivo, periodo_de_nivelacion: PeriodoDeNivelacion):
     if resultado.get("error"):
         return resultado
 
-    matriz_procesada = [
-        {"identificacion": identificacion} for identificacion in resultado["identificaciones_validas"]
-    ] + [{} for _ in range(resultado["observados"])]
+    # Conteo dinámico: el consolidado refleja el estado real del periodo (cuenta de
+    # estudiantes anclados), no acumula por carga. Así, re-cargar la misma MTN no
+    # infla ni descuadra los totales.
+    identificaciones = list(
+        PerfilEstudiante.objects.filter(
+            periodo_de_nivelacion=periodo_de_nivelacion
+        ).values_list("usuario_de_sistema__identificacion", flat=True)
+    )
+    participantes = len(identificaciones)
+    observados = resultado["observados"]
+
+    matriz_procesada = (
+        [{"identificacion": ident} for ident in identificaciones]
+        + [{} for _ in range(observados)]
+    )
 
     consolidado_poo = ConsolidadoAcademicoPOO(
         periodo_academico=None,
         fecha_de_corte=date.today(),
-        total_de_cupos_aceptados=resultado["exitosos"],
+        total_de_cupos_aceptados=participantes,
     )
-    consolidado_poo.cargar_matriz_de_cupos(
-        matriz_procesada, resultado["exitosos"], resultado["observados"]
-    )
+    consolidado_poo.cargar_matriz_de_cupos(matriz_procesada, participantes, observados)
     estadisticas = consolidado_poo.obtener_estadisticas_de_consolidado()
 
     consolidado_db, _ = ConsolidadoAcademico.objects.get_or_create(
         periodo_academico=periodo_de_nivelacion,
         defaults={"fecha_de_corte": date.today()},
     )
-    consolidado_db.registros_validos += estadisticas["Registros válidos"]
-    consolidado_db.total_cupos_aceptados += estadisticas["Cupos aceptados esperados"]
-    consolidado_db.registros_observados = estadisticas["Registros observados"]
-    consolidado_db.registros_totales = consolidado_db.registros_validos + estadisticas["Registros observados"]
+    consolidado_db.registros_validos = estadisticas["Registros válidos"]
+    consolidado_db.total_cupos_aceptados = estadisticas["Cupos aceptados esperados"]
+    consolidado_db.registros_observados = observados
+    consolidado_db.registros_totales = participantes + observados
     consolidado_db.fecha_de_corte = date.today()
     consolidado_db.save()
 

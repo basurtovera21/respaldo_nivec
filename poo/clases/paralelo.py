@@ -10,12 +10,14 @@ from poo.clases.horario import Horario
 
 
 class Paralelo:
-    def __init__(self, codigo_de_paralelo: str, nombre: str, jornada: Jornada, modalidad: Modalidad, capacidad_maxima: int):
+    CAPACIDAD_MAXIMA_PREDETERMINADA = 35
+
+    def __init__(self, codigo_de_paralelo: str, nombre: str, jornada: Jornada, modalidad: Modalidad, capacidad_maxima: int = None):
         self.codigo_de_paralelo = codigo_de_paralelo
         self.nombre = nombre
         self.jornada = jornada
         self.modalidad = modalidad
-        self.capacidad_maxima = capacidad_maxima
+        self.capacidad_maxima = capacidad_maxima if capacidad_maxima is not None else Paralelo.CAPACIDAD_MAXIMA_PREDETERMINADA
         self._docente_responsable = None
         self._estudiantes_matriculados = []
         self.horarios = []

@@ -41,13 +41,15 @@ class CohorteDeMatricula:
         
         
     def _actualizar_contador_de_registro(self, registro_de_cupo: RegistroDeCupo):
-        if registro_de_cupo == RegistroDeCupo.REGULAR:
+        valor = registro_de_cupo.value if isinstance(registro_de_cupo, RegistroDeCupo) else registro_de_cupo
+
+        if valor == RegistroDeCupo.REGULAR.value:
             self._total_primera_matricula += 1
 
-        elif registro_de_cupo == RegistroDeCupo.SEGUNDA_MATRICULA:
+        elif valor == RegistroDeCupo.SEGUNDA_MATRICULA.value:
             self._total_segunda_matricula += 1
 
-        elif registro_de_cupo == RegistroDeCupo.EXONERACION:
+        elif valor == RegistroDeCupo.EXONERACION.value:
             self._total_exonerados += 1    
             
             
