@@ -291,18 +291,6 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
             try:
                 ident_str = registro["cedula"]
                 if UsuarioDeSistema.objects.filter(identificacion=ident_str).exists():
-                    if periodo_de_nivelacion is not None:
-                        perfil_existente = PerfilEstudiante.objects.filter(
-                            usuario_de_sistema__identificacion=ident_str,
-                            carrera_registrada__campus__universidad=universidad_usuario,
-                        ).first()
-                        if perfil_existente:
-                            perfil_existente.periodo_de_nivelacion = periodo_de_nivelacion
-                            perfil_existente.save(update_fields=["periodo_de_nivelacion"])
-                            resultado["advertencias"].append(
-                                f"El registro de la fila {registro['fila']} ha vinculado el registro al Periodo de nivelación especificado"
-                            )
-                            continue
                     resultado["advertencias"].append(
                         f"El registro de la fila {registro['fila']} fue omitido (el Estudiante ya se encuentra registrado)"
                     )
