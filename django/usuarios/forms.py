@@ -16,10 +16,10 @@ def validar_jornadas_continuas(jornadas):
     if any(j not in _JORNADAS_ORDENADAS for j in jornadas):
         return "Jornada no válida"
     if len(jornadas) > 2:
-        return "Solo se permiten jornadas continuas (Matutina-Vespertina o Vespertina-Nocturna)"
+        return "La especificación de la Jornada no es continua"
     indices = sorted(_JORNADAS_ORDENADAS.index(j) for j in jornadas)
     if len(indices) == 2 and indices[1] - indices[0] != 1:
-        return "Las jornadas deben ser continuas (Matutina-Vespertina o Vespertina-Nocturna)"
+        return "La especificación de la Jornada no es continua"
     return None
 
 class FormularioUsuarioDeSistema(forms.ModelForm):
@@ -116,7 +116,7 @@ class FormularioPerfilEstudiante(forms.ModelForm):
 
 class FormularioRegistrarDocente(forms.ModelForm):
     especialidades_texto = forms.CharField(label="Especialidades", required=False, widget=forms.TextInput(attrs={'class': 'campo-input'}), help_text="Registre la información separada por comas")
-    jornadas = forms.MultipleChoiceField(label="Jornadas disponibles", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple, help_text="Solo jornadas continuas: Matutina-Vespertina o Vespertina-Nocturna")
+    jornadas = forms.MultipleChoiceField(label="Jornada", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple, help_text="Registre jornadas continuas (de ser necesario)")
     class Meta:
         model = PerfilDocente
         fields = ("identificador_institucional", "tipo_de_vinculacion", "tiempo_de_dedicacion", "carga_horaria_maxima")
@@ -137,7 +137,7 @@ class FormularioRegistrarDocente(forms.ModelForm):
         errores = {field: "Información requerida" for field in ["tipo_de_vinculacion", "tiempo_de_dedicacion"] if not cleaned_data.get(field)}
         carga = cleaned_data.get("carga_horaria_maxima")
         if carga is None: errores['carga_horaria_maxima'] = "Información requerida"
-        elif carga < 0: errores['carga_horaria_maxima'] = "La carga horaria máxima no puede ser negativa"
+        elif carga < 0: errores['carga_horaria_maxima'] = "Registro no válido"
         error_jornadas = validar_jornadas_continuas(cleaned_data.get("jornadas") or [])
         if error_jornadas: errores['jornadas'] = error_jornadas
         if errores: raise forms.ValidationError(errores)
@@ -158,7 +158,7 @@ class FormularioDatosDocenteUA(forms.ModelForm):
         errores = {field: "Información requerida" for field in ["tipo_de_vinculacion", "tiempo_de_dedicacion"] if not cleaned_data.get(field)}
         carga = cleaned_data.get("carga_horaria_maxima")
         if carga is None: errores['carga_horaria_maxima'] = "Información requerida"
-        elif carga < 0: errores['carga_horaria_maxima'] = "La carga horaria máxima no puede ser negativa"
+        elif carga < 0: errores['carga_horaria_maxima'] = "Registro no válido"
         if errores: raise forms.ValidationError(errores)
         return cleaned_data
 
