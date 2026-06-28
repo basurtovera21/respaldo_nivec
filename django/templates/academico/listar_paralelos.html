@@ -2,7 +2,7 @@
 
 {% block boton_registrar %}
     {% if not solo_lectura %}
-    <a href="{% url 'generar_paralelos' %}" class="boton boton-primario">Crear paralelos</a>
+    <a href="{% url 'generar_paralelos' %}" class="boton boton-primario">Crear Paralelos</a>
     {% endif %}
 {% endblock %}
 
@@ -32,8 +32,8 @@
     <th style="font-weight: bold; text-align: left; color: #515154">Jornada</th>
     <th style="font-weight: bold; text-align: left; color: #515154">Modalidad</th>
     <th style="font-weight: bold; text-align: left; color: #515154">Unidades curriculares</th>
-    <th style="font-weight: bold; text-align: left; color: #515154">Estudiantes matriculados</th>
-    <th style="font-weight: bold; text-align: left; color: #515154">Capacidad máxima</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Estudiantes registrados</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Capacidad máxima especificada</th>
     <th style="font-weight: bold; text-align: left; color: #515154">Acciones</th>
 {% endblock %}
 
@@ -51,7 +51,7 @@
         <td style="text-align: left; color: #1d1d1f;">{{ p.capacidad }}</td>
         <td style="text-align: left; white-space: nowrap;">
             <a href="{% url 'detalle_paralelo' p.representativo_id %}" class="etiqueta-accion etiqueta-modificar">Unidades curriculares</a>
-            <a href="{% url 'listar_estudiantes_paralelo' p.representativo_id %}" class="etiqueta-accion etiqueta-naranja">Estudiantes</a>
+            <a href="{% url 'listar_estudiantes_paralelo' p.representativo_id %}" class="etiqueta-accion etiqueta-naranja">Estudiantes registrados</a>
             {% if not solo_lectura %}
             <a href="{% url 'eliminar_paralelo' p.representativo_id %}"
                onclick="return confirm('Confirmar acción');"

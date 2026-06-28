@@ -11,9 +11,7 @@
     <div>
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
         <p style="color: #515154; font-size: 13px; font-weight: bold; margin: 0;">
-            {{ paralelo.periodo_de_nivelacion.periodo }} —
-            {{ paralelo.unidad_curricular.malla_curricular.carrera.nombre }} —
-            {{ paralelo.get_jornada_display }}
+            ({{ paralelo.periodo_de_nivelacion.periodo }}). {{ paralelo.unidad_curricular.malla_curricular.carrera.nombre }} ({{ paralelo.get_jornada_display }})
         </p>
     </div>
 </div>
@@ -22,11 +20,11 @@
     <table style="width: 100%;">
         <thead>
             <tr>
-                <th style="font-weight: bold; text-align: left; color: #515154">Identificación</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Estudiante</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Número de identificación</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Estudiante registrado</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Registro de cupo</th>
                 {% if not solo_lectura %}
-                <th style="font-weight: bold; text-align: left; color: #515154">Mover</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Reasignar</th>
                 {% endif %}
             </tr>
         </thead>
@@ -50,7 +48,7 @@
                                 </option>
                             {% endfor %}
                         </select>
-                        <button type="submit" class="boton boton-secundario" style="cursor: pointer;">Mover</button>
+                        <button type="submit" class="boton boton-secundario" style="cursor: pointer;">Reasignar</button>
                     </form>
                     {% else %}
                     <span style="color: #86868b;">No existen registros actualmente</span>

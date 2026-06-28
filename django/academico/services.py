@@ -955,7 +955,7 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                         nombre_nuevo = f"Paralelo {indice_base + indice}"
                         # Un solo código para todo el paralelo lógico (todas sus unidades).
                         contador_codigo += 1
-                        codigo_nuevo = f"PAR{contador_codigo}"
+                        codigo_nuevo = f"PAR{contador_codigo:03d}"
                         for unidad in unidades:
                             paralelo_db = Paralelo.objects.create(
                                 periodo_de_nivelacion=periodo_db,
