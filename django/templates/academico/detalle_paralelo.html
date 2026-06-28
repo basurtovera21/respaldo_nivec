@@ -15,6 +15,7 @@
 
 <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
 <p style="color: #515154; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
+    Código: {{ representativo.codigo_de_paralelo }} —
     {{ representativo.periodo_de_nivelacion.periodo }} —
     Capacidad: {{ representativo.capacidad_maxima }} —
     Estudiantes: {{ representativo.estudiantes_matriculados.count }}
@@ -24,7 +25,6 @@
     <table style="width: 100%;">
         <thead>
             <tr>
-                <th style="font-weight: bold; text-align: left; color: #515154">Código de paralelo</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Unidad curricular</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Docente responsable</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Acciones</th>
@@ -33,7 +33,6 @@
         <tbody>
             {% for u in unidades %}
             <tr>
-                <td style="font-family: monospace; text-align: left; color: #1d1d1f;">{{ u.codigo_de_paralelo }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ u.unidad_curricular.nombre }}</td>
                 <td style="text-align: left; color: #1d1d1f;">
                     {% if u.docente_responsable %}
@@ -44,16 +43,15 @@
                 </td>
                 <td style="text-align: left; white-space: nowrap;">
                     {% if not solo_lectura %}
-                    <a href="{% url 'asignar_docente_paralelo' u.id %}" class="etiqueta-accion etiqueta-modificar">Docente</a>
+                    <a href="{% url 'asignar_docente_paralelo' u.id %}" class="etiqueta-accion etiqueta-modificar">Docente responsable</a>
                     {% endif %}
                     <a href="{% url 'listar_horarios_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Horarios</a>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4" style="text-align: center; color: #86868b; padding: 30px;">
-                    No existen unidades en este paralelo
-                </td>
+                <td colspan="3" style="text-align: center; color: #86868b; padding: 30px;">
+                    No existen registros actualmente
             </tr>
             {% endfor %}
         </tbody>

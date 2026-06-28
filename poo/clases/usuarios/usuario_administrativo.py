@@ -18,6 +18,7 @@ class UsuarioAdministrativo(UsuarioDeSistema):
             porcentaje_de_discapacidad = porcentaje_de_discapacidad,
             celular = celular,
             direccion = direccion,
+            universidad = universidad,
             **kwargs
         )
         self.universidad = universidad

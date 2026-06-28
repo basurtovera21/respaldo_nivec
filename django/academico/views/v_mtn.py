@@ -88,12 +88,12 @@ def procesar_mtn(request):
             clasificacion = resultado["clasificacion"]
             messages.success(
                 request,
-                f"{resultado['exitosos']} partícipe(s) registrado(s) ({clasificacion['regular']} regulares, {clasificacion['segunda']} segunda matrícula, {clasificacion['exoneracion']} proceso de exoneración). {resultado['observados']} registro(s) observado(s)"
+                f"{resultado['exitosos']} partícipes registrados ({clasificacion['regular']} regulares, {clasificacion['segunda']} segunda matrícula, {clasificacion['exoneracion']} proceso de exoneración). {resultado['observados']} registros observados"
             )
         else:
             messages.warning(
                 request,
-                f"No se registraron partícipes nuevos. {resultado['observados']} registro(s) observado(s)"
+                f"No se registraron partícipes nuevos. {resultado['observados']} registros observados"
             )
 
         return redirect("listar_consolidados")
@@ -123,6 +123,6 @@ def listar_consolidados(request):
         "titulo_pagina": "Matriz de tercer nivel - NIVEC",
         "titulo": "Consolidados académicos",
         "url_registrar": "procesar_mtn",
-        "texto_registrar": "Procesar MTN",
+        "texto_registrar": "Procesar Matriz de tercer nivel",
         "url_volver": "panel_dan",
     })

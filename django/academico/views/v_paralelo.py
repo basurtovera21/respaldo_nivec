@@ -124,7 +124,7 @@ def generar_paralelos(request):
         if resumen["paralelos_creados"] > 0 or resumen["estudiantes_distribuidos"] > 0:
             messages.success(
                 request,
-                f"{resumen['grupos_creados']} Paralelo(s) creado(s). {resumen['estudiantes_distribuidos']} Estudiante(s) distribuido(s)."
+                f"{resumen['grupos_creados']} Paralelos creados. {resumen['estudiantes_distribuidos']} Estudiantes distribuidos"
             )
         else:
             messages.warning(
@@ -233,7 +233,7 @@ def listar_estudiantes_paralelo(request, paralelo_id):
         "destinos": destinos,
         "solo_lectura": usuario_es_solo_lectura(request.user),
         "titulo_pagina": "Paralelo - NIVEC",
-        "titulo": f"Estudiantes - {paralelo.nombre} ({paralelo.unidad_curricular.nombre})",
+        "titulo": f"{paralelo.nombre} ({paralelo.unidad_curricular.nombre})",
     })
 
 @requiere_perfil(*ROLES_MODIFICAN)

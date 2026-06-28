@@ -127,7 +127,7 @@ class PeriodoDeNivelacion(models.Model):
 class Paralelo(models.Model):
     periodo_de_nivelacion = models.ForeignKey(PeriodoDeNivelacion, on_delete=models.PROTECT, related_name="paralelos", verbose_name="Periodo de nivelación registrado")
     unidad_curricular = models.ForeignKey(UnidadCurricular, on_delete=models.PROTECT, related_name="paralelos", verbose_name="Unidad curricular")
-    codigo_de_paralelo = models.CharField(max_length=50, unique=True, verbose_name="Código de paralelo")
+    codigo_de_paralelo = models.CharField(max_length=50, verbose_name="Código de paralelo")
     nombre = models.CharField(max_length=50, verbose_name="Nombre")
     jornada = models.CharField(max_length=50, choices=cambiar_enum_a_choices(Jornada), verbose_name="Jornada")
     modalidad = models.CharField(max_length=50, choices=cambiar_enum_a_choices(Modalidad), verbose_name="Modalidad")
