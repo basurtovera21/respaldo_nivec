@@ -193,13 +193,11 @@ class FormularioMallaCurricular(forms.ModelForm):
             "carrera",
             "codigo_de_malla",
             "nombre",
-            "duracion_semanas",
         )
         labels = {
             "carrera": "Carrera registrada",
             "codigo_de_malla": "Código de Malla curricular",
             "nombre": "Nombre",
-            "duracion_semanas": "Duración (en semanas)",
         }
         widgets = {
             "codigo_de_malla": forms.TextInput(attrs={
@@ -222,7 +220,6 @@ class FormularioMallaCurricular(forms.ModelForm):
 
         carrera = cleaned_data.get("carrera")
         nombre = cleaned_data.get("nombre")
-        duracion = cleaned_data.get("duracion_semanas")
 
         if not carrera:
             errores["carrera"] = "Información requerida"
@@ -230,7 +227,6 @@ class FormularioMallaCurricular(forms.ModelForm):
         malla_poo = MallaCurricularBase(
             codigo_de_malla="PENDIENTE",
             nombre=nombre or "",
-            duracion_semanas=duracion if isinstance(duracion, int) else 0,
             version_de_malla="PENDIENTE",
         )
         errores.update(malla_poo.validar_datos_de_registro())

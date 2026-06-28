@@ -10,10 +10,9 @@ from poo.clases.interfaces.i_unidad_evaluable import IUnidadEvaluable
 from poo.clases.interfaces.i_clonable import IClonable
 
 class MallaCurricular(IClonable):
-    def __init__(self, codigo_de_malla: str, nombre: str, duracion_semanas: int, version_de_malla: str):
+    def __init__(self, codigo_de_malla: str, nombre: str, version_de_malla: str):
         self.codigo_de_malla = codigo_de_malla
         self.nombre = nombre
-        self.duracion_semanas = duracion_semanas
         self.version_de_malla = version_de_malla
         self._estado = EstadoDeMalla.DISENO
         self._total_horas_nivelacion = 0.0
@@ -61,17 +60,11 @@ class MallaCurricular(IClonable):
             return True
         return False
 
-    def validar_duracion(self):
-        return isinstance(self.duracion_semanas, int) and self.duracion_semanas > 0
-
     def validar_datos_de_registro(self):
         errores = {}
 
         if not self.nombre or not self.nombre.strip():
             errores["nombre"] = "Información requerida"
-
-        if not self.validar_duracion():
-            errores["duracion_semanas"] = "Duración no válida"
 
         return errores
 
