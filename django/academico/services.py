@@ -835,7 +835,7 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
         unidades = list(malla.unidades_curriculares.all())
         if not unidades:
             resumen["advertencias"].append(
-                f"El registro de la Malla curricular {carrera.nombre} fue omitido (sin registros asociados)"
+                f"No se han creado Paralelos para {carrera.nombre} (sin registros de Unidades curriculares asociados)"
             )
             continue
 
