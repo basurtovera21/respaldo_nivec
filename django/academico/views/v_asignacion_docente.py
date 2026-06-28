@@ -61,5 +61,5 @@ def asignar_docente_paralelo(request, paralelo_id):
         "evaluaciones": evaluaciones,
         "solo_lectura": solo_lectura,
         "titulo_pagina": "Docente - NIVEC",
-        "titulo": f"Asignar docente - {paralelo.nombre} ({paralelo.unidad_curricular.nombre})",
+        "titulo": f"Asignación Docente - {paralelo.nombre} ({paralelo.unidad_curricular.nombre})",
     })

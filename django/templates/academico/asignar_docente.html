@@ -4,60 +4,42 @@
 
 {% block contenido %}
 <style>
-    .tarjeta table th, .tarjeta table td { padding: 12px 18px; }
-    .pill { padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: bold; display: inline-block; }
-    .pill-ok { background: #e8f5e9; color: #2e7d32; }
-    .pill-no { background: #fdf2f2; color: #c81e1e; }
-    .pill-neutro { background: #f2f2f7; color: #515154; }
-    .btn-asignar {
-        padding: 5px 14px; border-radius: 6px; font-size: 12px; font-weight: bold;
-        border: none; cursor: pointer; background-color: #b45309; color: white;
+    .tarjeta table th, .tarjeta table td { padding: 12px 18px; white-space: nowrap; }
+    .etiqueta-accion {
+        padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: bold;
+        border: none; cursor: pointer; text-decoration: none; display: inline-block;
     }
-    .btn-asignar:disabled { background-color: #f2f2f7; color: #b0b0b5; cursor: not-allowed; }
-    .btn-quitar {
-        padding: 5px 14px; border-radius: 6px; font-size: 12px; font-weight: bold;
-        border: 1px solid rgba(200,30,30,0.2); cursor: pointer; background-color: #fdf2f2; color: #c81e1e;
+    .etiqueta-naranja { background-color: #fef9ec; color: #b45309; border: 1px solid rgba(180,83,9,0.1); }
+    .etiqueta-eliminar { background-color: #fdf2f2; color: #c81e1e; border: 1px solid rgba(200,30,30,0.1); }
+    .etiqueta-estado {
+        background-color: #f2f2f7; padding: 4px 8px; border-radius: 6px;
+        font-size: 12px; font-weight: bold; color: #1d1d1f;
     }
 </style>
 
 <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
-<p style="color: #515154; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
-    {{ paralelo.periodo_de_nivelacion.periodo }} —
-    {{ paralelo.unidad_curricular.malla_curricular.carrera.nombre }} —
-    {{ paralelo.get_jornada_display }} ·
-    Horas sincrónicas de la Unidad curricular: {{ paralelo.unidad_curricular.horas_sincronicas }}
+<p style="color: #515154; font-size: 13px; font-weight: bold; margin-bottom: 8px;">
+    {{ paralelo.unidad_curricular.malla_curricular.carrera.nombre }} ({{ paralelo.get_jornada_display }}). Horas sincrónicas especificadas: {{ paralelo.unidad_curricular.horas_sincronicas }} horas
 </p>
 
-<div class="tarjeta" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-    <div>
-        <span style="font-weight: bold; color: #515154;">Docente designado actualmente:</span>
-        {% if paralelo.docente_responsable %}
-            <span style="color: #1d1d1f; font-weight: bold;">
-                {{ paralelo.docente_responsable.usuario_de_sistema.nombres }}
-                {{ paralelo.docente_responsable.usuario_de_sistema.apellidos }}
-            </span>
-        {% else %}
-            <span style="color: #86868b;">Sin designación actualmente</span>
-        {% endif %}
-    </div>
-    {% if paralelo.docente_responsable and not solo_lectura %}
-    <form method="post" action="{% url 'asignar_docente_paralelo' paralelo.id %}">
-        {% csrf_token %}
-        <input type="hidden" name="accion" value="quitar">
-        <button type="submit" class="btn-quitar" onclick="return confirm('¿Quitar la designación del docente?');">Quitar designación</button>
-    </form>
+<p style="color: #515154; font-size: 13px; margin-top: 16px; margin-bottom: 24px;">
+    <span style="font-weight: bold;">Docente designado:</span>
+    {% if paralelo.docente_responsable %}
+        {{ paralelo.docente_responsable.usuario_de_sistema.nombres }} {{ paralelo.docente_responsable.usuario_de_sistema.apellidos }}
+    {% else %}
+        <span style="color: #86868b;">Sin designación</span>
     {% endif %}
-</div>
+</p>
 
 <div class="tarjeta" style="padding: 0; overflow-x: auto;">
     <table style="width: 100%;">
         <thead>
             <tr>
                 <th style="font-weight: bold; text-align: left; color: #515154">Docente</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Vinculación</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Carga horaria (Periodo de nivelación)</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Especialidad</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Estado</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Carga horaria semanal</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Especialidades</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Disponibilidad</th>
                 {% if not solo_lectura %}
                 <th style="font-weight: bold; text-align: left; color: #515154">Acción</th>
                 {% endif %}
@@ -66,28 +48,17 @@
         <tbody>
             {% for e in evaluaciones %}
             <tr>
-                <td style="text-align: left; color: #1d1d1f;">
-                    {{ e.docente.usuario_de_sistema.nombres }} {{ e.docente.usuario_de_sistema.apellidos }}
-                    {% if e.es_actual %}<span class="pill pill-neutro" style="margin-left: 6px;">Designado</span>{% endif %}
-                </td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.docente.usuario_de_sistema.nombres }} {{ e.docente.usuario_de_sistema.apellidos }}</td>
                 <td style="text-align: left;">
-                    {% if e.activo %}
-                        <span class="pill pill-ok">Activo</span>
-                    {% else %}
-                        <span class="pill pill-no">Inactivo</span>
-                    {% endif %}
+                    <span class="etiqueta-estado">{% if e.activo %}Activo{% else %}Inactivo{% endif %}</span>
                 </td>
                 <td style="text-align: left; color: #1d1d1f;">{{ e.carga_actual }} / {{ e.carga_maxima }} h</td>
-                <td style="text-align: left;">
-                    {% if e.especialidad_ok %}
-                        <span class="pill pill-ok">Coincide</span>
-                    {% else %}
-                        <span class="pill pill-neutro">Sin coincidencia</span>
-                    {% endif %}
+                <td style="text-align: left; color: #1d1d1f;">
+                    {% if e.especialidad_ok %}Coincide{% else %}Sin coincidencia{% endif %}
                 </td>
                 <td style="text-align: left;">
                     {% if e.asignable %}
-                        <span style="color: #2e7d32; font-weight: bold;">Asignable</span>
+                        <span style="color: #1d1d1f;">Asignable</span>
                     {% else %}
                         <span style="color: #c81e1e;">{{ e.motivo }}</span>
                     {% endif %}
@@ -95,12 +66,16 @@
                 {% if not solo_lectura %}
                 <td style="text-align: left;">
                     {% if e.es_actual %}
-                        <span style="color: #86868b;">—</span>
-                    {% else %}
+                    <form method="post" action="{% url 'asignar_docente_paralelo' paralelo.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion" value="quitar">
+                        <button type="submit" class="etiqueta-accion etiqueta-eliminar" onclick="return confirm('Confirmar acción');">Eliminar</button>
+                    </form>
+                    {% elif e.asignable and not paralelo.docente_responsable %}
                     <form method="post" action="{% url 'asignar_docente_paralelo' paralelo.id %}">
                         {% csrf_token %}
                         <input type="hidden" name="docente_id" value="{{ e.docente.id }}">
-                        <button type="submit" class="btn-asignar" {% if not e.asignable %}disabled{% endif %}>Asignar</button>
+                        <button type="submit" class="etiqueta-accion etiqueta-naranja">Asignar</button>
                     </form>
                     {% endif %}
                 </td>

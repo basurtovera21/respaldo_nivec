@@ -40,7 +40,7 @@
                 </td>
                 <td style="text-align: left; white-space: nowrap;">
                     {% if not solo_lectura %}
-                    <a href="{% url 'asignar_docente_paralelo' u.id %}" class="etiqueta-accion etiqueta-modificar">Docente responsable</a>
+                    <a href="{% url 'asignar_docente_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Docente responsable</a>
                     {% endif %}
                     <a href="{% url 'listar_horarios_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Horarios</a>
                 </td>

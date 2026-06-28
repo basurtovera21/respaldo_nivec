@@ -794,6 +794,42 @@ def _obtener_o_crear_cohorte(periodo_db, carrera):
         fecha_de_cierre=periodo_db.fecha_fin,
         tipo_de_cohorte=TipoDeCohorte.PRIMERA_MATRICULA.value,
     )
+def servicio_recalcular_cohorte_de_carrera(periodo_db, carrera):
+    # Recalcula los totales de la cohorte (por tipo de cupo) desde los estudiantes
+    # realmente matriculados. La lógica de conteo vive en la POO CohorteDeMatricula.
+    from poo.clases.cohorte_de_matricula import CohorteDeMatricula as CohorteDeMatriculaPOO
+    from poo.clases.enums.tipo_de_cohorte import TipoDeCohorte
+
+    cohorte = CohorteDeMatricula.objects.filter(
+        periodo_de_nivelacion=periodo_db, carrera_registrada=carrera
+    ).first()
+    if not cohorte:
+        return
+
+    estudiantes = PerfilEstudiante.objects.filter(
+        periodo_de_nivelacion=periodo_db,
+        carrera_registrada=carrera,
+        estudiantes_matriculados__paralelo__periodo_de_nivelacion=periodo_db,
+    ).distinct()
+
+    cohorte_poo = CohorteDeMatriculaPOO(
+        codigo_de_registro=cohorte.codigo_de_registro,
+        nombre_cohorte=cohorte.nombre_cohorte,
+        carrera_registrada=None,
+        fecha_de_cierre=periodo_db.fecha_fin,
+        periodo_de_nivelacion=None,
+        tipo_de_cohorte=obtener_enum_flexible(TipoDeCohorte, cohorte.tipo_de_cohorte),
+    )
+    for estudiante_db in estudiantes:
+        cohorte_poo.registrar_estudiante_matriculado(estudiante_db)
+
+    estadisticas = cohorte_poo.obtener_estadisticas_de_registro()
+    cohorte.total_primera_matricula = estadisticas["Total primera matricula"]
+    cohorte.total_segunda_matricula = estadisticas["Total segunda matricula"]
+    cohorte.total_exonerados = estadisticas["Total exonerados"]
+    cohorte.save()
+
+
 def servicio_generar_paralelos(periodo_db, capacidad=35):
     import math
     from poo.clases.paralelo import Paralelo as ParaleloBase
@@ -1112,12 +1148,20 @@ def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, e
         nombre=paralelo_db.nombre,
         unidad_curricular__malla_curricular__carrera=carrera,
     )
-    horarios_externos = [
-        _construir_horario_poo(horario_db)
-        for horario_db in Horario.objects.filter(
-            paralelo__in=paralelos_del_grupo
-        ).exclude(paralelo=paralelo_db)
-    ]
+    horarios_db_externos = list(
+        Horario.objects.filter(paralelo__in=paralelos_del_grupo).exclude(paralelo=paralelo_db)
+    )
+    # Evita la doble reserva del docente: incluye sus sesiones en otros paralelos del periodo.
+    if paralelo_db.docente_responsable_id:
+        ids_vistos = {h.id for h in horarios_db_externos}
+        for h in Horario.objects.filter(
+            paralelo__periodo_de_nivelacion=paralelo_db.periodo_de_nivelacion,
+            paralelo__docente_responsable_id=paralelo_db.docente_responsable_id,
+        ).exclude(paralelo=paralelo_db):
+            if h.id not in ids_vistos:
+                horarios_db_externos.append(h)
+                ids_vistos.add(h.id)
+    horarios_externos = [_construir_horario_poo(h) for h in horarios_db_externos]
 
     paralelo_poo = _construir_paralelo_poo_con_horarios(paralelo_db)
     horas_sincronicas = paralelo_db.unidad_curricular.horas_sincronicas
@@ -1168,6 +1212,15 @@ def servicio_obtener_matriz_de_horarios(periodo_db, paralelos_db):
     return matriz
 
 
+def _horas_sincronicas_semanales(unidad):
+    # Las unidades guardan horas TOTALES del periodo; la carga docente es semanal,
+    # por eso se normaliza dividiendo por las semanas de la malla.
+    semanas = unidad.malla_curricular.duracion_semanas or 0
+    if semanas <= 0:
+        semanas = 1
+    return round(unidad.horas_sincronicas / semanas, 2)
+
+
 def _construir_docente_poo_para_periodo(docente_db, periodo_db, paralelo_excluir_id=None):
     from usuarios.services import _crear_docente
     from poo.clases.enums.estado_de_vinculacion import EstadoDeVinculacion as EnumEstadoDeVinculacion
@@ -1186,10 +1239,11 @@ def _construir_docente_poo_para_periodo(docente_db, periodo_db, paralelo_excluir
 
     carga_actual = 0.0
     for paralelo_actual in paralelos_actuales:
-        carga_actual += paralelo_actual.unidad_curricular.horas_sincronicas
+        carga_actual += _horas_sincronicas_semanales(paralelo_actual.unidad_curricular)
         for horario_db in Horario.objects.filter(paralelo=paralelo_actual):
             docente_poo.agregar_horario_ocupado(_construir_horario_poo(horario_db))
 
+    carga_actual = round(carga_actual, 2)
     docente_poo.registrar_carga_actual(carga_actual)
     return docente_poo, carga_actual
 
@@ -1204,7 +1258,7 @@ def _texto_motivo_no_asignable(resultado):
         )
     if motivo == "carga":
         return (
-            f"El Docente excede la carga de horas máxima"
+            f"Excede la carga máxima ({resultado['carga_actual']} + {resultado['horas_nuevas']} h > {resultado['carga_maxima']} h máx.)"
         )
     return "El Docente no puede ser asignado."
 
@@ -1215,7 +1269,7 @@ def servicio_evaluar_docentes_para_paralelo(paralelo_db):
     periodo = paralelo_db.periodo_de_nivelacion
     unidad = paralelo_db.unidad_curricular
     areas = unidad.area_de_conocimiento or []
-    horas_unidad = unidad.horas_sincronicas
+    horas_unidad = _horas_sincronicas_semanales(unidad)
 
     paralelo_poo = _construir_paralelo_poo_con_horarios(paralelo_db)
     facade = CentroDeOperacionAcademica()
@@ -1253,7 +1307,7 @@ def servicio_asignar_docente(paralelo_db, docente_db):
     periodo = paralelo_db.periodo_de_nivelacion
     unidad = paralelo_db.unidad_curricular
     areas = unidad.area_de_conocimiento or []
-    horas_unidad = unidad.horas_sincronicas
+    horas_unidad = _horas_sincronicas_semanales(unidad)
 
     docente_poo, carga_actual = _construir_docente_poo_para_periodo(
         docente_db, periodo, paralelo_excluir_id=paralelo_db.id
@@ -1269,24 +1323,17 @@ def servicio_asignar_docente(paralelo_db, docente_db):
     paralelo_db.docente_responsable = docente_db
     paralelo_db.save(update_fields=["docente_responsable"])
 
-    docente_db.carga_horaria_actual = round(carga_actual + horas_unidad, 2)
-    docente_db.save(update_fields=["carga_horaria_actual"])
-
     advertencia = None
     if resultado.get("advertencia") == "especialidad":
         advertencia = ("El área de conocimiento de la Unidad curricular no coincide con las especialidades registradas del Docente")
     return (True, "El Docente ha sido asignado correctamente", advertencia)
 
 def servicio_quitar_docente(paralelo_db):
+    docente_db = paralelo_db.docente_responsable
     if not docente_db:
         return (False, "El paralelo no tiene un docente designado actualmente")
 
-    horas_unidad = paralelo_db.unidad_curricular.horas_sincronicas
     paralelo_db.docente_responsable = None
     paralelo_db.save(update_fields=["docente_responsable"])
-
-    carga_restante = max(0.0, round((docente_db.carga_horaria_actual or 0) - horas_unidad, 2))
-    docente_db.carga_horaria_actual = carga_restante
-    docente_db.save(update_fields=["carga_horaria_actual"])
 
     return (True, "El Docente ha sido desvinculado correctamente")

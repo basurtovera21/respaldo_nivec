@@ -50,7 +50,7 @@
         <td style="text-align: left; color: #1d1d1f;">{{ p.estudiantes }}</td>
         <td style="text-align: left; color: #1d1d1f;">{{ p.capacidad }}</td>
         <td style="text-align: left; white-space: nowrap;">
-            <a href="{% url 'detalle_paralelo' p.representativo_id %}" class="etiqueta-accion etiqueta-modificar">Unidades curriculares</a>
+            <a href="{% url 'detalle_paralelo' p.representativo_id %}" class="etiqueta-accion etiqueta-naranja">Unidades curriculares</a>
             <a href="{% url 'listar_estudiantes_paralelo' p.representativo_id %}" class="etiqueta-accion etiqueta-naranja">Estudiantes registrados</a>
             {% if not solo_lectura %}
             <a href="{% url 'eliminar_paralelo' p.representativo_id %}"
