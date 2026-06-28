@@ -4,6 +4,23 @@ from .models import UsuarioDeSistema, PerfilDocente, PerfilEstudiante, PerfilAdm
 from poo.clases.usuarios.usuario_de_sistema import UsuarioDeSistema as UsuarioDeSistemaBase
 from poo.clases.enums.estado_de_usuario import EstadoDeUsuario
 from poo.clases.enums import perfil_administrativo
+from poo.clases.enums.jornada import Jornada
+
+
+# Solo se permiten jornadas continuas: una sola, o Matutina-Vespertina, o Vespertina-Nocturna.
+_JORNADAS_ORDENADAS = [Jornada.MATUTINA.value, Jornada.VESPERTINA.value, Jornada.NOCTURNA.value]
+
+def validar_jornadas_continuas(jornadas):
+    if not jornadas:
+        return "Información requerida"
+    if any(j not in _JORNADAS_ORDENADAS for j in jornadas):
+        return "Jornada no válida"
+    if len(jornadas) > 2:
+        return "Solo se permiten jornadas continuas (Matutina-Vespertina o Vespertina-Nocturna)"
+    indices = sorted(_JORNADAS_ORDENADAS.index(j) for j in jornadas)
+    if len(indices) == 2 and indices[1] - indices[0] != 1:
+        return "Las jornadas deben ser continuas (Matutina-Vespertina o Vespertina-Nocturna)"
+    return None
 
 class FormularioUsuarioDeSistema(forms.ModelForm):
     contrasena = forms.CharField(label="Contraseña predefinida", required=False, widget=forms.TextInput(attrs={'readonly': True, 'placeholder': 'Número de identificación registrado', 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'}))
@@ -99,6 +116,7 @@ class FormularioPerfilEstudiante(forms.ModelForm):
 
 class FormularioRegistrarDocente(forms.ModelForm):
     especialidades_texto = forms.CharField(label="Especialidades", required=False, widget=forms.TextInput(attrs={'class': 'campo-input'}), help_text="Registre la información separada por comas")
+    jornadas = forms.MultipleChoiceField(label="Jornadas disponibles", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple, help_text="Solo jornadas continuas: Matutina-Vespertina o Vespertina-Nocturna")
     class Meta:
         model = PerfilDocente
         fields = ("identificador_institucional", "tipo_de_vinculacion", "tiempo_de_dedicacion", "carga_horaria_maxima")
@@ -113,12 +131,15 @@ class FormularioRegistrarDocente(forms.ModelForm):
         for field in self.fields.values(): field.error_messages.update({'required': ''})
         self.fields['identificador_institucional'].required = False
         if self.instance and self.instance.pk and self.instance.especialidades: self.fields['especialidades_texto'].initial = ", ".join(self.instance.especialidades)
+        if self.instance and self.instance.pk and self.instance.jornadas: self.fields['jornadas'].initial = self.instance.jornadas
     def clean(self):
         cleaned_data = super().clean()
         errores = {field: "Información requerida" for field in ["tipo_de_vinculacion", "tiempo_de_dedicacion"] if not cleaned_data.get(field)}
         carga = cleaned_data.get("carga_horaria_maxima")
         if carga is None: errores['carga_horaria_maxima'] = "Información requerida"
         elif carga < 0: errores['carga_horaria_maxima'] = "La carga horaria máxima no puede ser negativa"
+        error_jornadas = validar_jornadas_continuas(cleaned_data.get("jornadas") or [])
+        if error_jornadas: errores['jornadas'] = error_jornadas
         if errores: raise forms.ValidationError(errores)
         texto_esp = cleaned_data.get("especialidades_texto", "")
         cleaned_data['especialidades'] = [esp.strip() for esp in texto_esp.split(',') if esp.strip()] if texto_esp else []

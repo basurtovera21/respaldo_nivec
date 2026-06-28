@@ -90,6 +90,7 @@ def registrar_docente(request):
                     docente.estado_de_vinculacion = EnumEstadoDeVinculacion.ACTIVO.value
                     docente.universidad = universidad_usuario
                     docente.especialidades = formulario_docente.cleaned_data.get('especialidades', [])
+                    docente.jornadas = formulario_docente.cleaned_data.get('jornadas', [])
                     docente.save()
 
                 messages.success(request, "El Docente ha sido registrado correctamente")
@@ -135,6 +136,7 @@ def modificar_docente(request, docente_id):
                 
                 docente_guardado = formulario_docente.save(commit=False)
                 docente_guardado.especialidades = formulario_docente.cleaned_data.get('especialidades', [])
+                docente_guardado.jornadas = formulario_docente.cleaned_data.get('jornadas', [])
                 docente_guardado.save()
 
             messages.success(request, "El Docente ha sido modificado correctamente")
