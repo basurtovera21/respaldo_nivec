@@ -809,6 +809,7 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
 
     universidad = periodo_db.universidad
     facade = CentroDeOperacionAcademica()
+    enum_modalidad = obtener_enum_flexible(EnumModalidad, periodo_db.modalidad)
 
     carreras = Carrera.objects.filter(campus__universidad=universidad)
 
@@ -905,7 +906,7 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                     grupos_poo = [
                         ParaleloBase(
                             codigo_de_paralelo=f"G{indice}",
-                            nombre=f"Grupo {indice_max + indice}",
+                            nombre=f"Paralelo {indice_max + indice}",
                             jornada=enum_jornada,
                             modalidad=enum_modalidad,
                             capacidad_maxima=capacidad,
@@ -919,7 +920,7 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                         miembros = list(grupo_poo._estudiantes_matriculados)
                         if not miembros:
                             continue
-                        nombre_nuevo = f"Grupo {indice_max + indice}"
+                        nombre_nuevo = f"Paralelo {indice_max + indice}"
                         for unidad in unidades:
                             paralelo_db = Paralelo.objects.create(
                                 periodo_de_nivelacion=periodo_db,
