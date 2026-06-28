@@ -1092,7 +1092,6 @@ def _construir_horario_poo(horario_db):
         hora_inicio=horario_db.hora_inicio,
         hora_fin=horario_db.hora_fin,
         espacio_de_imparticion=horario_db.espacio_de_imparticion,
-        modalidad=obtener_enum_flexible(Modalidad, horario_db.modalidad),
         numero_semana=horario_db.numero_semana,
         tipo_de_sesion=obtener_enum_flexible(TipoDeSesion, horario_db.tipo_de_sesion),
     )
@@ -1123,16 +1122,14 @@ def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, e
     try:
         enum_dia = obtener_enum_flexible(DiaDeSemana, dia_semana)
         enum_tipo = obtener_enum_flexible(TipoDeSesion, tipo_de_sesion)
-        enum_modalidad = obtener_enum_flexible(Modalidad, paralelo_db.modalidad)
     except ValueError:
-        return (False, "Día/Tipo de sesión o Modalidad no válido")
+        return (False, "Día o Tipo de sesión no válido")
 
     nuevo_horario_poo = HorarioPOO(
         dia_semana=enum_dia,
         hora_inicio=hora_inicio,
         hora_fin=hora_fin,
         espacio_de_imparticion=espacio,
-        modalidad=enum_modalidad,
         numero_semana=numero_semana,
         tipo_de_sesion=enum_tipo,
     )
@@ -1187,7 +1184,6 @@ def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, e
         hora_inicio=hora_inicio,
         hora_fin=hora_fin,
         espacio_de_imparticion=espacio,
-        modalidad=paralelo_db.modalidad,
         numero_semana=numero_semana,
         tipo_de_sesion=tipo_de_sesion,
     )

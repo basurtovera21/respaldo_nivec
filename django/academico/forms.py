@@ -609,14 +609,13 @@ class FormularioParalelo(forms.ModelForm):
 class FormularioHorario(forms.ModelForm):
     class Meta:
         model = Horario
-        fields = ("paralelo", "dia_semana", "hora_inicio", "hora_fin", "espacio_de_imparticion", "modalidad", "numero_semana", "tipo_de_sesion")
+        fields = ("paralelo", "dia_semana", "hora_inicio", "hora_fin", "espacio_de_imparticion", "numero_semana", "tipo_de_sesion")
         labels = {
             "paralelo": "Paralelo registrado",
             "dia_semana": "Día de semana",
             "hora_inicio": "Hora de inicio",
             "hora_fin": "Hora de finalización",
             "espacio_de_imparticion": "Espacio de impartición",
-            "modalidad": "Modalidad",
             "numero_semana": "Número de semana",
             "tipo_de_sesion": "Tipo de sesión",
         }
