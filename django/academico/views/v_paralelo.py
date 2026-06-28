@@ -189,7 +189,7 @@ def mover_estudiante(request, paralelo_id):
         destino_id = request.POST.get("paralelo_destino") or None
 
         if not estudiante_id or not destino_id:
-            messages.error(request, "Debe seleccionar un estudiante y un grupo destino")
+            messages.error(request, "Debe seleccionar un estudiante y un paralelo destino")
             return redirect("listar_estudiantes_paralelo", paralelo_id=paralelo.id)
 
         estudiante = get_object_or_404(
