@@ -60,8 +60,8 @@
         <td style="text-align: left; white-space: nowrap;">
             <a href="{% url 'listar_estudiantes_paralelo' p.id %}" class="etiqueta-accion etiqueta-modificar">Estudiantes</a>
             <a href="{% url 'listar_horarios_paralelo' p.id %}" class="etiqueta-accion etiqueta-naranja">Horarios</a>
-            <a href="{% url 'asignar_docente_paralelo' p.id %}" class="etiqueta-accion etiqueta-naranja">Docente</a>
             {% if not solo_lectura %}
+            <a href="{% url 'asignar_docente_paralelo' p.id %}" class="etiqueta-accion etiqueta-naranja">Docente</a>
             <a href="{% url 'eliminar_paralelo' p.id %}"
                onclick="return confirm('Confirmar acción');"
                class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
