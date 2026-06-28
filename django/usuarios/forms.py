@@ -116,7 +116,9 @@ class FormularioRegistrarDocente(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         errores = {field: "Información requerida" for field in ["tipo_de_vinculacion", "tiempo_de_dedicacion"] if not cleaned_data.get(field)}
-        if cleaned_data.get("carga_horaria_maxima") is None: errores['carga_horaria_maxima'] = "Información requerida"
+        carga = cleaned_data.get("carga_horaria_maxima")
+        if carga is None: errores['carga_horaria_maxima'] = "Información requerida"
+        elif carga < 0: errores['carga_horaria_maxima'] = "La carga horaria máxima no puede ser negativa"
         if errores: raise forms.ValidationError(errores)
         texto_esp = cleaned_data.get("especialidades_texto", "")
         cleaned_data['especialidades'] = [esp.strip() for esp in texto_esp.split(',') if esp.strip()] if texto_esp else []
@@ -133,7 +135,9 @@ class FormularioDatosDocenteUA(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         errores = {field: "Información requerida" for field in ["tipo_de_vinculacion", "tiempo_de_dedicacion"] if not cleaned_data.get(field)}
-        if cleaned_data.get("carga_horaria_maxima") is None: errores['carga_horaria_maxima'] = "Información requerida"
+        carga = cleaned_data.get("carga_horaria_maxima")
+        if carga is None: errores['carga_horaria_maxima'] = "Información requerida"
+        elif carga < 0: errores['carga_horaria_maxima'] = "La carga horaria máxima no puede ser negativa"
         if errores: raise forms.ValidationError(errores)
         return cleaned_data
 

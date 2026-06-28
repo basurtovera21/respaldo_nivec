@@ -1208,13 +1208,16 @@ def servicio_obtener_matriz_de_horarios(periodo_db, paralelos_db):
     return matriz
 
 
-def _horas_sincronicas_semanales(unidad):
-    # Las unidades guardan horas TOTALES del periodo; la carga docente es semanal,
-    # por eso se normaliza dividiendo por las semanas de la malla.
-    semanas = unidad.malla_curricular.duracion_semanas or 0
-    if semanas <= 0:
-        semanas = 1
-    return round(unidad.horas_sincronicas / semanas, 2)
+def _semanas_de_periodo(periodo_db):
+    dias = (periodo_db.fecha_fin - periodo_db.fecha_inicio).days
+    semanas = dias // 7
+    return semanas if semanas > 0 else 1
+
+
+def _horas_sincronicas_semanales(unidad, periodo_db):
+    # Las unidades guardan horas TOTALES; la carga docente es semanal. Las semanas
+    # se toman de la DURACIÓN DEL PERIODO de nivelación (no de la malla).
+    return round(unidad.horas_sincronicas / _semanas_de_periodo(periodo_db), 2)
 
 
 def _construir_docente_poo_para_periodo(docente_db, periodo_db, paralelo_excluir_id=None):
@@ -1235,7 +1238,7 @@ def _construir_docente_poo_para_periodo(docente_db, periodo_db, paralelo_excluir
 
     carga_actual = 0.0
     for paralelo_actual in paralelos_actuales:
-        carga_actual += _horas_sincronicas_semanales(paralelo_actual.unidad_curricular)
+        carga_actual += _horas_sincronicas_semanales(paralelo_actual.unidad_curricular, periodo_db)
         for horario_db in Horario.objects.filter(paralelo=paralelo_actual):
             docente_poo.agregar_horario_ocupado(_construir_horario_poo(horario_db))
 
@@ -1265,7 +1268,7 @@ def servicio_evaluar_docentes_para_paralelo(paralelo_db):
     periodo = paralelo_db.periodo_de_nivelacion
     unidad = paralelo_db.unidad_curricular
     areas = unidad.area_de_conocimiento or []
-    horas_unidad = _horas_sincronicas_semanales(unidad)
+    horas_unidad = _horas_sincronicas_semanales(unidad, periodo)
 
     paralelo_poo = _construir_paralelo_poo_con_horarios(paralelo_db)
     facade = CentroDeOperacionAcademica()
@@ -1288,6 +1291,7 @@ def servicio_evaluar_docentes_para_paralelo(paralelo_db):
             "docente": docente_db,
             "es_actual": paralelo_db.docente_responsable_id == docente_db.id,
             "carga_actual": carga_actual,
+            "carga_proyectada": round(carga_actual + horas_unidad, 2),
             "carga_maxima": docente_db.carga_horaria_maxima,
             "horas_unidad": horas_unidad,
             "asignable": resultado["ok"],
@@ -1303,7 +1307,7 @@ def servicio_asignar_docente(paralelo_db, docente_db):
     periodo = paralelo_db.periodo_de_nivelacion
     unidad = paralelo_db.unidad_curricular
     areas = unidad.area_de_conocimiento or []
-    horas_unidad = _horas_sincronicas_semanales(unidad)
+    horas_unidad = _horas_sincronicas_semanales(unidad, periodo)
 
     docente_poo, carga_actual = _construir_docente_poo_para_periodo(
         docente_db, periodo, paralelo_excluir_id=paralelo_db.id
