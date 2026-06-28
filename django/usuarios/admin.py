@@ -68,7 +68,7 @@ class PerfilAdministrativoAdmin(admin.ModelAdmin):
     
 @admin.register(PerfilDocente)
 class PerfilDocenteAdmin(admin.ModelAdmin):
-    list_display = ("usuario_de_sistema", "identificador_institucional", "tipo_de_vinculacion", "tiempo_de_dedicacion", "estado_de_vinculacion", "carga_horaria_actual", "carga_horaria_maxima")
+    list_display = ("usuario_de_sistema", "identificador_institucional", "tipo_de_vinculacion", "tiempo_de_dedicacion", "estado_de_vinculacion", "carga_horaria_maxima")
     search_fields = ("usuario_de_sistema__nombres", "usuario_de_sistema__apellidos", "identificador_institucional")
     list_filter = ("tipo_de_vinculacion", "tiempo_de_dedicacion", "estado_de_vinculacion")
     ordering = ("usuario_de_sistema__estado_de_usuario", "usuario_de_sistema__apellidos", "usuario_de_sistema__nombres")
@@ -81,7 +81,6 @@ class PerfilDocenteAdmin(admin.ModelAdmin):
                 "tipo_de_vinculacion",
                 "estado_de_vinculacion", 
                 "tiempo_de_dedicacion", 
-                "carga_horaria_actual", 
                 "carga_horaria_maxima"
             )
         }),

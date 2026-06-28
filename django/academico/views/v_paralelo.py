@@ -4,7 +4,7 @@ from django.db import transaction
 from django.db.models import ProtectedError
 
 from academico.models import Paralelo, PeriodoDeNivelacion, MatriculaParalelo
-from academico.services import servicio_generar_paralelos, servicio_mover_estudiante
+from academico.services import servicio_generar_paralelos, servicio_mover_estudiante, servicio_recalcular_cohorte_de_carrera
 from usuarios.models import PerfilEstudiante
 from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
 from usuarios.utils import (
@@ -152,12 +152,15 @@ def eliminar_paralelo(request, paralelo_id):
         Paralelo, id=paralelo_id, periodo_de_nivelacion__universidad=universidad_usuario
     )
 
+    periodo = representativo.periodo_de_nivelacion
+    carrera = representativo.unidad_curricular.malla_curricular.carrera
     paralelos_grupo = _paralelos_del_grupo(representativo)
-    nombre = representativo.nombre
 
     with transaction.atomic():
         MatriculaParalelo.objects.filter(paralelo__in=paralelos_grupo).delete()
         paralelos_grupo.delete()
+
+    servicio_recalcular_cohorte_de_carrera(periodo, carrera)
 
     messages.success(request, f"El Paralelo ha sido eliminado correctamente")
     return redirect("listar_paralelos")
