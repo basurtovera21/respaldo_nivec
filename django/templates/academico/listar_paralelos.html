@@ -8,7 +8,7 @@
 
 {% block filtros %}
     <form method="get" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-        <label style="font-weight: bold; font-size: 13px; color: #515154;">Periodo de nivelación:</label>
+        <label style="font-weight: bold; font-size: 13px; color: #515154;">Filtrar por periodo:</label>
         <select name="periodo" onchange="this.form.submit()"
                 style="padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 13px; background: white; color: #1d1d1f; outline: none;">
             <option value=""></option>
@@ -25,44 +25,33 @@
 {% endblock %}
 
 {% block cabeceras_tabla %}
-    <th style="font-weight: bold; text-align: left; color: #515154">Código de paralelo</th>
-    <th style="font-weight: bold; text-align: left; color: #515154">Periodo de nivelación</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Paralelo</th>
     <th style="font-weight: bold; text-align: left; color: #515154">Carrera</th>
-    <th style="font-weight: bold; text-align: left; color: #515154">Unidad curricular</th>
-    <th style="font-weight: bold; text-align: left; color: #515154">Nombre</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Periodo de nivelación</th>
     <th style="font-weight: bold; text-align: left; color: #515154">Jornada</th>
     <th style="font-weight: bold; text-align: left; color: #515154">Modalidad</th>
-    <th style="font-weight: bold; text-align: left; color: #515154">Capacidad máxima</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Unidades curriculares</th>
     <th style="font-weight: bold; text-align: left; color: #515154">Estudiantes matriculados</th>
-    <th style="font-weight: bold; text-align: left; color: #515154">Docente responsable</th>
+    <th style="font-weight: bold; text-align: left; color: #515154">Capacidad máxima</th>
     <th style="font-weight: bold; text-align: left; color: #515154">Acciones</th>
 {% endblock %}
 
 {% block cuerpo_tabla %}
     {% for p in paralelos %}
     <tr>
-        <td style="font-family: monospace; text-align: left; color: #1d1d1f;">{{ p.codigo_de_paralelo }}</td>
-        <td style="text-align: left; color: #1d1d1f;">{{ p.periodo_de_nivelacion.periodo }}</td>
-        <td style="text-align: left; color: #1d1d1f;">{{ p.unidad_curricular.malla_curricular.carrera.nombre }}</td>
-        <td style="text-align: left; color: #1d1d1f;">{{ p.unidad_curricular.nombre }}</td>
-        <td style="text-align: left; color: #1d1d1f;">{{ p.nombre }}</td>
-        <td style="text-align: left; color: #1d1d1f;">{{ p.get_jornada_display }}</td>
-        <td style="text-align: left; color: #1d1d1f;">{{ p.get_modalidad_display }}</td>
-        <td style="text-align: left; color: #1d1d1f;">{{ p.capacidad_maxima }}</td>
-        <td style="text-align: left; color: #1d1d1f;">{{ p.estudiantes_matriculados.count }}</td>
-        <td style="text-align: left; color: #1d1d1f;">
-            {% if p.docente_responsable %}
-                {{ p.docente_responsable.usuario_de_sistema.nombres }} {{ p.docente_responsable.usuario_de_sistema.apellidos }}
-            {% else %}
-                <span style="color: #86868b;">Sin designación</span>
-            {% endif %}
-        </td>
+        <td style="text-align: left; color: #1d1d1f; font-weight: bold;">{{ p.nombre }}</td>
+        <td style="text-align: left; color: #1d1d1f;">{{ p.carrera }}</td>
+        <td style="text-align: left; color: #1d1d1f;">{{ p.periodo }}</td>
+        <td style="text-align: left; color: #1d1d1f;">{{ p.jornada }}</td>
+        <td style="text-align: left; color: #1d1d1f;">{{ p.modalidad }}</td>
+        <td style="text-align: left; color: #1d1d1f;">{{ p.unidades }}</td>
+        <td style="text-align: left; color: #1d1d1f;">{{ p.estudiantes }}</td>
+        <td style="text-align: left; color: #1d1d1f;">{{ p.capacidad }}</td>
         <td style="text-align: left; white-space: nowrap;">
-            <a href="{% url 'listar_estudiantes_paralelo' p.id %}" class="etiqueta-accion etiqueta-modificar">Estudiantes</a>
-            <a href="{% url 'listar_horarios_paralelo' p.id %}" class="etiqueta-accion etiqueta-naranja">Horarios</a>
+            <a href="{% url 'detalle_paralelo' p.representativo_id %}" class="etiqueta-accion etiqueta-modificar">Unidades</a>
+            <a href="{% url 'listar_estudiantes_paralelo' p.representativo_id %}" class="etiqueta-accion etiqueta-naranja">Estudiantes</a>
             {% if not solo_lectura %}
-            <a href="{% url 'asignar_docente_paralelo' p.id %}" class="etiqueta-accion etiqueta-naranja">Docente</a>
-            <a href="{% url 'eliminar_paralelo' p.id %}"
+            <a href="{% url 'eliminar_paralelo' p.representativo_id %}"
                onclick="return confirm('Confirmar acción');"
                class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
             {% endif %}
@@ -70,7 +59,7 @@
     </tr>
     {% empty %}
     <tr>
-        <td colspan="11" style="text-align: center; color: #86868b; padding: 30px;">
+        <td colspan="9" style="text-align: center; color: #86868b; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>

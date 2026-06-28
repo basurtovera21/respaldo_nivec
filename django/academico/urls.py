@@ -48,6 +48,7 @@ urlpatterns = [
     
     path("paralelos/", views.listar_paralelos, name="listar_paralelos"),
     path("paralelos/generar/", views.generar_paralelos, name="generar_paralelos"),
+    path("paralelos/<int:paralelo_id>/detalle/", views.detalle_paralelo, name="detalle_paralelo"),
     path("paralelos/eliminar/<int:paralelo_id>/", views.eliminar_paralelo, name="eliminar_paralelo"),
     path("paralelos/<int:paralelo_id>/estudiantes/", views.listar_estudiantes_paralelo, name="listar_estudiantes_paralelo"),
     path("paralelos/<int:paralelo_id>/mover-estudiante/", views.mover_estudiante, name="mover_estudiante"),
