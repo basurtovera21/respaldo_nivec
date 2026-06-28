@@ -1204,7 +1204,7 @@ def _texto_motivo_no_asignable(resultado):
         )
     if motivo == "carga":
         return (
-            f"El Docente excede la carga de horas máxima"
+            f"Excede la carga máxima ({resultado['carga_actual']} + {resultado['horas_nuevas']} h > {resultado['carga_maxima']} h máx.)"
         )
     return "El Docente no puede ser asignado."
 
@@ -1278,6 +1278,7 @@ def servicio_asignar_docente(paralelo_db, docente_db):
     return (True, "El Docente ha sido asignado correctamente", advertencia)
 
 def servicio_quitar_docente(paralelo_db):
+    docente_db = paralelo_db.docente_responsable
     if not docente_db:
         return (False, "El paralelo no tiene un docente designado actualmente")
 
