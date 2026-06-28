@@ -1204,7 +1204,7 @@ def _texto_motivo_no_asignable(resultado):
         )
     if motivo == "carga":
         return (
-            f"El Docente excede la carga de horas máxima"
+            f"Excede la carga máxima ({resultado['carga_actual']} + {resultado['horas_nuevas']} h > {resultado['carga_maxima']} h máx.)"
         )
     return "El Docente no puede ser asignado."
 
