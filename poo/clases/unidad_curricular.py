@@ -1,6 +1,3 @@
-#Enum
-from poo.clases.enums.tipo_de_componente import TipoDeComponente
-
 #Interfaz
 from poo.clases.interfaces.i_unidad_evaluable import IUnidadEvaluable
 
@@ -84,7 +81,6 @@ class UnidadCurricular(IUnidadEvaluable):
             "Horas totales": self.horas_totales,
             "Horas sincrónicas": self.horas_sincronicas,
             "Horas asincrónicas": self.horas_asincronicas,
-            "Tipo de componente": self.tipo_de_componente.value,
             "Criterio de aprobación": self.criterio_de_aprobacion,
             "Porcentaje mínimo de asistencia": self.porcentaje_minimo_asistencia
         }

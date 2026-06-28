@@ -313,7 +313,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
             "horas_totales",
             "horas_sincronicas",
             "horas_asincronicas",
-            "tipo_de_componente",
             "criterio_de_aprobacion",
             "porcentaje_minimo_asistencia",
         ]
