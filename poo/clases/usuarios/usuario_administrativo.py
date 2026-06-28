@@ -18,6 +18,9 @@ class UsuarioAdministrativo(UsuarioDeSistema):
             porcentaje_de_discapacidad = porcentaje_de_discapacidad,
             celular = celular,
             direccion = direccion,
+            # Se reenvía 'universidad' para la herencia múltiple (CoordinadorUnidadAcademica),
+            # donde Docente también la requiere. En herencia simple, la clase base la ignora.
+            universidad = universidad,
             **kwargs
         )
         self.universidad = universidad
