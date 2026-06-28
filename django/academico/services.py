@@ -798,10 +798,12 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
     import math
     from poo.clases.paralelo import Paralelo as ParaleloBase
     from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
+    from poo.clases.cohorte_de_matricula import CohorteDeMatricula as CohorteDeMatriculaPOO
     from poo.clases.enums.jornada import Jornada
     from poo.clases.enums.modalidad import Modalidad as EnumModalidad
     from poo.clases.enums.estado_de_malla import EstadoDeMalla
     from poo.clases.enums.registro_de_cupo import RegistroDeCupo
+    from poo.clases.enums.tipo_de_cohorte import TipoDeCohorte
 
     resumen = {
         "grupos_creados": 0,
@@ -912,11 +914,19 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
 
                 estudiantes_restantes = estudiantes[indice_pendiente:]
                 if estudiantes_restantes:
+                    # El número de paralelo es único por periodo (continúa entre jornadas),
+                    # así no se repite "Paralelo 1" en cada jornada.
+                    numeros_periodo = [
+                        _numero_de_grupo(nombre) for nombre in
+                        Paralelo.objects.filter(periodo_de_nivelacion=periodo_db)
+                        .values_list("nombre", flat=True).distinct()
+                    ]
+                    indice_base = max(numeros_periodo) if numeros_periodo else 0
                     numero_de_grupos = math.ceil(len(estudiantes_restantes) / capacidad)
                     grupos_poo = [
                         ParaleloBase(
                             codigo_de_paralelo=f"G{indice}",
-                            nombre=f"Paralelo {indice_max + indice}",
+                            nombre=f"Paralelo {indice_base + indice}",
                             jornada=enum_jornada,
                             modalidad=enum_modalidad,
                             capacidad_maxima=capacidad,
@@ -930,7 +940,7 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                         miembros = list(grupo_poo._estudiantes_matriculados)
                         if not miembros:
                             continue
-                        nombre_nuevo = f"Paralelo {indice_max + indice}"
+                        nombre_nuevo = f"Paralelo {indice_base + indice}"
                         for unidad in unidades:
                             paralelo_db = Paralelo.objects.create(
                                 periodo_de_nivelacion=periodo_db,
@@ -951,14 +961,23 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                         resumen["grupos_creados"] += 1
                         estudiantes_a_contar.extend(miembros)
 
+                # El conteo por tipo de cupo vive en la POO CohorteDeMatricula.
+                cohorte_poo = CohorteDeMatriculaPOO(
+                    codigo_de_registro=cohorte.codigo_de_registro,
+                    nombre_cohorte=cohorte.nombre_cohorte,
+                    carrera_registrada=None,
+                    fecha_de_cierre=periodo_db.fecha_fin,
+                    periodo_de_nivelacion=None,
+                    tipo_de_cohorte=obtener_enum_flexible(TipoDeCohorte, cohorte.tipo_de_cohorte),
+                )
                 for estudiante_db in estudiantes_a_contar:
-                    if estudiante_db.registro_de_cupo == RegistroDeCupo.REGULAR.value:
-                        cohorte.total_primera_matricula += 1
-                    elif estudiante_db.registro_de_cupo == RegistroDeCupo.SEGUNDA_MATRICULA.value:
-                        cohorte.total_segunda_matricula += 1
-                    elif estudiante_db.registro_de_cupo == RegistroDeCupo.EXONERACION.value:
-                        cohorte.total_exonerados += 1
-                    resumen["estudiantes_distribuidos"] += 1
+                    cohorte_poo.registrar_estudiante_matriculado(estudiante_db)
+
+                estadisticas_cohorte = cohorte_poo.obtener_estadisticas_de_registro()
+                cohorte.total_primera_matricula += estadisticas_cohorte["Total primera matricula"]
+                cohorte.total_segunda_matricula += estadisticas_cohorte["Total segunda matricula"]
+                cohorte.total_exonerados += estadisticas_cohorte["Total exonerados"]
+                resumen["estudiantes_distribuidos"] += len(estudiantes_a_contar)
 
                 cohorte.save()
 
