@@ -65,6 +65,7 @@ def listar_paralelos(request):
         if clave not in grupos:
             grupos[clave] = {
                 "representativo_id": p.id,
+                "codigo": p.codigo_de_paralelo,
                 "nombre": p.nombre,
                 "carrera": carrera.nombre,
                 "periodo": p.periodo_de_nivelacion.periodo,
