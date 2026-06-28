@@ -25,7 +25,9 @@ class UsuarioDeSistema (metaclass = ABCMeta):
         self._celular = celular
         self._direccion = direccion
         self._estado_de_usuario = EstadoDeUsuario.PENDIENTE
-        super().__init__(**kwargs) 
+        # Clase base del dominio: ignora kwargs sobrantes para no romper la
+        # herencia cooperativa (object no acepta argumentos).
+        super().__init__()
     
     
     @property

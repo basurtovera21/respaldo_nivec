@@ -823,6 +823,18 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
     facade = CentroDeOperacionAcademica()
     enum_modalidad = obtener_enum_flexible(EnumModalidad, periodo_db.modalidad)
 
+    import re
+
+    def _num_sufijo(cadena):
+        coincidencia = re.search(r"(\d+)$", str(cadena or ""))
+        return int(coincidencia.group(1)) if coincidencia else 0
+
+    # Código secuencial global, uno por paralelo lógico (compartido por todas sus unidades).
+    contador_codigo = max(
+        [_num_sufijo(c) for c in Paralelo.objects.values_list("codigo_de_paralelo", flat=True).distinct()],
+        default=0,
+    )
+
     carreras = Carrera.objects.filter(campus__universidad=universidad)
 
     for carrera in carreras:
@@ -914,12 +926,15 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
 
                 estudiantes_restantes = estudiantes[indice_pendiente:]
                 if estudiantes_restantes:
-                    numeros_periodo = [
+                    # El número (nombre) reinicia por carrera: cada carrera empieza en "Paralelo 1".
+                    numeros_carrera = [
                         _numero_de_grupo(nombre) for nombre in
-                        Paralelo.objects.filter(periodo_de_nivelacion=periodo_db)
-                        .values_list("nombre", flat=True).distinct()
+                        Paralelo.objects.filter(
+                            periodo_de_nivelacion=periodo_db,
+                            unidad_curricular__malla_curricular__carrera=carrera,
+                        ).values_list("nombre", flat=True).distinct()
                     ]
-                    indice_base = max(numeros_periodo) if numeros_periodo else 0
+                    indice_base = max(numeros_carrera) if numeros_carrera else 0
                     numero_de_grupos = math.ceil(len(estudiantes_restantes) / capacidad)
                     grupos_poo = [
                         ParaleloBase(
@@ -939,11 +954,14 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                         if not miembros:
                             continue
                         nombre_nuevo = f"Paralelo {indice_base + indice}"
+                        # Un solo código para todo el paralelo lógico (todas sus unidades).
+                        contador_codigo += 1
+                        codigo_nuevo = f"PAR{contador_codigo}"
                         for unidad in unidades:
                             paralelo_db = Paralelo.objects.create(
                                 periodo_de_nivelacion=periodo_db,
                                 unidad_curricular=unidad,
-                                codigo_de_paralelo=generar_identificador_siguiente(Paralelo, "PAR", "codigo_de_paralelo"),
+                                codigo_de_paralelo=codigo_nuevo,
                                 nombre=nombre_nuevo,
                                 jornada=jornada_valor,
                                 modalidad=periodo_db.modalidad,
