@@ -809,6 +809,7 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
 
     universidad = periodo_db.universidad
     facade = CentroDeOperacionAcademica()
+    enum_modalidad = obtener_enum_flexible(EnumModalidad, periodo_db.modalidad)
 
     carreras = Carrera.objects.filter(campus__universidad=universidad)
 
@@ -822,7 +823,7 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
         unidades = list(malla.unidades_curriculares.all())
         if not unidades:
             resumen["advertencias"].append(
-                f"El registro de la Malla curricular activa de {carrera.nombre} fue omitido (no presenta Unidades curriculares)"
+                f"El registro de la Malla curricular {carrera.nombre} fue omitido (sin registros asociados)"
             )
             continue
 
@@ -851,7 +852,7 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                 enum_jornada = obtener_enum_flexible(Jornada, jornada_valor)
             except ValueError:
                 resumen["advertencias"].append(
-                    f"El registro de Jornada fue omitido (Jornada no válida en {carrera.nombre})"
+                    f"El registro de Jornada fue omitido (registro no válido)"
                 )
                 continue
 
@@ -905,7 +906,7 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                     grupos_poo = [
                         ParaleloBase(
                             codigo_de_paralelo=f"G{indice}",
-                            nombre=f"Grupo {indice_max + indice}",
+                            nombre=f"Paralelo {indice_max + indice}",
                             jornada=enum_jornada,
                             modalidad=enum_modalidad,
                             capacidad_maxima=capacidad,
@@ -919,7 +920,7 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                         miembros = list(grupo_poo._estudiantes_matriculados)
                         if not miembros:
                             continue
-                        nombre_nuevo = f"Grupo {indice_max + indice}"
+                        nombre_nuevo = f"Paralelo {indice_max + indice}"
                         for unidad in unidades:
                             paralelo_db = Paralelo.objects.create(
                                 periodo_de_nivelacion=periodo_db,
@@ -966,14 +967,14 @@ def servicio_mover_estudiante(estudiante_db, paralelo_destino_db):
         unidad_curricular__malla_curricular__carrera=carrera,
     ))
     if not paralelos_destino:
-        return (False, "El paralelo de destino no es válido")
+        return (False, "La especificación del Paralelo de destino no es válido")
 
     representativo = paralelos_destino[0]
     ocupacion_destino = MatriculaParalelo.objects.filter(
         paralelo=representativo
     ).exclude(estudiante=estudiante_db).count()
     if ocupacion_destino >= representativo.capacidad_maxima:
-        return (False, "El paralelo de destino no presenta cupo disponible")
+        return (False, "El Paralelo de destino no presenta cupos disponibles")
 
     matriculas_actuales = MatriculaParalelo.objects.filter(
         estudiante=estudiante_db,
@@ -983,7 +984,7 @@ def servicio_mover_estudiante(estudiante_db, paralelo_destino_db):
 
     primera_matricula = matriculas_actuales.first()
     if primera_matricula and primera_matricula.paralelo.nombre == nombre_destino:
-        return (False, "El estudiante ya pertenece a ese paralelo")
+        return (False, "El Estudiante ya pertenece al Paralelo especificado")
 
     cohorte = (
         primera_matricula.cohorte_de_matricula
@@ -999,7 +1000,7 @@ def servicio_mover_estudiante(estudiante_db, paralelo_destino_db):
                 defaults={"cohorte_de_matricula": cohorte},
             )
 
-    return (True, "El estudiante fue reasignado correctamente")
+    return (True, "El Estudiante fue reasignado correctamente")
 
 
 # ==========================================

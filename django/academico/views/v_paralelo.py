@@ -22,7 +22,7 @@ ROLES_MODIFICAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
 def listar_paralelos(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario)
@@ -56,7 +56,7 @@ def listar_paralelos(request):
 def generar_paralelos(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     periodos = PeriodoDeNivelacion.objects.filter(
@@ -65,14 +65,14 @@ def generar_paralelos(request):
     )
 
     if not periodos.exists():
-        messages.warning(request, "No existen periodos de nivelación en Planificación")
+        messages.warning(request, "No existen Periodos de nivelación en planificación")
         return redirect("panel_dan")
 
     if request.method == "POST":
         periodo_id = request.POST.get("periodo") or None
         periodo = periodos.filter(id=periodo_id).first() if periodo_id else None
         if not periodo:
-            messages.error(request, "Debe seleccionar un Periodo de nivelación en Planificación")
+            messages.error(request, "Especifique un Periodo de nivelación en planificación")
             return redirect("generar_paralelos")
 
 
@@ -86,12 +86,12 @@ def generar_paralelos(request):
         if resumen["paralelos_creados"] > 0 or resumen["estudiantes_distribuidos"] > 0:
             messages.success(
                 request,
-                f"{resumen['grupos_creados']} paralelo(s) nuevo(s). {resumen['estudiantes_distribuidos']} estudiante(s) distribuido(s)."
+                f"{resumen['grupos_creados']} Paralelo(s) creado(s). {resumen['estudiantes_distribuidos']} Estudiante(s) distribuido(s)."
             )
         else:
             messages.warning(
                 request,
-                "No existen estudiantes pendientes por distribuir actualmente"
+                "No quedan Estudiantes pendientes por distribuir actualmente"
             )
 
         return redirect("listar_paralelos")
@@ -107,7 +107,7 @@ def generar_paralelos(request):
 def eliminar_paralelo(request, paralelo_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     paralelo = get_object_or_404(
@@ -116,12 +116,12 @@ def eliminar_paralelo(request, paralelo_id):
 
     try:
         paralelo.delete()
-        messages.success(request, "El paralelo ha sido eliminado correctamente")
+        messages.success(request, "El Paralelo ha sido eliminado correctamente")
     except ProtectedError:
         total = paralelo.estudiantes_matriculados.count()
         messages.error(
             request,
-            f"El paralelo no se ha podido eliminar ({total} estudiante(s) matriculado(s))"
+            f"El Paralelo no se ha podido eliminar ({total} Estudiante(s) matriculado(s))"
         )
     return redirect("listar_paralelos")
 
@@ -129,7 +129,7 @@ def eliminar_paralelo(request, paralelo_id):
 def listar_estudiantes_paralelo(request, paralelo_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     paralelo = get_object_or_404(
@@ -177,7 +177,7 @@ def listar_estudiantes_paralelo(request, paralelo_id):
 def mover_estudiante(request, paralelo_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     paralelo = get_object_or_404(
@@ -189,7 +189,7 @@ def mover_estudiante(request, paralelo_id):
         destino_id = request.POST.get("paralelo_destino") or None
 
         if not estudiante_id or not destino_id:
-            messages.error(request, "Debe seleccionar un estudiante y un grupo destino")
+            messages.error(request, "Especifique un Estudiante y un Paralelo destino")
             return redirect("listar_estudiantes_paralelo", paralelo_id=paralelo.id)
 
         estudiante = get_object_or_404(
