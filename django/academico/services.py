@@ -1279,6 +1279,7 @@ def servicio_evaluar_docentes_para_paralelo(paralelo_db):
             "docente": docente_db,
             "es_actual": paralelo_db.docente_responsable_id == docente_db.id,
             "carga_actual": carga_actual,
+            "carga_proyectada": round(carga_actual + horas_unidad, 2),
             "carga_maxima": docente_db.carga_horaria_maxima,
             "horas_unidad": horas_unidad,
             "asignable": resultado["ok"],
