@@ -57,7 +57,6 @@ def descargar_plantilla_malla(request):
     cabeceras = [
         "Código de Carrera (CAR...)",
         "Nombre de la Malla curricular",
-        "Duración en semanas (número entero)",
     ]
     ws.append(cabeceras)
 

@@ -72,7 +72,6 @@ class MallaCurricular(models.Model):
     carrera = models.ForeignKey(Carrera, on_delete=models.PROTECT, related_name="mallas_curriculares", verbose_name="Carrera registrada")
     codigo_de_malla = models.CharField(max_length=50, unique=True, verbose_name="Código de Malla curricular")
     nombre = models.CharField(max_length=200, verbose_name="Nombre")
-    duracion_semanas = models.IntegerField(verbose_name="Duración (en semanas)")
     version_de_malla = models.CharField(max_length=20, verbose_name="Versión de Malla curricular")
     estado = models.CharField(max_length=50, choices=cambiar_enum_a_choices(EstadoDeMalla), default=EstadoDeMalla.DISENO.value, verbose_name="Estado")
     total_horas_nivelacion = models.FloatField(default=0.0, verbose_name="Total de horas de nivelación")

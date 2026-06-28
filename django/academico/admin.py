@@ -86,7 +86,6 @@ class MallaCurricularAdmin(admin.ModelAdmin):
                 "carrera", 
                 "codigo_de_malla", 
                 "nombre", 
-                "duracion_semanas", 
                 "version_de_malla", 
                 "estado", 
                 "total_horas_nivelacion"
