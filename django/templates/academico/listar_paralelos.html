@@ -8,7 +8,7 @@
 
 {% block filtros %}
     <form method="get" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-        <label style="font-weight: bold; font-size: 13px; color: #515154;">Filtrar por periodo:</label>
+        <label style="font-weight: bold; font-size: 13px; color: #515154;">Periodo de nivelación:</label>
         <select name="periodo" onchange="this.form.submit()"
                 style="padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 13px; background: white; color: #1d1d1f; outline: none;">
             <option value=""></option>
@@ -60,8 +60,8 @@
         <td style="text-align: left; white-space: nowrap;">
             <a href="{% url 'listar_estudiantes_paralelo' p.id %}" class="etiqueta-accion etiqueta-modificar">Estudiantes</a>
             <a href="{% url 'listar_horarios_paralelo' p.id %}" class="etiqueta-accion etiqueta-naranja">Horarios</a>
-            <a href="{% url 'asignar_docente_paralelo' p.id %}" class="etiqueta-accion etiqueta-naranja">Docente</a>
             {% if not solo_lectura %}
+            <a href="{% url 'asignar_docente_paralelo' p.id %}" class="etiqueta-accion etiqueta-naranja">Docente</a>
             <a href="{% url 'eliminar_paralelo' p.id %}"
                onclick="return confirm('Confirmar acción');"
                class="etiqueta-accion etiqueta-eliminar">Eliminar</a>

@@ -99,7 +99,7 @@ def generar_paralelos(request):
     return render(request, "academico/generar_paralelos.html", {
         "periodos": periodos,
         "titulo_pagina": "Paralelo - NIVEC",
-        "titulo": "Crear paralelos",
+        "titulo": "Crear Paralelos",
         "url_cancelar": "listar_paralelos",
     })
 
