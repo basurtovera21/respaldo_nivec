@@ -153,7 +153,6 @@ class Horario(models.Model):
     hora_inicio = models.TimeField(verbose_name="Hora de inicio")
     hora_fin = models.TimeField(verbose_name="Hora de finalización")
     espacio_de_imparticion = models.CharField(max_length=200, verbose_name="Espacio de impartición")
-    modalidad = models.CharField(max_length=50, choices=cambiar_enum_a_choices(Modalidad), verbose_name="Modalidad")
     numero_semana = models.IntegerField(verbose_name="Número de semana")
     tipo_de_sesion = models.CharField(max_length=50, choices=cambiar_enum_a_choices(TipoDeSesion), verbose_name="Tipo de sesión")
 

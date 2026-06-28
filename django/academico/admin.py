@@ -167,7 +167,7 @@ class ParaleloAdmin(admin.ModelAdmin):
 class HorarioAdmin(admin.ModelAdmin):
     list_display = ("paralelo", "dia_semana", "hora_inicio", "hora_fin", "tipo_de_sesion", "espacio_de_imparticion", "numero_semana")
     search_fields = ("paralelo__nombre", "espacio_de_imparticion")
-    list_filter = ("dia_semana", "tipo_de_sesion", "modalidad")
+    list_filter = ("dia_semana", "tipo_de_sesion")
     ordering = ("paralelo", "dia_semana", "hora_inicio")
 
     fieldsets = (
@@ -178,7 +178,6 @@ class HorarioAdmin(admin.ModelAdmin):
                 "hora_inicio", 
                 "hora_fin", 
                 "espacio_de_imparticion", 
-                "modalidad", 
                 "numero_semana", 
                 "tipo_de_sesion"
             )
