@@ -1278,6 +1278,7 @@ def servicio_asignar_docente(paralelo_db, docente_db):
     return (True, "El Docente ha sido asignado correctamente", advertencia)
 
 def servicio_quitar_docente(paralelo_db):
+    docente_db = paralelo_db.docente_responsable
     if not docente_db:
         return (False, "El paralelo no tiene un docente designado actualmente")
 
