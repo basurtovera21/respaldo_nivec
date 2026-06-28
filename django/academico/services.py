@@ -249,22 +249,14 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
 
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
-                codigo_carrera, nombre, duracion = fila[:3]
+                codigo_carrera, nombre = fila[:2]
 
-                if not any([codigo_carrera, nombre, duracion]):
+                if not any([codigo_carrera, nombre]):
                     continue
 
-                if not all([codigo_carrera, nombre, duracion]):
+                if not all([codigo_carrera, nombre]):
                     resultado["advertencias"].append(
                         f"El registro de la fila {numero_fila} fue omitido por falta de información"
-                    )
-                    continue
-
-                try:
-                    duracion_int = int(duracion)
-                except (ValueError, TypeError):
-                    resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (Duración no válida)"
                     )
                     continue
 
@@ -280,7 +272,6 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
                 malla_poo = MallaCurricularBase(
                     codigo_de_malla="PENDIENTE",
                     nombre=str(nombre).strip(),
-                    duracion_semanas=duracion_int,
                     version_de_malla="PENDIENTE",
                 )
 
@@ -306,7 +297,6 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
                             MallaCurricular, "MC", "codigo_de_malla"
                         ),
                         nombre=malla_poo.nombre,
-                        duracion_semanas=malla_poo.duracion_semanas,
                         version_de_malla=servicio_generar_version_malla(carrera_obj),
                         estado=EstadoDeMalla.DISENO.value,
                     )
@@ -679,7 +669,6 @@ def _construir_malla_poo(malla_db, cargar_unidades=False):
     malla_poo = MallaCurricularBase(
         codigo_de_malla=malla_db.codigo_de_malla,
         nombre=malla_db.nombre,
-        duracion_semanas=malla_db.duracion_semanas,
         version_de_malla=malla_db.version_de_malla,
     )
 
@@ -753,7 +742,6 @@ def servicio_clonar_malla_curricular(id_malla_curricular_bd, nuevo_nombre=None):
             carrera=malla_curricular_db.carrera,
             codigo_de_malla=clon_poo.codigo_de_malla,
             nombre=clon_poo.nombre,
-            duracion_semanas=clon_poo.duracion_semanas,
             version_de_malla=clon_poo.version_de_malla,
             estado=clon_poo.estado.value,  # Diseño
             total_horas_nivelacion=clon_poo.total_horas_nivelacion,
@@ -1208,13 +1196,16 @@ def servicio_obtener_matriz_de_horarios(periodo_db, paralelos_db):
     return matriz
 
 
-def _horas_sincronicas_semanales(unidad):
-    # Las unidades guardan horas TOTALES del periodo; la carga docente es semanal,
-    # por eso se normaliza dividiendo por las semanas de la malla.
-    semanas = unidad.malla_curricular.duracion_semanas or 0
-    if semanas <= 0:
-        semanas = 1
-    return round(unidad.horas_sincronicas / semanas, 2)
+def _semanas_de_periodo(periodo_db):
+    dias = (periodo_db.fecha_fin - periodo_db.fecha_inicio).days
+    semanas = dias // 7
+    return semanas if semanas > 0 else 1
+
+
+def _horas_sincronicas_semanales(unidad, periodo_db):
+    # Las unidades guardan horas TOTALES; la carga docente es semanal. Las semanas
+    # se toman de la DURACIÓN DEL PERIODO de nivelación (no de la malla).
+    return round(unidad.horas_sincronicas / _semanas_de_periodo(periodo_db), 2)
 
 
 def _construir_docente_poo_para_periodo(docente_db, periodo_db, paralelo_excluir_id=None):
@@ -1235,7 +1226,7 @@ def _construir_docente_poo_para_periodo(docente_db, periodo_db, paralelo_excluir
 
     carga_actual = 0.0
     for paralelo_actual in paralelos_actuales:
-        carga_actual += _horas_sincronicas_semanales(paralelo_actual.unidad_curricular)
+        carga_actual += _horas_sincronicas_semanales(paralelo_actual.unidad_curricular, periodo_db)
         for horario_db in Horario.objects.filter(paralelo=paralelo_actual):
             docente_poo.agregar_horario_ocupado(_construir_horario_poo(horario_db))
 
@@ -1265,7 +1256,7 @@ def servicio_evaluar_docentes_para_paralelo(paralelo_db):
     periodo = paralelo_db.periodo_de_nivelacion
     unidad = paralelo_db.unidad_curricular
     areas = unidad.area_de_conocimiento or []
-    horas_unidad = _horas_sincronicas_semanales(unidad)
+    horas_unidad = _horas_sincronicas_semanales(unidad, periodo)
 
     paralelo_poo = _construir_paralelo_poo_con_horarios(paralelo_db)
     facade = CentroDeOperacionAcademica()
@@ -1303,7 +1294,7 @@ def servicio_asignar_docente(paralelo_db, docente_db):
     periodo = paralelo_db.periodo_de_nivelacion
     unidad = paralelo_db.unidad_curricular
     areas = unidad.area_de_conocimiento or []
-    horas_unidad = _horas_sincronicas_semanales(unidad)
+    horas_unidad = _horas_sincronicas_semanales(unidad, periodo)
 
     docente_poo, carga_actual = _construir_docente_poo_para_periodo(
         docente_db, periodo, paralelo_excluir_id=paralelo_db.id
