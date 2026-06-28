@@ -170,7 +170,7 @@ def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
 
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
-                tipo_id, identificacion, nombres, apellidos, correo, tipo_vinc, tiempo_dedic, carga_max, especialidades_str = fila[:9]
+                tipo_id, identificacion, nombres, apellidos, correo, tipo_vinc, tiempo_dedic, carga_max, especialidades_str, jornadas_str = fila[:10]
                 
                 if not any([tipo_id, identificacion, nombres, apellidos, correo, tipo_vinc, tiempo_dedic, carga_max]):
                     continue
@@ -209,6 +209,13 @@ def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
                 
                 lista_especialidades = [esp.strip() for esp in str(especialidades_str).split(',') if esp.strip()] if especialidades_str else []
 
+                from usuarios.forms import validar_jornadas_continuas
+                lista_jornadas = [j.strip().capitalize() for j in str(jornadas_str).split(',') if j.strip()] if jornadas_str else []
+                error_jornadas = validar_jornadas_continuas(lista_jornadas)
+                if error_jornadas:
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Jornadas no válidas: {error_jornadas})")
+                    continue
+
                 with transaction.atomic():
                     usuario = UsuarioDeSistema.objects.create(
                         tipo_de_identificacion=tipo_id_str,
@@ -229,7 +236,8 @@ def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
                         tiempo_de_dedicacion=dedic_validas[tiempo_dedic_limpio],
                         carga_horaria_maxima=carga_max_float,
                         estado_de_vinculacion=EnumEstadoDeVinculacion.ACTIVO.value,
-                        especialidades=lista_especialidades
+                        especialidades=lista_especialidades,
+                        jornadas=lista_jornadas
                     )
                     resultado["exitosos"] += 1
             

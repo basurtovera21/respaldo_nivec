@@ -43,7 +43,7 @@ def descargar_plantilla_docente(request):
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Docentes"
-    cabeceras = ["Tipo de identificación (Cédula, Pasaporte, Cédula extranjera)", "Número de identificación", "Nombres", "Apellidos", "Correo institucional", "Tipo de vinculación (Nombramiento, Contrato, Ocasional, Honorario)", "Tiempo de dedicación (Tiempo completo, Medio tiempo, Tiempo parcial)", "Carga horaria máxima (número decimal)", "Especialidades (información separada por comas)"]
+    cabeceras = ["Tipo de identificación (Cédula, Pasaporte, Cédula extranjera)", "Número de identificación", "Nombres", "Apellidos", "Correo institucional", "Tipo de vinculación (Nombramiento, Contrato, Ocasional, Honorario)", "Tiempo de dedicación (Tiempo completo, Medio tiempo, Tiempo parcial)", "Carga horaria máxima (número decimal)", "Especialidades (información separada por comas)", "Jornadas (Matutina, Vespertina, Nocturna - continuas, separadas por coma)"]
     ws.append(cabeceras)
     for col in range(1, len(cabeceras) + 1): 
         ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 40
