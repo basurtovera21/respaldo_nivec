@@ -180,7 +180,9 @@ def modificar_administrativo(request, admin_id):
                 formulario_perfil.save()
                 
                 if formulario_docente:
-                    formulario_docente.save()
+                    docente_guardado = formulario_docente.save(commit=False)
+                    docente_guardado.jornadas = formulario_docente.cleaned_data.get('jornadas', [])
+                    docente_guardado.save()
             
             if es_coordinador_ua:
                 messages.success(request, "El Coordinador de unidad académica ha sido modificado correctamente")

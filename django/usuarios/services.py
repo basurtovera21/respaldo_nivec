@@ -132,7 +132,7 @@ def servicio_coordinador_ua_registrar_masivo_desde_excel(archivo, universidad_us
         prefijo_ua = UsuarioAdministrativoBase.definir_prefijo_identificador(EnumPerfilAdministrativo.COORDINADOR_UA)
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
-                tipo_id, identificacion, nombres, apellidos, correo, ua, tipo_vinc, tiempo_dedic, carga_max = fila[:9]
+                tipo_id, identificacion, nombres, apellidos, correo, ua, tipo_vinc, tiempo_dedic, carga_max, jornadas_str = fila[:10]
                 if not any([tipo_id, identificacion, nombres, apellidos, correo, ua, tipo_vinc, tiempo_dedic, carga_max]): continue
                 if not all([tipo_id, identificacion, nombres, apellidos, correo, ua, tipo_vinc, tiempo_dedic, carga_max]):
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido por falta de información"); continue
@@ -143,6 +143,11 @@ def servicio_coordinador_ua_registrar_masivo_desde_excel(archivo, universidad_us
                 vinc_exacta, dedic_exacta = vinc_validas[tipo_vinc_limpio], dedic_validas[tiempo_dedic_limpio]
                 try: carga_max_float = float(carga_max)
                 except ValueError: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Carga horaria no válida)"); continue
+                from usuarios.forms import validar_jornadas_continuas
+                lista_jornadas = [j.strip().capitalize() for j in str(jornadas_str).split(',') if j.strip()] if jornadas_str else []
+                error_jornadas = validar_jornadas_continuas(lista_jornadas)
+                if error_jornadas:
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Jornadas no válidas: {error_jornadas})"); continue
                 try: UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
                 except ValueError as e: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})"); continue
                 if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
@@ -151,7 +156,7 @@ def servicio_coordinador_ua_registrar_masivo_desde_excel(archivo, universidad_us
                     usuario = UsuarioDeSistema.objects.create(tipo_de_identificacion=tipo_id_str, identificacion=identificacion_str, nombres=str(nombres).strip(), apellidos=str(apellidos).strip(), correo_institucional=str(correo).strip(), estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value)
                     usuario.set_password(identificacion_str); usuario.save()
                     PerfilAdministrativo.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_administrativo=generar_identificador_siguiente(PerfilAdministrativo, prefijo_ua, 'identificador_administrativo'), identificador_coordinador_ua=generar_identificador_siguiente(PerfilAdministrativo, prefijo_ua, 'identificador_coordinador_ua'), unidad_academica=ua_str, perfil_administrativo=rol_fijo)
-                    PerfilDocente.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_institucional=generar_identificador_siguiente(PerfilDocente, "DC", 'identificador_institucional'), tipo_de_vinculacion=vinc_exacta, tiempo_de_dedicacion=dedic_exacta, carga_horaria_maxima=carga_max_float, estado_de_vinculacion=EnumEstadoDeVinculacion.ACTIVO.value)
+                    PerfilDocente.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_institucional=generar_identificador_siguiente(PerfilDocente, "DC", 'identificador_institucional'), tipo_de_vinculacion=vinc_exacta, tiempo_de_dedicacion=dedic_exacta, carga_horaria_maxima=carga_max_float, estado_de_vinculacion=EnumEstadoDeVinculacion.ACTIVO.value, jornadas=lista_jornadas)
                     resultado["exitosos"] += 1
             except Exception as e: resultado["advertencias"].append(f"Fila {numero_fila} omitida ({str(e)})")
     except Exception: resultado["error"] = "Ha ocurrido un error al procesar el documento"
