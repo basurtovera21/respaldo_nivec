@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ titulo_pagina|default:"NIVEC" }}{% endblock %}
+
+{% block contenido %}
+<style>
+    .tarjeta table th, .tarjeta table td { padding: 12px 24px; white-space: nowrap; }
+    .etiqueta-accion {
+        padding: 4px 12px; border-radius: 6px; font-size: 12px; text-decoration: none;
+        display: inline-block; font-weight: bold; margin-right: 8px;
+    }
+    .etiqueta-modificar { background-color: #f0f6ff; color: #0071e3; border: 1px solid rgba(0,113,227,0.1); }
+    .etiqueta-naranja { background-color: #fef9ec; color: #b45309; border: 1px solid rgba(180,83,9,0.1); }
+</style>
+
+<h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
+<p style="color: #515154; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
+    {{ representativo.periodo_de_nivelacion.periodo }} —
+    Capacidad: {{ representativo.capacidad_maxima }} —
+    Estudiantes: {{ representativo.estudiantes_matriculados.count }}
+</p>
+
+<div class="tarjeta" style="padding: 0; overflow-x: auto;">
+    <table style="width: 100%;">
+        <thead>
+            <tr>
+                <th style="font-weight: bold; text-align: left; color: #515154">Código de paralelo</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Unidad curricular</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Docente responsable</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in unidades %}
+            <tr>
+                <td style="font-family: monospace; text-align: left; color: #1d1d1f;">{{ u.codigo_de_paralelo }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ u.unidad_curricular.nombre }}</td>
+                <td style="text-align: left; color: #1d1d1f;">
+                    {% if u.docente_responsable %}
+                        {{ u.docente_responsable.usuario_de_sistema.nombres }} {{ u.docente_responsable.usuario_de_sistema.apellidos }}
+                    {% else %}
+                        <span style="color: #86868b;">Sin designación</span>
+                    {% endif %}
+                </td>
+                <td style="text-align: left; white-space: nowrap;">
+                    {% if not solo_lectura %}
+                    <a href="{% url 'asignar_docente_paralelo' u.id %}" class="etiqueta-accion etiqueta-modificar">Docente</a>
+                    {% endif %}
+                    <a href="{% url 'listar_horarios_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Horarios</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center; color: #86868b; padding: 30px;">
+                    No existen unidades en este paralelo
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top: 15px;">
+    <a href="{% url 'listar_paralelos' %}" class="boton boton-secundario">Volver</a>
+</div>
+{% endblock %}

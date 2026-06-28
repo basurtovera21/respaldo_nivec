@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import ProtectedError
 
 from academico.models import Paralelo, PeriodoDeNivelacion, MatriculaParalelo
@@ -18,6 +19,23 @@ from usuarios.utils import (
 ROLES_VISUALIZAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
 ROLES_MODIFICAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
 
+
+def _numero_para_orden(nombre):
+    try:
+        return int(str(nombre).split()[-1])
+    except (ValueError, IndexError):
+        return 0
+
+
+def _paralelos_del_grupo(representativo):
+    carrera = representativo.unidad_curricular.malla_curricular.carrera
+    return Paralelo.objects.filter(
+        periodo_de_nivelacion=representativo.periodo_de_nivelacion,
+        jornada=representativo.jornada,
+        nombre=representativo.nombre,
+        unidad_curricular__malla_curricular__carrera=carrera,
+    )
+
 @requiere_perfil(*ROLES_VISUALIZAN)
 def listar_paralelos(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
@@ -31,9 +49,7 @@ def listar_paralelos(request):
         periodo_de_nivelacion__universidad=universidad_usuario
     ).select_related(
         "periodo_de_nivelacion",
-        "unidad_curricular",
         "unidad_curricular__malla_curricular__carrera",
-        "docente_responsable__usuario_de_sistema",
     )
 
     periodo_id = request.GET.get("periodo")
@@ -42,8 +58,29 @@ def listar_paralelos(request):
         paralelos = paralelos.filter(periodo_de_nivelacion__id=periodo_id)
         periodo_seleccionado = periodos.filter(id=periodo_id).first()
 
+    grupos = {}
+    for p in paralelos:
+        carrera = p.unidad_curricular.malla_curricular.carrera
+        clave = (p.periodo_de_nivelacion_id, carrera.id, p.jornada, p.nombre)
+        if clave not in grupos:
+            grupos[clave] = {
+                "representativo_id": p.id,
+                "nombre": p.nombre,
+                "carrera": carrera.nombre,
+                "periodo": p.periodo_de_nivelacion.periodo,
+                "jornada": p.get_jornada_display(),
+                "modalidad": p.get_modalidad_display(),
+                "capacidad": p.capacidad_maxima,
+                "unidades": 0,
+                "estudiantes": p.estudiantes_matriculados.count(),
+                "_orden": (carrera.nombre, _numero_para_orden(p.nombre)),
+            }
+        grupos[clave]["unidades"] += 1
+
+    paralelos_agrupados = sorted(grupos.values(), key=lambda g: g["_orden"])
+
     return render(request, "academico/listar_paralelos.html", {
-        "paralelos": paralelos,
+        "paralelos": paralelos_agrupados,
         "periodos": periodos,
         "periodo_seleccionado": periodo_seleccionado,
         "solo_lectura": usuario_es_solo_lectura(request.user),
@@ -110,20 +147,45 @@ def eliminar_paralelo(request, paralelo_id):
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
-    paralelo = get_object_or_404(
+    representativo = get_object_or_404(
         Paralelo, id=paralelo_id, periodo_de_nivelacion__universidad=universidad_usuario
     )
 
-    try:
-        paralelo.delete()
-        messages.success(request, "El Paralelo ha sido eliminado correctamente")
-    except ProtectedError:
-        total = paralelo.estudiantes_matriculados.count()
-        messages.error(
-            request,
-            f"El Paralelo no se ha podido eliminar ({total} Estudiante(s) matriculado(s))"
-        )
+    paralelos_grupo = _paralelos_del_grupo(representativo)
+    nombre = representativo.nombre
+
+    with transaction.atomic():
+        MatriculaParalelo.objects.filter(paralelo__in=paralelos_grupo).delete()
+        paralelos_grupo.delete()
+
+    messages.success(request, f"El Paralelo ha sido eliminado correctamente")
     return redirect("listar_paralelos")
+
+@requiere_perfil(*ROLES_VISUALIZAN)
+def detalle_paralelo(request, paralelo_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    representativo = get_object_or_404(
+        Paralelo, id=paralelo_id, periodo_de_nivelacion__universidad=universidad_usuario
+    )
+    carrera = representativo.unidad_curricular.malla_curricular.carrera
+
+    unidades = _paralelos_del_grupo(representativo).select_related(
+        "unidad_curricular",
+        "docente_responsable__usuario_de_sistema",
+    ).order_by("unidad_curricular__nombre")
+
+    return render(request, "academico/detalle_paralelo.html", {
+        "representativo": representativo,
+        "carrera": carrera,
+        "unidades": unidades,
+        "solo_lectura": usuario_es_solo_lectura(request.user),
+        "titulo_pagina": "Paralelo - NIVEC",
+        "titulo": f"{representativo.nombre} - {carrera.nombre} ({representativo.get_jornada_display()})",
+    })
 
 @requiere_perfil(*ROLES_VISUALIZAN)
 def listar_estudiantes_paralelo(request, paralelo_id):
@@ -189,7 +251,7 @@ def mover_estudiante(request, paralelo_id):
         destino_id = request.POST.get("paralelo_destino") or None
 
         if not estudiante_id or not destino_id:
-            messages.error(request, "Especifique un Estudiante y un Paralelo destino")
+            messages.error(request, "Especifique un Estudiante y un Paralelo de destino")
             return redirect("listar_estudiantes_paralelo", paralelo_id=paralelo.id)
 
         estudiante = get_object_or_404(
