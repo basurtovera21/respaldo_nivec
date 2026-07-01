@@ -1071,6 +1071,77 @@ def servicio_mover_estudiante(estudiante_db, paralelo_destino_db):
     return (True, "El Estudiante fue reasignado correctamente")
 
 
+def _paralelos_del_grupo_de_estudiantes(paralelo_db):
+    # Todas las filas Paralelo (una por unidad) del mismo paralelo lógico.
+    carrera = paralelo_db.unidad_curricular.malla_curricular.carrera
+    return Paralelo.objects.filter(
+        periodo_de_nivelacion=paralelo_db.periodo_de_nivelacion,
+        jornada=paralelo_db.jornada,
+        nombre=paralelo_db.nombre,
+        unidad_curricular__malla_curricular__carrera=carrera,
+    )
+
+
+def periodo_permite_gestion_matriculas(periodo_db):
+    # La matrícula manual solo se puede gestionar en Planificación o En curso.
+    return periodo_db.estado in (EstadoDePeriodo.PLANIFICACION.value, EstadoDePeriodo.EN_CURSO.value)
+
+
+def servicio_retirar_estudiante_de_paralelo(estudiante_db, paralelo_db):
+    periodo = paralelo_db.periodo_de_nivelacion
+    carrera = paralelo_db.unidad_curricular.malla_curricular.carrera
+
+    if not periodo_permite_gestion_matriculas(periodo):
+        return (False, "Solo se puede gestionar la matrícula en Periodos en planificación o en curso")
+
+    paralelos_grupo = _paralelos_del_grupo_de_estudiantes(paralelo_db)
+    matriculas = MatriculaParalelo.objects.filter(estudiante=estudiante_db, paralelo__in=paralelos_grupo)
+    if not matriculas.exists():
+        return (False, "El Estudiante no pertenece al Paralelo especificado")
+
+    with transaction.atomic():
+        matriculas.delete()
+
+    servicio_recalcular_cohorte_de_carrera(periodo, carrera)
+    return (True, "El Estudiante fue retirado del Paralelo correctamente")
+
+
+def servicio_agregar_estudiante_a_paralelo(estudiante_db, paralelo_db):
+    periodo = paralelo_db.periodo_de_nivelacion
+    carrera = paralelo_db.unidad_curricular.malla_curricular.carrera
+
+    if not periodo_permite_gestion_matriculas(periodo):
+        return (False, "Solo se puede gestionar la matrícula en Periodos en planificación o en curso")
+
+    # Coherencia: mismo periodo, misma carrera y misma jornada.
+    if (estudiante_db.periodo_de_nivelacion_id != periodo.id
+            or estudiante_db.carrera_registrada_id != carrera.id
+            or estudiante_db.jornada != paralelo_db.jornada):
+        return (False, "El Estudiante no es compatible con el Paralelo (Carrera o Jornada)")
+
+    # No debe estar ya asignado a ningún paralelo del periodo.
+    if MatriculaParalelo.objects.filter(estudiante=estudiante_db, paralelo__periodo_de_nivelacion=periodo).exists():
+        return (False, "El Estudiante ya se encuentra asignado a un Paralelo")
+
+    paralelos_grupo = list(_paralelos_del_grupo_de_estudiantes(paralelo_db))
+    representativo = paralelos_grupo[0]
+    ocupacion = MatriculaParalelo.objects.filter(paralelo=representativo).count()
+    if ocupacion >= representativo.capacidad_maxima:
+        return (False, "El Paralelo no presenta cupos disponibles")
+
+    cohorte = _obtener_o_crear_cohorte(periodo, carrera)
+    with transaction.atomic():
+        for paralelo_grupo_db in paralelos_grupo:
+            MatriculaParalelo.objects.get_or_create(
+                estudiante=estudiante_db,
+                paralelo=paralelo_grupo_db,
+                defaults={"cohorte_de_matricula": cohorte},
+            )
+
+    servicio_recalcular_cohorte_de_carrera(periodo, carrera)
+    return (True, "El Estudiante fue agregado al Paralelo correctamente")
+
+
 # ==========================================
 # B.2 - Horarios
 # ==========================================
