@@ -1,62 +1,73 @@
 {% extends "base.html" %}
-{% block titulo %}NIVEC{% endblock %}
+{% block titulo %}Panel DAN — NIVEC{% endblock %}
 
 {% block contenido %}
-    <style>
-        .boton-deshabilitado {
-            background: #f2f2f7;
-            color: #b0b0b5;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-    </style>
-
-    <h2 style="margin-bottom: 20px;">Coordinación de admisión y nivelación</h2>
-
-    <div class="tarjeta">
-        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Estructura curricular</h2>
-        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Parámetros curriculares</p>
-        <div class="acciones" style="margin-bottom: 0;">
-            <a href="{% url 'listar_mallas' %}" class="boton boton-secundario">Mallas curriculares</a>
-            <a href="{% url 'listar_unidades' %}" class="boton boton-secundario">Unidades curriculares</a>
-        </div>
+<div class="tarjeta">
+    <h2>Panel — Dirección de Admisión y Nivelación</h2>
+    <div class="acciones">
+        <a href="{% url 'procesar_mtn' %}" class="boton boton-primario">Procesar MTN</a>
+        <a href="{% url 'registrar_periodo' %}" class="boton boton-secundario">Registrar periodo</a>
+        <a href="{% url 'listar_estudiantes' %}" class="boton boton-secundario">Ver estudiantes</a>
+        <a href="{% url 'listar_cohortes' %}" class="boton boton-secundario">Ver cohortes</a>
+        <a href="{% url 'listar_informes' %}" class="boton boton-secundario">Ver informes</a>
     </div>
+</div>
 
-    <div class="tarjeta">
-        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Matriz de tercer nivel</h2>
-        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Registro y validación</p>
-        <div class="acciones" style="margin-bottom: 0;">
-            <a href="{% url 'procesar_mtn' %}" class="boton boton-secundario">Matriz de tercer nivel</a>
-            <a href="{% url 'listar_consolidados' %}" class="boton boton-secundario">Consolidados académicos</a>
-        </div>
-    </div>
+<div class="tarjeta">
+    <h2>Periodos de nivelación</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Periodo</th><th>Año</th><th>Modalidad</th>
+                <th>Inicio</th><th>Fin</th><th>Estado</th><th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for periodo in periodos_de_nivelacion %}
+            <tr>
+                <td>{{ periodo.periodo }}</td>
+                <td>{{ periodo.anio }}</td>
+                <td>{{ periodo.modalidad }}</td>
+                <td>{{ periodo.fecha_inicio }}</td>
+                <td>{{ periodo.fecha_fin }}</td>
+                <td>{{ periodo.estado }}</td>
+                <td>
+                    <a href="{% url 'iniciar_periodo' periodo.id %}" class="boton boton-secundario">Iniciar</a>
+                    <a href="{% url 'finalizar_periodo' periodo.id %}" class="boton boton-secundario">Cerrar</a>
+                    <a href="{% url 'exportar_informe' periodo.id %}?formato=excel" class="boton boton-secundario">Excel</a>
+                    <a href="{% url 'exportar_informe' periodo.id %}?formato=txt" class="boton boton-secundario">TXT</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" style="text-align:center; color:#86868b;">Sin periodos registrados.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
-    <div class="tarjeta">
-        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Conformación estructural</h2>
-        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Distribución académica</p>
-        <div class="acciones" style="margin-bottom: 0;">
-            <a href="{% url 'listar_paralelos' %}" class="boton boton-secundario">Paralelos</a>
-            <a href="{% url 'matriz_horarios' %}" class="boton boton-secundario">Horarios</a>
-        </div>
-    </div>
-
-    <div class="tarjeta">
-        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Vinculación docente</h2>
-        <div class="acciones" style="margin-bottom: 0;">
-            <a href="{% url 'listar_paralelos' %}" class="boton boton-secundario">Asignaciones</a>
-            <span class="boton boton-deshabilitado">Incidencias académicas</span>
-            <span class="boton boton-deshabilitado">Evaluaciones de desempeño</span>
-        </div>
-    </div>
-
-    <div class="tarjeta">
-        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">-</h2>
-        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">-</p>
-        <div class="acciones" style="margin-bottom: 0;">
-            <span class="boton boton-deshabilitado">Cohortes de matrícula</span>
-            <span class="boton boton-deshabilitado">Evaluaciones académicas</span>
-            <span class="boton boton-deshabilitado">Informes generales</span>
-        </div>
-    </div>
-
+<div class="tarjeta">
+    <h2>Consolidados académicos</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Periodo</th><th>Fecha de corte</th><th>Cupos</th>
+                <th>Totales</th><th>Válidos</th><th>Observados</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for consolidado in consolidados_academicos %}
+            <tr>
+                <td>{{ consolidado.periodo_academico.periodo }}</td>
+                <td>{{ consolidado.fecha_de_corte }}</td>
+                <td>{{ consolidado.total_cupos_aceptados }}</td>
+                <td>{{ consolidado.registros_totales }}</td>
+                <td>{{ consolidado.registros_validos }}</td>
+                <td>{{ consolidado.registros_observados }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" style="text-align:center; color:#86868b;">Sin consolidados registrados.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
