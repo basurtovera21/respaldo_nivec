@@ -146,6 +146,7 @@ class FormularioRegistrarDocente(forms.ModelForm):
         return cleaned_data
 
 class FormularioDatosDocenteUA(forms.ModelForm):
+    jornadas = forms.MultipleChoiceField(label="Jornada", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple, help_text="Registre jornadas continuas (de ser necesario)")
     class Meta:
         model = PerfilDocente
         fields = ("tipo_de_vinculacion", "tiempo_de_dedicacion", "carga_horaria_maxima")
@@ -153,12 +154,15 @@ class FormularioDatosDocenteUA(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values(): field.error_messages.update({'required': ''}); field.required = False
+        if self.instance and self.instance.pk and self.instance.jornadas: self.fields['jornadas'].initial = self.instance.jornadas
     def clean(self):
         cleaned_data = super().clean()
         errores = {field: "Información requerida" for field in ["tipo_de_vinculacion", "tiempo_de_dedicacion"] if not cleaned_data.get(field)}
         carga = cleaned_data.get("carga_horaria_maxima")
         if carga is None: errores['carga_horaria_maxima'] = "Información requerida"
         elif carga < 0: errores['carga_horaria_maxima'] = "Registro no válido"
+        error_jornadas = validar_jornadas_continuas(cleaned_data.get("jornadas") or [])
+        if error_jornadas: errores['jornadas'] = error_jornadas
         if errores: raise forms.ValidationError(errores)
         return cleaned_data
 
