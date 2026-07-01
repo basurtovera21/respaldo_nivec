@@ -54,6 +54,7 @@ urlpatterns = [
     path("paralelos/<int:paralelo_id>/mover-estudiante/", views.mover_estudiante, name="mover_estudiante"),
     path("paralelos/<int:paralelo_id>/retirar-estudiante/", views.retirar_estudiante, name="retirar_estudiante"),
     path("paralelos/<int:paralelo_id>/agregar-estudiante/", views.agregar_estudiante, name="agregar_estudiante"),
+    path("paralelos/<int:paralelo_id>/estudiantes-disponibles/", views.estudiantes_disponibles, name="estudiantes_disponibles"),
     path("paralelos/<int:paralelo_id>/horarios/", views.listar_horarios_paralelo, name="listar_horarios_paralelo"),
     path("paralelos/<int:paralelo_id>/horarios/registrar/", views.registrar_horario, name="registrar_horario"),
     path("horarios/<int:horario_id>/eliminar/", views.eliminar_horario, name="eliminar_horario"),

@@ -212,18 +212,6 @@ def listar_estudiantes_paralelo(request, paralelo_id):
     capacidad = paralelo.capacidad_maxima
     puede_gestionar = periodo_permite_gestion_matriculas(periodo)
 
-    no_asignados = []
-    if puede_gestionar:
-        no_asignados = PerfilEstudiante.objects.filter(
-            carrera_registrada=carrera,
-            jornada=paralelo.jornada,
-            periodo_de_nivelacion=periodo,
-        ).exclude(
-            estudiantes_matriculados__paralelo__periodo_de_nivelacion=periodo
-        ).distinct().select_related("usuario_de_sistema").order_by(
-            "usuario_de_sistema__apellidos", "usuario_de_sistema__nombres"
-        )
-
     otros = Paralelo.objects.filter(
         periodo_de_nivelacion=paralelo.periodo_de_nivelacion,
         jornada=paralelo.jornada,
@@ -251,7 +239,6 @@ def listar_estudiantes_paralelo(request, paralelo_id):
         "paralelo": paralelo,
         "matriculas": matriculas,
         "destinos": destinos,
-        "no_asignados": no_asignados,
         "puede_gestionar": puede_gestionar,
         "ocupacion": ocupacion,
         "capacidad": capacidad,
@@ -329,6 +316,47 @@ def retirar_estudiante(request, paralelo_id):
 
 
 @requiere_perfil(*ROLES_MODIFICAN)
+def estudiantes_disponibles(request, paralelo_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    paralelo = get_object_or_404(
+        Paralelo, id=paralelo_id, periodo_de_nivelacion__universidad=universidad_usuario
+    )
+    carrera = paralelo.unidad_curricular.malla_curricular.carrera
+    periodo = paralelo.periodo_de_nivelacion
+
+    if not periodo_permite_gestion_matriculas(periodo):
+        messages.warning(request, "Solo se puede gestionar la matrícula en Periodos en planificación o en curso")
+        return redirect("listar_estudiantes_paralelo", paralelo_id=paralelo.id)
+
+    ocupacion = MatriculaParalelo.objects.filter(paralelo=paralelo).count()
+    capacidad = paralelo.capacidad_maxima
+
+    no_asignados = PerfilEstudiante.objects.filter(
+        carrera_registrada=carrera,
+        jornada=paralelo.jornada,
+        periodo_de_nivelacion=periodo,
+    ).exclude(
+        estudiantes_matriculados__paralelo__periodo_de_nivelacion=periodo
+    ).distinct().select_related("usuario_de_sistema").order_by(
+        "usuario_de_sistema__apellidos", "usuario_de_sistema__nombres"
+    )
+
+    return render(request, "academico/estudiantes_disponibles.html", {
+        "paralelo": paralelo,
+        "no_asignados": no_asignados,
+        "ocupacion": ocupacion,
+        "capacidad": capacidad,
+        "lleno": ocupacion >= capacidad,
+        "titulo_pagina": "Paralelo - NIVEC",
+        "titulo": f"Agregar estudiante - {paralelo.nombre}",
+    })
+
+
+@requiere_perfil(*ROLES_MODIFICAN)
 def agregar_estudiante(request, paralelo_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -343,7 +371,7 @@ def agregar_estudiante(request, paralelo_id):
         estudiante_id = request.POST.get("estudiante") or None
         if not estudiante_id:
             messages.error(request, "Especifique un Estudiante")
-            return redirect("listar_estudiantes_paralelo", paralelo_id=paralelo.id)
+            return redirect("estudiantes_disponibles", paralelo_id=paralelo.id)
 
         estudiante = get_object_or_404(
             PerfilEstudiante,
@@ -353,4 +381,4 @@ def agregar_estudiante(request, paralelo_id):
         ok, mensaje = servicio_agregar_estudiante_a_paralelo(estudiante, paralelo)
         (messages.success if ok else messages.error)(request, mensaje)
 
-    return redirect("listar_estudiantes_paralelo", paralelo_id=paralelo.id)
+    return redirect("estudiantes_disponibles", paralelo_id=paralelo.id)
