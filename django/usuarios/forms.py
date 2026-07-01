@@ -146,6 +146,7 @@ class FormularioRegistrarDocente(forms.ModelForm):
         return cleaned_data
 
 class FormularioDatosDocenteUA(forms.ModelForm):
+    especialidades_texto = forms.CharField(label="Especialidades", required=False, widget=forms.TextInput(attrs={'class': 'campo-input'}), help_text="Registre la información separada por comas")
     jornadas = forms.MultipleChoiceField(label="Jornada", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple, help_text="Registre jornadas continuas (de ser necesario)")
     class Meta:
         model = PerfilDocente
@@ -154,6 +155,7 @@ class FormularioDatosDocenteUA(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values(): field.error_messages.update({'required': ''}); field.required = False
+        if self.instance and self.instance.pk and self.instance.especialidades: self.fields['especialidades_texto'].initial = ", ".join(self.instance.especialidades)
         if self.instance and self.instance.pk and self.instance.jornadas: self.fields['jornadas'].initial = self.instance.jornadas
     def clean(self):
         cleaned_data = super().clean()
@@ -164,6 +166,8 @@ class FormularioDatosDocenteUA(forms.ModelForm):
         error_jornadas = validar_jornadas_continuas(cleaned_data.get("jornadas") or [])
         if error_jornadas: errores['jornadas'] = error_jornadas
         if errores: raise forms.ValidationError(errores)
+        texto_esp = cleaned_data.get("especialidades_texto", "")
+        cleaned_data['especialidades'] = [esp.strip() for esp in texto_esp.split(',') if esp.strip()] if texto_esp else []
         return cleaned_data
 
 class FormularioPerfilAdministrativo(forms.ModelForm):

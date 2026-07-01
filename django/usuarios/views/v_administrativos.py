@@ -181,6 +181,7 @@ def modificar_administrativo(request, admin_id):
                 
                 if formulario_docente:
                     docente_guardado = formulario_docente.save(commit=False)
+                    docente_guardado.especialidades = formulario_docente.cleaned_data.get('especialidades', [])
                     docente_guardado.jornadas = formulario_docente.cleaned_data.get('jornadas', [])
                     docente_guardado.save()
             
