@@ -29,12 +29,6 @@
             <input type="time" name="hora_fin" value="{{ horario.hora_fin|time:'H:i' }}">
         </div>
         <div class="campo">
-            <label style="font-weight: bold;">Tipo de sesión</label>
-            <select name="tipo_de_sesion">
-                {% for t in tipos_de_sesion %}<option value="{{ t }}" {% if t == horario.tipo_de_sesion %}selected{% endif %}>{{ t }}</option>{% endfor %}
-            </select>
-        </div>
-        <div class="campo">
             <label style="font-weight: bold;">Espacio de impartición</label>
             <input type="text" name="espacio_de_imparticion" value="{{ horario.espacio_de_imparticion }}" placeholder="Aula física o virtual (opcional)">
         </div>

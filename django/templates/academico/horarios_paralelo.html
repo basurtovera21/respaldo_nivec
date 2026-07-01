@@ -21,11 +21,20 @@
             {{ representativo.periodo_de_nivelacion.periodo }} — {{ representativo.get_jornada_display }} (franja {{ franja }})
         </p>
     </div>
-    {% if not solo_lectura and not todas_completas %}
+    {% if not solo_lectura and es_planificacion and not todas_completas %}
     <form method="post" action="{% url 'generar_horario_sugerido' representativo.id %}" style="margin: 0;">
         {% csrf_token %}
         <button type="submit" class="boton boton-secundario" onclick="return confirm('¿Generar el horario sugerido de todo el paralelo (todas las unidades) dentro de la franja?');">Generar horario sugerido</button>
     </form>
+    {% endif %}
+</div>
+
+<div class="tarjeta" style="margin-bottom: 16px;">
+    <span style="font-weight: bold; color: {% if todas_completas %}#2e7d32{% else %}#b45309{% endif %};">
+        Horario del paralelo: {% if todas_completas %}Completo{% else %}Incompleto (faltan unidades por cubrir){% endif %}
+    </span>
+    {% if not es_planificacion %}
+    <p style="color: #86868b; font-size: 12px; margin: 6px 0 0;">Los horarios solo se pueden gestionar cuando el Periodo está en planificación.</p>
     {% endif %}
 </div>
 
@@ -60,7 +69,7 @@
     </table>
 </div>
 
-{% if not solo_lectura %}
+{% if not solo_lectura and es_planificacion %}
 <div class="tarjeta" style="margin-bottom: 20px;">
     <h2 style="font-size: 15px; font-weight: bold; margin-bottom: 4px;">Agregar sesión</h2>
     <p style="color: #86868b; font-size: 12px; margin-bottom: 12px;">
@@ -89,13 +98,7 @@
                 <label style="font-weight: bold;">Hora de finalización</label>
                 <input type="time" name="hora_fin">
             </div>
-            <div class="campo" style="margin-bottom: 0;">
-                <label style="font-weight: bold;">Tipo de sesión</label>
-                <select name="tipo_de_sesion">
-                    {% for t in tipos_de_sesion %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
-                </select>
-            </div>
-            <div class="campo" style="margin-bottom: 0; flex: 1; min-width: 160px;">
+            <div class="campo" style="margin-bottom: 0; flex: 1; min-width: 200px;">
                 <label style="font-weight: bold;">Espacio de impartición</label>
                 <input type="text" name="espacio_de_imparticion" placeholder="Aula física o virtual (opcional)">
             </div>
@@ -114,8 +117,7 @@
                 <th style="font-weight: bold; text-align: left; color: #515154">Inicio</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Fin</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Espacio</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Tipo</th>
-                {% if not solo_lectura %}
+                {% if not solo_lectura and es_planificacion %}
                 <th style="font-weight: bold; text-align: left; color: #515154">Acciones</th>
                 {% endif %}
             </tr>
@@ -128,8 +130,7 @@
                 <td style="text-align: left; color: #1d1d1f;">{{ h.hora_inicio }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ h.hora_fin }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ h.espacio_de_imparticion|default:"—" }}</td>
-                <td style="text-align: left; color: #1d1d1f;">{{ h.get_tipo_de_sesion_display }}</td>
-                {% if not solo_lectura %}
+                {% if not solo_lectura and es_planificacion %}
                 <td style="text-align: left; white-space: nowrap;">
                     <a href="{% url 'editar_horario' h.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
                     <a href="{% url 'eliminar_horario' h.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
@@ -138,7 +139,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7" style="text-align: center; color: #86868b; padding: 30px;">
+                <td colspan="6" style="text-align: center; color: #86868b; padding: 30px;">
                     No existen sesiones registradas actualmente
                 </td>
             </tr>
