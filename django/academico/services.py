@@ -27,7 +27,6 @@ from poo.clases.informe_general import InformeGeneral as InformeGeneralPOO
 from poo.clases.servicios.procesador_de_informe import ProcesadorDeInforme
 from poo.clases.cohorte_de_matricula import CohorteDeMatricula as CohorteDeMatriculaPOO
 from poo.clases.horario import Horario as HorarioPOO
-from poo.clases.servicios.distribuidor_de_estudiantes import DistribuidorDeEstudiantes
 from poo.clases.consolidado_academico import ConsolidadoAcademico as ConsolidadoAcademicoPOO
 
 from academico.models import (
@@ -471,61 +470,6 @@ def servicio_registrar_evaluacion_academica(evaluacion_academica: EvaluacionAcad
     evaluacion_academica.save()
 
 
-def servicio_distribuir_estudiantes(periodo_de_nivelacion: PeriodoDeNivelacion):
-    paralelos = Paralelo.objects.filter(periodo_de_nivelacion_base=periodo_de_nivelacion)
-    aspirantes = PerfilEstudiante.objects.filter(
-        estado_de_matricula = EstadoDeMatricula.ASPIRANTE.value,
-        carrera_registrada__campus__universidad = periodo_de_nivelacion.universidad
-    )
-
-    from usuarios.services import _construir_estudiante
-    from poo.clases.paralelo import Paralelo as ParaleloBase
-
-    paralelos_base = []
-    indice_paralelo = {}
-
-    for paralelo in paralelos:
-        paralelo_base = ParaleloBase(
-            codigo_de_paralelo = paralelo.codigo_de_paralelo,
-            nombre = paralelo.nombre,
-            jornada = obtener_enum_flexible(Jornada, paralelo.jornada),
-            modalidad = obtener_enum_flexible(Modalidad, paralelo.modalidad),
-            capacidad_maxima = paralelo.capacidad_maxima
-        )
-        paralelos_base.append(paralelo_base)
-        indice_paralelo[paralelo.codigo_de_paralelo] = paralelo
-
-    estudiantes_base = []
-    indice_estudiante = {}
-
-    for aspirante in aspirantes:
-        estudiante_base = _construir_estudiante(aspirante)
-        estudiantes_base.append(estudiante_base)
-        indice_estudiante[aspirante.identificador_institucional] = aspirante
-
-    distribuidor_de_estudiantes = DistribuidorDeEstudiantes(paralelos_base)
-    estudiantes_no_asignados_base = distribuidor_de_estudiantes.distribuir(estudiantes_base)
-
-    for paralelo_base in paralelos_base:
-        paralelo = indice_paralelo[paralelo_base.codigo_de_paralelo]
-        for estudiante_base in paralelo_base._estudiantes_matriculados:
-            perfil_estudiante = indice_estudiante.get(estudiante_base.identificador_institucional)
-            if perfil_estudiante:
-                if not MatriculaParalelo.objects.filter(estudiante=perfil_estudiante, paralelo=paralelo).exists():
-                    MatriculaParalelo.objects.create(
-                        estudiante = perfil_estudiante,
-                        paralelo = paralelo,
-                        cohorte_de_matricula = CohorteDeMatricula.objects.filter(
-                            periodo_de_nivelacion = periodo_de_nivelacion,
-                            carrera_registrada = perfil_estudiante.carrera_registrada
-                        ).first()
-                    )
-                perfil_estudiante.estado_de_matricula = EstadoDeMatricula.MATRICULADO.value
-                perfil_estudiante.save()
-
-    return [indice_estudiante[e.identificador_institucional] for e in estudiantes_no_asignados_base if e.identificador_institucional in indice_estudiante]
-
-
 def servicio_procesar_mtn(archivo, periodo_de_nivelacion: PeriodoDeNivelacion):
     from usuarios.services import servicio_estudiante_registrar_masivo_desde_excel
     from poo.clases.consolidado_academico import ConsolidadoAcademico as ConsolidadoAcademicoPOO
@@ -888,6 +832,7 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                     carrera_registrada=carrera,
                     jornada=jornada_valor,
                     periodo_de_nivelacion=periodo_db,
+                    estado_de_matricula=EstadoDeMatricula.MATRICULADO.value,
                 ).exclude(
                     estudiantes_matriculados__paralelo__periodo_de_nivelacion=periodo_db
                 ).distinct()
@@ -1119,6 +1064,10 @@ def servicio_agregar_estudiante_a_paralelo(estudiante_db, paralelo_db):
             or estudiante_db.jornada != paralelo_db.jornada):
         return (False, "El Estudiante no es compatible con el Paralelo (Carrera o Jornada)")
 
+    # Solo estudiantes con matrícula activa (no retirados ni anulados).
+    if estudiante_db.estado_de_matricula != EstadoDeMatricula.MATRICULADO.value:
+        return (False, "El Estudiante no tiene una matrícula activa")
+
     # No debe estar ya asignado a ningún paralelo del periodo.
     if MatriculaParalelo.objects.filter(estudiante=estudiante_db, paralelo__periodo_de_nivelacion=periodo).exists():
         return (False, "El Estudiante ya se encuentra asignado a un Paralelo")
@@ -1131,12 +1080,17 @@ def servicio_agregar_estudiante_a_paralelo(estudiante_db, paralelo_db):
 
     cohorte = _obtener_o_crear_cohorte(periodo, carrera)
     with transaction.atomic():
-        for paralelo_grupo_db in paralelos_grupo:
-            MatriculaParalelo.objects.get_or_create(
-                estudiante=estudiante_db,
-                paralelo=paralelo_grupo_db,
-                defaults={"cohorte_de_matricula": cohorte},
-            )
+        ya_matriculado = set(
+            MatriculaParalelo.objects.filter(
+                estudiante=estudiante_db, paralelo__in=paralelos_grupo
+            ).values_list("paralelo_id", flat=True)
+        )
+        nuevas = [
+            MatriculaParalelo(estudiante=estudiante_db, paralelo=p, cohorte_de_matricula=cohorte)
+            for p in paralelos_grupo if p.id not in ya_matriculado
+        ]
+        if nuevas:
+            MatriculaParalelo.objects.bulk_create(nuevas)
 
     servicio_recalcular_cohorte_de_carrera(periodo, carrera)
     return (True, "El Estudiante fue agregado al Paralelo correctamente")
