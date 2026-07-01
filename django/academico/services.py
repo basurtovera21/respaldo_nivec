@@ -1131,12 +1131,17 @@ def servicio_agregar_estudiante_a_paralelo(estudiante_db, paralelo_db):
 
     cohorte = _obtener_o_crear_cohorte(periodo, carrera)
     with transaction.atomic():
-        for paralelo_grupo_db in paralelos_grupo:
-            MatriculaParalelo.objects.get_or_create(
-                estudiante=estudiante_db,
-                paralelo=paralelo_grupo_db,
-                defaults={"cohorte_de_matricula": cohorte},
-            )
+        ya_matriculado = set(
+            MatriculaParalelo.objects.filter(
+                estudiante=estudiante_db, paralelo__in=paralelos_grupo
+            ).values_list("paralelo_id", flat=True)
+        )
+        nuevas = [
+            MatriculaParalelo(estudiante=estudiante_db, paralelo=p, cohorte_de_matricula=cohorte)
+            for p in paralelos_grupo if p.id not in ya_matriculado
+        ]
+        if nuevas:
+            MatriculaParalelo.objects.bulk_create(nuevas)
 
     servicio_recalcular_cohorte_de_carrera(periodo, carrera)
     return (True, "El Estudiante fue agregado al Paralelo correctamente")
