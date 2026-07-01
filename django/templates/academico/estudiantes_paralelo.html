@@ -5,16 +5,46 @@
 {% block contenido %}
 <style>
     .tarjeta table th, .tarjeta table td { padding: 12px 24px; white-space: nowrap; }
+    .etiqueta-accion {
+        padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: bold;
+        border: none; cursor: pointer; text-decoration: none; display: inline-block;
+    }
+    .etiqueta-eliminar { background-color: #fdf2f2; color: #c81e1e; border: 1px solid rgba(200,30,30,0.1); }
+    .campo-select-linea {
+        padding: 6px 10px; border: 1px solid #d2d2d7; border-radius: 8px;
+        font-size: 13px; background: white; color: #1d1d1f;
+    }
 </style>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
     <div>
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
         <p style="color: #515154; font-size: 13px; font-weight: bold; margin: 0;">
-            ({{ paralelo.periodo_de_nivelacion.periodo }}). {{ paralelo.unidad_curricular.malla_curricular.carrera.nombre }} ({{ paralelo.get_jornada_display }})
+            ({{ paralelo.periodo_de_nivelacion.periodo }}). {{ paralelo.unidad_curricular.malla_curricular.carrera.nombre }} ({{ paralelo.get_jornada_display }}) &middot; {{ ocupacion }}/{{ capacidad }} estudiantes
         </p>
     </div>
 </div>
+
+{% if not solo_lectura and puede_gestionar %}
+<div class="tarjeta" style="margin-bottom: 16px;">
+    <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f; margin-bottom: 12px;">Agregar estudiante</h3>
+    {% if lleno %}
+        <p style="color: #86868b; font-size: 13px; margin: 0;">El Paralelo no presenta cupos disponibles</p>
+    {% elif no_asignados %}
+        <form method="post" action="{% url 'agregar_estudiante' paralelo.id %}" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            {% csrf_token %}
+            <select name="estudiante" class="campo-select-linea" style="min-width: 320px;">
+                {% for e in no_asignados %}
+                    <option value="{{ e.id }}">{{ e.usuario_de_sistema.nombres }} {{ e.usuario_de_sistema.apellidos }} ({{ e.usuario_de_sistema.identificacion }})</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="boton boton-primario" style="cursor: pointer;">Agregar</button>
+        </form>
+    {% else %}
+        <p style="color: #86868b; font-size: 13px; margin: 0;">No existen estudiantes sin asignar para esta Carrera y Jornada</p>
+    {% endif %}
+</div>
+{% endif %}
 
 <div class="tarjeta" style="padding: 0; overflow-x: auto;">
     <table style="width: 100%;">
@@ -23,8 +53,9 @@
                 <th style="font-weight: bold; text-align: left; color: #515154">Número de identificación</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Estudiante registrado</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Registro de cupo</th>
-                {% if not solo_lectura %}
+                {% if not solo_lectura and puede_gestionar %}
                 <th style="font-weight: bold; text-align: left; color: #515154">Reasignar</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Acción</th>
                 {% endif %}
             </tr>
         </thead>
@@ -34,14 +65,13 @@
                 <td style="font-family: monospace; text-align: left; color: #1d1d1f;">{{ m.estudiante.usuario_de_sistema.identificacion }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ m.estudiante.usuario_de_sistema.nombres }} {{ m.estudiante.usuario_de_sistema.apellidos }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ m.estudiante.get_registro_de_cupo_display }}</td>
-                {% if not solo_lectura %}
+                {% if not solo_lectura and puede_gestionar %}
                 <td style="text-align: left;">
                     {% if destinos %}
                     <form method="post" action="{% url 'mover_estudiante' paralelo.id %}" style="display: flex; gap: 8px; align-items: center;">
                         {% csrf_token %}
                         <input type="hidden" name="estudiante" value="{{ m.estudiante.id }}">
-                        <select name="paralelo_destino"
-                                style="padding: 6px 10px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 13px; background: white; color: #1d1d1f;">
+                        <select name="paralelo_destino" class="campo-select-linea">
                             {% for d in destinos %}
                                 <option value="{{ d.paralelo_id }}" {% if d.lleno %}disabled{% endif %}>
                                     {{ d.nombre }} ({{ d.ocupacion }}/{{ d.capacidad }}){% if d.lleno %} - lleno{% endif %}
@@ -51,15 +81,22 @@
                         <button type="submit" class="boton boton-secundario" style="cursor: pointer;">Reasignar</button>
                     </form>
                     {% else %}
-                    <span style="color: #86868b;">No existen registros actualmente</span>
+                    <span style="color: #86868b;">No existen otros paralelos</span>
                     {% endif %}
+                </td>
+                <td style="text-align: left;">
+                    <form method="post" action="{% url 'retirar_estudiante' paralelo.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="estudiante" value="{{ m.estudiante.id }}">
+                        <button type="submit" class="etiqueta-accion etiqueta-eliminar" onclick="return confirm('Confirmar acción');">Retirar</button>
+                    </form>
                 </td>
                 {% endif %}
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4" style="text-align: center; color: #86868b; padding: 30px;">
-                    No existen registros actualmente
+                <td colspan="5" style="text-align: center; color: #86868b; padding: 30px;">
+                    No existen estudiantes matriculados en este Paralelo actualmente
                 </td>
             </tr>
             {% endfor %}

@@ -4,7 +4,7 @@ from django.db import transaction
 from django.db.models import ProtectedError
 
 from academico.models import Paralelo, PeriodoDeNivelacion, MatriculaParalelo
-from academico.services import servicio_generar_paralelos, servicio_mover_estudiante, servicio_recalcular_cohorte_de_carrera
+from academico.services import servicio_generar_paralelos, servicio_mover_estudiante, servicio_recalcular_cohorte_de_carrera, servicio_retirar_estudiante_de_paralelo, servicio_agregar_estudiante_a_paralelo, periodo_permite_gestion_matriculas
 from usuarios.models import PerfilEstudiante
 from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
 from usuarios.utils import (
@@ -207,6 +207,23 @@ def listar_estudiantes_paralelo(request, paralelo_id):
         paralelo=paralelo
     ).select_related("estudiante__usuario_de_sistema")
 
+    periodo = paralelo.periodo_de_nivelacion
+    ocupacion = matriculas.count()
+    capacidad = paralelo.capacidad_maxima
+    puede_gestionar = periodo_permite_gestion_matriculas(periodo)
+
+    no_asignados = []
+    if puede_gestionar:
+        no_asignados = PerfilEstudiante.objects.filter(
+            carrera_registrada=carrera,
+            jornada=paralelo.jornada,
+            periodo_de_nivelacion=periodo,
+        ).exclude(
+            estudiantes_matriculados__paralelo__periodo_de_nivelacion=periodo
+        ).distinct().select_related("usuario_de_sistema").order_by(
+            "usuario_de_sistema__apellidos", "usuario_de_sistema__nombres"
+        )
+
     otros = Paralelo.objects.filter(
         periodo_de_nivelacion=paralelo.periodo_de_nivelacion,
         jornada=paralelo.jornada,
@@ -234,6 +251,11 @@ def listar_estudiantes_paralelo(request, paralelo_id):
         "paralelo": paralelo,
         "matriculas": matriculas,
         "destinos": destinos,
+        "no_asignados": no_asignados,
+        "puede_gestionar": puede_gestionar,
+        "ocupacion": ocupacion,
+        "capacidad": capacidad,
+        "lleno": ocupacion >= capacidad,
         "solo_lectura": usuario_es_solo_lectura(request.user),
         "titulo_pagina": "Paralelo - NIVEC",
         "titulo": f"{paralelo.nombre} ({paralelo.unidad_curricular.nombre})",
@@ -274,5 +296,61 @@ def mover_estudiante(request, paralelo_id):
             messages.success(request, mensaje)
         else:
             messages.error(request, mensaje)
+
+    return redirect("listar_estudiantes_paralelo", paralelo_id=paralelo.id)
+
+
+@requiere_perfil(*ROLES_MODIFICAN)
+def retirar_estudiante(request, paralelo_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    paralelo = get_object_or_404(
+        Paralelo, id=paralelo_id, periodo_de_nivelacion__universidad=universidad_usuario
+    )
+
+    if request.method == "POST":
+        estudiante_id = request.POST.get("estudiante") or None
+        if not estudiante_id:
+            messages.error(request, "Especifique un Estudiante")
+            return redirect("listar_estudiantes_paralelo", paralelo_id=paralelo.id)
+
+        estudiante = get_object_or_404(
+            PerfilEstudiante,
+            id=estudiante_id,
+            carrera_registrada__campus__universidad=universidad_usuario,
+        )
+        ok, mensaje = servicio_retirar_estudiante_de_paralelo(estudiante, paralelo)
+        (messages.success if ok else messages.error)(request, mensaje)
+
+    return redirect("listar_estudiantes_paralelo", paralelo_id=paralelo.id)
+
+
+@requiere_perfil(*ROLES_MODIFICAN)
+def agregar_estudiante(request, paralelo_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    paralelo = get_object_or_404(
+        Paralelo, id=paralelo_id, periodo_de_nivelacion__universidad=universidad_usuario
+    )
+
+    if request.method == "POST":
+        estudiante_id = request.POST.get("estudiante") or None
+        if not estudiante_id:
+            messages.error(request, "Especifique un Estudiante")
+            return redirect("listar_estudiantes_paralelo", paralelo_id=paralelo.id)
+
+        estudiante = get_object_or_404(
+            PerfilEstudiante,
+            id=estudiante_id,
+            carrera_registrada__campus__universidad=universidad_usuario,
+        )
+        ok, mensaje = servicio_agregar_estudiante_a_paralelo(estudiante, paralelo)
+        (messages.success if ok else messages.error)(request, mensaje)
 
     return redirect("listar_estudiantes_paralelo", paralelo_id=paralelo.id)
