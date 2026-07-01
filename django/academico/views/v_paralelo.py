@@ -7,6 +7,7 @@ from academico.models import Paralelo, PeriodoDeNivelacion, MatriculaParalelo
 from academico.services import servicio_generar_paralelos, servicio_mover_estudiante, servicio_recalcular_cohorte_de_carrera, servicio_retirar_estudiante_de_paralelo, servicio_agregar_estudiante_a_paralelo, periodo_permite_gestion_matriculas
 from usuarios.models import PerfilEstudiante
 from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
+from poo.clases.enums.estado_de_matricula import EstadoDeMatricula
 from usuarios.utils import (
     requiere_perfil,
     usuario_es_solo_lectura,
@@ -339,6 +340,7 @@ def estudiantes_disponibles(request, paralelo_id):
         carrera_registrada=carrera,
         jornada=paralelo.jornada,
         periodo_de_nivelacion=periodo,
+        estado_de_matricula=EstadoDeMatricula.MATRICULADO.value,
     ).exclude(
         estudiantes_matriculados__paralelo__periodo_de_nivelacion=periodo
     ).distinct().select_related("usuario_de_sistema").order_by(
