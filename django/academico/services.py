@@ -341,15 +341,15 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
                 (codigo_malla, nombre, areas_str, horas_totales,
-                 horas_sincronicas, horas_asincronicas,
-                 criterio, porcentaje_asistencia) = fila[:8]
+                 horas_sincronicas, horas_sincronicas_semanales, horas_asincronicas,
+                 criterio, porcentaje_asistencia) = fila[:9]
 
                 if not any([codigo_malla, nombre, areas_str, horas_totales,
                             horas_sincronicas, horas_asincronicas]):
                     continue
 
                 if not all([codigo_malla, nombre, areas_str, horas_totales,
-                            horas_sincronicas, horas_asincronicas]):
+                            horas_sincronicas, horas_sincronicas_semanales, horas_asincronicas]):
                     resultado["advertencias"].append(
                         f"El registro de la fila {numero_fila} fue omitido por falta de información"
                     )
@@ -358,12 +358,21 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                 try:
                     horas_totales_f = float(horas_totales)
                     horas_sincronicas_f = float(horas_sincronicas)
+                    horas_sincronicas_semanales_f = float(horas_sincronicas_semanales)
                     horas_asincronicas_f = float(horas_asincronicas)
                     criterio_f = float(criterio) if criterio is not None else 7.0
                     porcentaje_f = float(porcentaje_asistencia) if porcentaje_asistencia is not None else 70.0
                 except (ValueError, TypeError):
                     resultado["advertencias"].append(
                         f"El registro de la fila {numero_fila} fue omitido (registro(s) no válido(s))"
+                    )
+                    continue
+
+                if (horas_sincronicas_semanales_f <= 0
+                        or horas_sincronicas_semanales_f != int(horas_sincronicas_semanales_f)
+                        or horas_sincronicas_semanales_f > horas_sincronicas_f):
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido (Horas sincrónicas semanales no válidas: entero, > 0 y <= sincrónicas totales)"
                     )
                     continue
 
@@ -420,6 +429,7 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                         area_de_conocimiento=unidad_poo.area_de_conocimiento,
                         horas_totales=unidad_poo.horas_totales,
                         horas_sincronicas=unidad_poo.horas_sincronicas,
+                        horas_sincronicas_semanales=horas_sincronicas_semanales_f,
                         horas_asincronicas=unidad_poo.horas_asincronicas,
                         criterio_de_aprobacion=unidad_poo.criterio_de_aprobacion,
                         porcentaje_minimo_asistencia=unidad_poo.porcentaje_minimo_asistencia,
@@ -1152,13 +1162,17 @@ def _horarios_externos_para_paralelo(paralelo_db):
 
 
 def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, espacio, tipo_de_sesion):
-    from poo.clases.franja_horaria import sesion_dentro_de_franja, MAX_HORAS_POR_SESION, MIN_HORAS_POR_SESION, texto_franja
+    from poo.clases.franja_horaria import sesion_dentro_de_franja, DURACIONES_VALIDAS, texto_franja
 
     try:
         enum_dia = obtener_enum_flexible(DiaDeSemana, dia_semana)
         enum_tipo = obtener_enum_flexible(TipoDeSesion, tipo_de_sesion)
     except ValueError:
         return (False, "Día o Tipo de sesión no válido")
+
+    # Una sola sesión de la misma unidad por día.
+    if Horario.objects.filter(paralelo=paralelo_db, dia_semana=dia_semana).exists():
+        return (False, "La Unidad curricular ya tiene una sesión ese día (solo se permite una por día)")
 
     # Patrón semanal: el horario se repite todas las semanas del periodo (numero_semana=1).
     nuevo_horario_poo = HorarioPOO(
@@ -1178,11 +1192,8 @@ def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, e
     if not sesion_dentro_de_franja(jornada, hora_inicio, hora_fin):
         return (False, f"La sesión debe estar dentro de la franja de la jornada {paralelo_db.jornada} ({texto_franja(jornada)})")
 
-    if nuevo_horario_poo.determinar_duracion_horas() > MAX_HORAS_POR_SESION:
-        return (False, f"Una sesión no puede exceder {int(MAX_HORAS_POR_SESION)} horas por día")
-
-    if nuevo_horario_poo.determinar_duracion_horas() < MIN_HORAS_POR_SESION:
-        return (False, f"Una sesión no puede ser menor a {int(MIN_HORAS_POR_SESION)} hora")
+    if nuevo_horario_poo.determinar_duracion_horas() not in DURACIONES_VALIDAS:
+        return (False, "La duración de la sesión debe ser de 1, 2 o 3 horas")
 
     horarios_externos = [_construir_horario_poo(h) for h in _horarios_externos_para_paralelo(paralelo_db)]
 
@@ -1236,22 +1247,20 @@ def _sugerir_bloque_libre(dia_poo, franja_inicio, franja_fin, bloque_horas, ocup
     return None
 
 
-def _distribucion_simetrica(horas, max_dias=5, min_h=1.0, max_h=3.0):
-    # Reparte 'horas' en bloques lo más iguales posible (en medias horas), uno por día,
+def _distribucion_simetrica(horas, max_dias=5, min_h=1, max_h=3):
+    # Reparte 'horas' en bloques de HORAS ENTERAS lo más iguales posible, uno por día,
     # cada bloque entre min_h y max_h, usando hasta max_dias días.
     import math
-    unidades = int(round(horas / 0.5))  # medias horas
-    min_u = int(min_h / 0.5)
-    max_u = int(max_h / 0.5)
-    if unidades < min_u:
+    h = int(round(horas))
+    if h < min_h:
         return []
-    dias = min(max_dias, unidades // min_u)
-    dias = max(dias, math.ceil(unidades / max_u))
+    dias = min(max_dias, h)
+    dias = max(dias, math.ceil(h / max_h))
     dias = min(dias, max_dias)
     dias = max(dias, 1)
-    base = unidades // dias
-    extra = unidades % dias
-    return [round((base + (1 if i < extra else 0)) * 0.5, 2) for i in range(dias)]
+    base = h // dias
+    extra = h % dias
+    return [min(base + (1 if i < extra else 0), max_h) for i in range(dias)]
 
 
 def _generar_horario_para_unidad(paralelo_unidad_db, tipo_sincronica):
@@ -1327,7 +1336,7 @@ def servicio_generar_horario_sugerido(representativo_db):
 
 
 def servicio_editar_horario(horario_db, dia_semana, hora_inicio, hora_fin, espacio, tipo_de_sesion):
-    from poo.clases.franja_horaria import sesion_dentro_de_franja, MAX_HORAS_POR_SESION, MIN_HORAS_POR_SESION, texto_franja
+    from poo.clases.franja_horaria import sesion_dentro_de_franja, DURACIONES_VALIDAS, texto_franja
 
     paralelo_db = horario_db.paralelo
     try:
@@ -1335,6 +1344,10 @@ def servicio_editar_horario(horario_db, dia_semana, hora_inicio, hora_fin, espac
         enum_tipo = obtener_enum_flexible(TipoDeSesion, tipo_de_sesion)
     except ValueError:
         return (False, "Día o Tipo de sesión no válido")
+
+    # Una sola sesión de la misma unidad por día (excluyendo la sesión editada).
+    if Horario.objects.filter(paralelo=paralelo_db, dia_semana=dia_semana).exclude(id=horario_db.id).exists():
+        return (False, "La Unidad curricular ya tiene una sesión ese día (solo se permite una por día)")
 
     nuevo = HorarioPOO(
         dia_semana=enum_dia, hora_inicio=hora_inicio, hora_fin=hora_fin,
@@ -1349,10 +1362,8 @@ def servicio_editar_horario(horario_db, dia_semana, hora_inicio, hora_fin, espac
         return (False, f"La sesión debe estar dentro de la franja de la jornada {paralelo_db.jornada} ({texto_franja(jornada)})")
 
     dur = nuevo.determinar_duracion_horas()
-    if dur > MAX_HORAS_POR_SESION:
-        return (False, f"Una sesión no puede exceder {int(MAX_HORAS_POR_SESION)} horas por día")
-    if dur < MIN_HORAS_POR_SESION:
-        return (False, f"Una sesión no puede ser menor a {int(MIN_HORAS_POR_SESION)} hora")
+    if dur not in DURACIONES_VALIDAS:
+        return (False, "La duración de la sesión debe ser de 1, 2 o 3 horas")
 
     propios = [_construir_horario_poo(h) for h in Horario.objects.filter(paralelo=paralelo_db).exclude(id=horario_db.id)]
     externos = [_construir_horario_poo(h) for h in _horarios_externos_para_paralelo(paralelo_db)]
@@ -1400,8 +1411,10 @@ def _semanas_de_periodo(periodo_db):
 
 
 def _horas_sincronicas_semanales(unidad, periodo_db):
-    # Las unidades guardan horas TOTALES; la carga docente es semanal. Las semanas
-    # se toman de la DURACIÓN DEL PERIODO de nivelación (no de la malla).
+    # Fuente de verdad: las horas sincrónicas SEMANALES definidas en la unidad.
+    # Retrocompatibilidad: si no se definieron, se derivan de las totales y las semanas.
+    if getattr(unidad, "horas_sincronicas_semanales", 0):
+        return round(unidad.horas_sincronicas_semanales, 2)
     return round(unidad.horas_sincronicas / _semanas_de_periodo(periodo_db), 2)
 
 

@@ -64,7 +64,7 @@
 <div class="tarjeta" style="margin-bottom: 20px;">
     <h2 style="font-size: 15px; font-weight: bold; margin-bottom: 4px;">Agregar sesión</h2>
     <p style="color: #86868b; font-size: 12px; margin-bottom: 12px;">
-        La sesión debe estar dentro de la franja {{ franja }} y durar entre 1 y 3 horas.
+        La sesión debe estar dentro de la franja {{ franja }} y durar 1, 2 o 3 horas.
     </p>
     <form method="post" action="{% url 'registrar_horario' representativo.id %}">
         {% csrf_token %}
