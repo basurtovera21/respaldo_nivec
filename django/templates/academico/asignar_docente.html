@@ -39,7 +39,6 @@
                 <th style="font-weight: bold; text-align: left; color: #515154">Estado</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Carga horaria semanal</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Especialidades</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Disponibilidad</th>
                 {% if not solo_lectura %}
                 <th style="font-weight: bold; text-align: left; color: #515154">Acción</th>
                 {% endif %}
@@ -52,16 +51,9 @@
                 <td style="text-align: left;">
                     <span class="etiqueta-estado">{% if e.activo %}Activo{% else %}Inactivo{% endif %}</span>
                 </td>
-                <td style="text-align: left; color: #1d1d1f;">{{ e.carga_actual }} / {{ e.carga_maxima }} h</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.carga_real }} / {{ e.carga_maxima }} h</td>
                 <td style="text-align: left; color: #1d1d1f;">
                     {% if e.especialidad_ok %}Coincide{% else %}Sin coincidencia{% endif %}
-                </td>
-                <td style="text-align: left;">
-                    {% if e.asignable %}
-                        <span style="color: #1d1d1f;">Asignable</span>
-                    {% else %}
-                        <span style="color: #c81e1e;">{{ e.motivo }}</span>
-                    {% endif %}
                 </td>
                 {% if not solo_lectura %}
                 <td style="text-align: left;">
@@ -71,7 +63,7 @@
                         <input type="hidden" name="accion" value="quitar">
                         <button type="submit" class="etiqueta-accion etiqueta-eliminar" onclick="return confirm('Confirmar acción');">Eliminar</button>
                     </form>
-                    {% elif e.asignable and not paralelo.docente_responsable %}
+                    {% elif not paralelo.docente_responsable %}
                     <form method="post" action="{% url 'asignar_docente_paralelo' paralelo.id %}">
                         {% csrf_token %}
                         <input type="hidden" name="docente_id" value="{{ e.docente.id }}">
@@ -83,8 +75,8 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" style="text-align: center; color: #86868b; padding: 30px;">
-                    No existen docentes registrados actualmente
+                <td colspan="5" style="text-align: center; color: #86868b; padding: 30px;">
+                    No existen docentes compatibles con la jornada del paralelo
                 </td>
             </tr>
             {% endfor %}

@@ -1251,15 +1251,11 @@ def _texto_motivo_no_asignable(resultado):
 
 def servicio_evaluar_docentes_para_paralelo(paralelo_db):
     from usuarios.models import PerfilDocente
-    from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
 
     periodo = paralelo_db.periodo_de_nivelacion
     unidad = paralelo_db.unidad_curricular
     areas = unidad.area_de_conocimiento or []
     horas_unidad = _horas_sincronicas_semanales(unidad, periodo)
-
-    paralelo_poo = _construir_paralelo_poo_con_horarios(paralelo_db)
-    facade = CentroDeOperacionAcademica()
 
     docentes = PerfilDocente.objects.filter(
         universidad=periodo.universidad
@@ -1269,30 +1265,21 @@ def servicio_evaluar_docentes_para_paralelo(paralelo_db):
 
     evaluaciones = []
     for docente_db in docentes:
+        # Solo se listan los docentes COMPATIBLES CON LA JORNADA del paralelo.
+        # La carga horaria (y las demás restricciones) NO se validan aquí para
+        # listar: eso se verifica al pulsar "Asignar" (servicio_asignar_docente).
+        if paralelo_db.jornada not in (docente_db.jornadas or []):
+            continue
         docente_poo, carga_actual = _construir_docente_poo_para_periodo(
             docente_db, periodo, paralelo_excluir_id=paralelo_db.id
         )
-        resultado = facade.validar_asignacion_docente(
-            docente_poo, paralelo_poo, horas_unidad, areas
-        )
         es_actual = paralelo_db.docente_responsable_id == docente_db.id
-        jornada_ok = paralelo_db.jornada in (docente_db.jornadas or [])
-        asignable = resultado["ok"] and jornada_ok
-        if not jornada_ok:
-            motivo = "El Docente no atiende la jornada del paralelo"
-        elif not resultado["ok"]:
-            motivo = _texto_motivo_no_asignable(resultado)
-        else:
-            motivo = ""
         evaluaciones.append({
             "docente": docente_db,
             "es_actual": es_actual,
-            "carga_actual": carga_actual,
             "carga_real": round(carga_actual + (horas_unidad if es_actual else 0), 2),
             "carga_maxima": docente_db.carga_horaria_maxima,
             "horas_unidad": horas_unidad,
-            "asignable": asignable,
-            "motivo": motivo,
             "especialidad_ok": docente_poo.tiene_especialidad_para(areas),
             "activo": docente_poo.esta_activo(),
         })
