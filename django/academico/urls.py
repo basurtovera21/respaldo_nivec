@@ -58,6 +58,7 @@ urlpatterns = [
     path("paralelos/<int:paralelo_id>/horarios/", views.listar_horarios_paralelo, name="listar_horarios_paralelo"),
     path("paralelos/<int:paralelo_id>/horarios/registrar/", views.registrar_horario, name="registrar_horario"),
     path("paralelos/<int:paralelo_id>/horarios/generar/", views.generar_horario_sugerido, name="generar_horario_sugerido"),
+    path("horarios/<int:horario_id>/editar/", views.editar_horario, name="editar_horario"),
     path("horarios/<int:horario_id>/eliminar/", views.eliminar_horario, name="eliminar_horario"),
     path("horarios/matriz/", views.matriz_horarios, name="matriz_horarios"),
     path("paralelos/<int:paralelo_id>/docente/", views.asignar_docente_paralelo, name="asignar_docente_paralelo"),

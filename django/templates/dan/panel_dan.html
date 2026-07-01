@@ -34,7 +34,6 @@
                 <td>
                     <a href="{% url 'iniciar_periodo' periodo.id %}" class="boton boton-secundario">Iniciar</a>
                     <a href="{% url 'finalizar_periodo' periodo.id %}" class="boton boton-secundario">Cerrar</a>
-                    <a href="{% url 'distribuir_estudiantes' periodo.id %}" class="boton boton-secundario">Distribuir</a>
                     <a href="{% url 'exportar_informe' periodo.id %}?formato=excel" class="boton boton-secundario">Excel</a>
                     <a href="{% url 'exportar_informe' periodo.id %}?formato=txt" class="boton boton-secundario">TXT</a>
                 </td>

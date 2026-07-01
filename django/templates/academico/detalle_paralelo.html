@@ -13,10 +13,15 @@
     .etiqueta-naranja { background-color: #fef9ec; color: #b45309; border: 1px solid rgba(180,83,9,0.1); }
 </style>
 
-<h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
-<p style="color: #515154; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
-    {{ representativo.codigo_de_paralelo }} ({{ representativo.periodo_de_nivelacion.periodo }})
-</p>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
+    <div>
+        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
+        <p style="color: #515154; font-size: 13px; font-weight: bold; margin: 0;">
+            {{ representativo.codigo_de_paralelo }} ({{ representativo.periodo_de_nivelacion.periodo }})
+        </p>
+    </div>
+    <a href="{% url 'listar_horarios_paralelo' representativo.id %}" class="boton boton-primario">Horarios del paralelo</a>
+</div>
 
 <div class="tarjeta" style="padding: 0; overflow-x: auto;">
     <table style="width: 100%;">
@@ -42,7 +47,6 @@
                     {% if not solo_lectura %}
                     <a href="{% url 'asignar_docente_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Docente responsable</a>
                     {% endif %}
-                    <a href="{% url 'listar_horarios_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Horarios</a>
                 </td>
             </tr>
             {% empty %}
