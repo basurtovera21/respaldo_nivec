@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 
 from academico.models import Paralelo, Horario, PeriodoDeNivelacion
-from academico.services import servicio_registrar_horario, servicio_horas_agendadas_paralelo, servicio_obtener_matriz_de_horarios, servicio_generar_horario_sugerido, servicio_editar_horario, _horas_sincronicas_semanales
+from academico.services import servicio_registrar_horario, servicio_horas_agendadas_paralelo, servicio_obtener_matriz_de_horarios, servicio_generar_horario_sugerido, servicio_editar_horario, periodo_en_planificacion, _horas_sincronicas_semanales
 from poo.clases.enums.dia_de_semana import DiaDeSemana
 from poo.clases.enums.tipo_de_sesion import TipoDeSesion
 from poo.clases.enums.jornada import Jornada
@@ -78,9 +78,9 @@ def listar_horarios_paralelo(request, paralelo_id):
         "unidades": unidades,
         "horarios": horarios,
         "todas_completas": todas_completas,
+        "es_planificacion": periodo_en_planificacion(representativo.periodo_de_nivelacion),
         "franja": texto_franja(jornada_enum),
         "dias": [dia.value for dia in DiaDeSemana],
-        "tipos_de_sesion": [tipo.value for tipo in TipoDeSesion],
         "solo_lectura": usuario_es_solo_lectura(request.user),
         "titulo_pagina": "Horario - NIVEC",
         "titulo": f"Horarios - {representativo.nombre} ({representativo.unidad_curricular.malla_curricular.carrera.nombre})",
@@ -105,7 +105,7 @@ def registrar_horario(request, paralelo_id):
             return redirect("listar_horarios_paralelo", paralelo_id=representativo.id)
 
         dia_semana = request.POST.get("dia_semana")
-        tipo_de_sesion = request.POST.get("tipo_de_sesion")
+        tipo_de_sesion = "Sincrónica"
         espacio = (request.POST.get("espacio_de_imparticion") or "").strip()
         hora_inicio = _parsear_hora(request.POST.get("hora_inicio"))
         hora_fin = _parsear_hora(request.POST.get("hora_fin"))
@@ -136,7 +136,7 @@ def editar_horario(request, horario_id):
 
     if request.method == "POST":
         dia_semana = request.POST.get("dia_semana")
-        tipo_de_sesion = request.POST.get("tipo_de_sesion")
+        tipo_de_sesion = "Sincrónica"
         espacio = (request.POST.get("espacio_de_imparticion") or "").strip()
         hora_inicio = _parsear_hora(request.POST.get("hora_inicio"))
         hora_fin = _parsear_hora(request.POST.get("hora_fin"))
@@ -159,7 +159,6 @@ def editar_horario(request, horario_id):
         "paralelo": paralelo,
         "franja": texto_franja(jornada_enum),
         "dias": [dia.value for dia in DiaDeSemana],
-        "tipos_de_sesion": [tipo.value for tipo in TipoDeSesion],
         "titulo_pagina": "Horario - NIVEC",
         "titulo": f"Editar sesión - {paralelo.unidad_curricular.nombre}",
     })
