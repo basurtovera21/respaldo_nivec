@@ -4,9 +4,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 
 from academico.models import Paralelo, Horario, PeriodoDeNivelacion
-from academico.services import servicio_registrar_horario, servicio_horas_agendadas_paralelo, servicio_obtener_matriz_de_horarios
+from academico.services import servicio_registrar_horario, servicio_horas_agendadas_paralelo, servicio_obtener_matriz_de_horarios, servicio_generar_horario_sugerido, _horas_sincronicas_semanales
 from poo.clases.enums.dia_de_semana import DiaDeSemana
 from poo.clases.enums.tipo_de_sesion import TipoDeSesion
+from poo.clases.enums.jornada import Jornada
+from poo.clases.franja_horaria import texto_franja
 from usuarios.utils import (
     requiere_perfil,
     usuario_es_solo_lectura,
@@ -37,18 +39,21 @@ def listar_horarios_paralelo(request, paralelo_id):
     )
 
     horarios = Horario.objects.filter(paralelo=paralelo).order_by(
-        "numero_semana", "dia_semana", "hora_inicio"
+        "dia_semana", "hora_inicio"
     )
 
     horas_agendadas = servicio_horas_agendadas_paralelo(paralelo)
-    horas_requeridas = paralelo.unidad_curricular.horas_sincronicas
+    horas_requeridas = _horas_sincronicas_semanales(paralelo.unidad_curricular, paralelo.periodo_de_nivelacion)
+    jornada_enum = Jornada(paralelo.jornada)
 
     return render(request, "academico/horarios_paralelo.html", {
         "paralelo": paralelo,
         "horarios": horarios,
         "horas_agendadas": horas_agendadas,
         "horas_requeridas": horas_requeridas,
+        "horas_restantes": round(max(horas_requeridas - horas_agendadas, 0), 2),
         "horas_completas": horas_agendadas >= horas_requeridas,
+        "franja": texto_franja(jornada_enum),
         "dias": [dia.value for dia in DiaDeSemana],
         "tipos_de_sesion": [tipo.value for tipo in TipoDeSesion],
         "solo_lectura": usuario_es_solo_lectura(request.user),
@@ -71,7 +76,6 @@ def registrar_horario(request, paralelo_id):
         dia_semana = request.POST.get("dia_semana")
         tipo_de_sesion = request.POST.get("tipo_de_sesion")
         espacio = (request.POST.get("espacio_de_imparticion") or "").strip()
-        numero_semana = request.POST.get("numero_semana")
         hora_inicio = _parsear_hora(request.POST.get("hora_inicio"))
         hora_fin = _parsear_hora(request.POST.get("hora_fin"))
 
@@ -80,12 +84,29 @@ def registrar_horario(request, paralelo_id):
             return redirect("listar_horarios_paralelo", paralelo_id=paralelo.id)
 
         ok, mensaje = servicio_registrar_horario(
-            paralelo, dia_semana, hora_inicio, hora_fin, espacio, numero_semana, tipo_de_sesion
+            paralelo, dia_semana, hora_inicio, hora_fin, espacio, tipo_de_sesion
         )
         if ok:
             messages.success(request, mensaje)
         else:
             messages.error(request, mensaje)
+
+    return redirect("listar_horarios_paralelo", paralelo_id=paralelo.id)
+
+@requiere_perfil(*ROLES_MODIFICAN)
+def generar_horario_sugerido(request, paralelo_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    paralelo = get_object_or_404(
+        Paralelo, id=paralelo_id, periodo_de_nivelacion__universidad=universidad_usuario
+    )
+
+    if request.method == "POST":
+        ok, mensaje = servicio_generar_horario_sugerido(paralelo)
+        (messages.success if ok else messages.error)(request, mensaje)
 
     return redirect("listar_horarios_paralelo", paralelo_id=paralelo.id)
 

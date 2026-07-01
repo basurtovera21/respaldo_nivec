@@ -58,7 +58,4 @@ class Horario:
         if not isinstance(self.numero_semana, int) or self.numero_semana <= 0:
             errores["numero_semana"] = "El número de semana debe ser un entero mayor a cero"
 
-        if not self.espacio_de_imparticion or not str(self.espacio_de_imparticion).strip():
-            errores["espacio_de_imparticion"] = "El espacio de impartición es requerido"
-
         return errores

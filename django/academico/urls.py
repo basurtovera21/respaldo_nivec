@@ -57,6 +57,7 @@ urlpatterns = [
     path("paralelos/<int:paralelo_id>/estudiantes-disponibles/", views.estudiantes_disponibles, name="estudiantes_disponibles"),
     path("paralelos/<int:paralelo_id>/horarios/", views.listar_horarios_paralelo, name="listar_horarios_paralelo"),
     path("paralelos/<int:paralelo_id>/horarios/registrar/", views.registrar_horario, name="registrar_horario"),
+    path("paralelos/<int:paralelo_id>/horarios/generar/", views.generar_horario_sugerido, name="generar_horario_sugerido"),
     path("horarios/<int:horario_id>/eliminar/", views.eliminar_horario, name="eliminar_horario"),
     path("horarios/matriz/", views.matriz_horarios, name="matriz_horarios"),
     path("paralelos/<int:paralelo_id>/docente/", views.asignar_docente_paralelo, name="asignar_docente_paralelo"),
@@ -73,7 +74,6 @@ urlpatterns = [
     path("incidencias/registrar/", views.registrar_incidencia, name="registrar_incidencia"),
     path("desempeno/registrar/", views.registrar_desempeno, name="registrar_desempeno"),
     #Distribución automática
-    path("distribuir/<int:periodo_id>/", views.distribuir_estudiantes, name="distribuir_estudiantes"),
     #Informe
     path("informes/", views.listar_informes, name="listar_informes"),
     path("informes/registrar/", views.registrar_informe, name="registrar_informe"),
