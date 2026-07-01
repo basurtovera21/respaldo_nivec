@@ -819,6 +819,14 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
             carrera=carrera, estado=EstadoDeMalla.ACTIVA.value
         ).first()
         if not malla:
+            if PerfilEstudiante.objects.filter(
+                carrera_registrada=carrera,
+                periodo_de_nivelacion=periodo_db,
+                estado_de_matricula=EstadoDeMatricula.MATRICULADO.value,
+            ).exists():
+                resumen["advertencias"].append(
+                    f"La Carrera de {carrera.nombre} tiene estudiantes registrados pero no cuenta con una Malla curricular activa"
+                )
             continue
 
         unidades = list(malla.unidades_curriculares.all())
