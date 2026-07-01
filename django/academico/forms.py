@@ -265,6 +265,7 @@ class FormularioUnidadCurricular(forms.ModelForm):
             "nombre",
             "horas_totales",
             "horas_sincronicas",
+            "horas_sincronicas_semanales",
             "horas_asincronicas",
             "criterio_de_aprobacion",
             "porcentaje_minimo_asistencia",
@@ -275,6 +276,7 @@ class FormularioUnidadCurricular(forms.ModelForm):
             "nombre": "Nombre",
             "horas_totales": "Horas totales",
             "horas_sincronicas": "Horas sincrónicas",
+            "horas_sincronicas_semanales": "Horas sincrónicas semanales",
             "horas_asincronicas": "Horas asincrónicas",
             "criterio_de_aprobacion": "Criterio de aprobación",
             "porcentaje_minimo_asistencia": "Porcentaje mínimo de asistencia",
@@ -308,6 +310,7 @@ class FormularioUnidadCurricular(forms.ModelForm):
             "nombre",
             "horas_totales",
             "horas_sincronicas",
+            "horas_sincronicas_semanales",
             "horas_asincronicas",
             "criterio_de_aprobacion",
             "porcentaje_minimo_asistencia",
@@ -316,6 +319,16 @@ class FormularioUnidadCurricular(forms.ModelForm):
         for campo in campos_requeridos:
             if cleaned_data.get(campo) is None or cleaned_data.get(campo) == "":
                 errores[campo] = "Información requerida"
+
+        semanales = cleaned_data.get("horas_sincronicas_semanales")
+        sincronicas = cleaned_data.get("horas_sincronicas")
+        if semanales not in (None, "") and "horas_sincronicas_semanales" not in errores:
+            if semanales <= 0:
+                errores["horas_sincronicas_semanales"] = "Debe ser mayor a cero"
+            elif float(semanales) != int(semanales):
+                errores["horas_sincronicas_semanales"] = "Debe ser un número entero de horas"
+            elif sincronicas not in (None, "") and semanales > sincronicas:
+                errores["horas_sincronicas_semanales"] = "No puede superar las horas sincrónicas totales"
 
         areas_texto = cleaned_data.get("areas_de_conocimiento_texto", "")
         if not areas_texto or not areas_texto.strip():
