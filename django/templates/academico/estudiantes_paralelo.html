@@ -23,28 +23,10 @@
             ({{ paralelo.periodo_de_nivelacion.periodo }}). {{ paralelo.unidad_curricular.malla_curricular.carrera.nombre }} ({{ paralelo.get_jornada_display }}) &middot; {{ ocupacion }}/{{ capacidad }} estudiantes
         </p>
     </div>
-</div>
-
-{% if not solo_lectura and puede_gestionar %}
-<div class="tarjeta" style="margin-bottom: 16px;">
-    <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f; margin-bottom: 12px;">Agregar estudiante</h3>
-    {% if lleno %}
-        <p style="color: #86868b; font-size: 13px; margin: 0;">El Paralelo no presenta cupos disponibles</p>
-    {% elif no_asignados %}
-        <form method="post" action="{% url 'agregar_estudiante' paralelo.id %}" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            {% csrf_token %}
-            <select name="estudiante" class="campo-select-linea" style="min-width: 320px;">
-                {% for e in no_asignados %}
-                    <option value="{{ e.id }}">{{ e.usuario_de_sistema.nombres }} {{ e.usuario_de_sistema.apellidos }} ({{ e.usuario_de_sistema.identificacion }})</option>
-                {% endfor %}
-            </select>
-            <button type="submit" class="boton boton-primario" style="cursor: pointer;">Agregar</button>
-        </form>
-    {% else %}
-        <p style="color: #86868b; font-size: 13px; margin: 0;">No existen estudiantes sin asignar para esta Carrera y Jornada</p>
+    {% if not solo_lectura and puede_gestionar %}
+    <a href="{% url 'estudiantes_disponibles' paralelo.id %}" class="boton boton-primario">Agregar estudiante</a>
     {% endif %}
 </div>
-{% endif %}
 
 <div class="tarjeta" style="padding: 0; overflow-x: auto;">
     <table style="width: 100%;">

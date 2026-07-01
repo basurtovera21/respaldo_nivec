@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ titulo_pagina|default:"NIVEC" }}{% endblock %}
+
+{% block contenido %}
+<style>
+    .tarjeta table th, .tarjeta table td { padding: 12px 24px; white-space: nowrap; }
+    .etiqueta-accion {
+        padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: bold;
+        border: none; cursor: pointer; text-decoration: none; display: inline-block;
+    }
+    .etiqueta-naranja { background-color: #fef9ec; color: #b45309; border: 1px solid rgba(180,83,9,0.1); }
+</style>
+
+<h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
+<p style="color: #515154; font-size: 13px; font-weight: bold; margin-bottom: 20px;">
+    ({{ paralelo.periodo_de_nivelacion.periodo }}). {{ paralelo.unidad_curricular.malla_curricular.carrera.nombre }} ({{ paralelo.get_jornada_display }}) &middot; {{ ocupacion }}/{{ capacidad }} estudiantes
+</p>
+
+{% if lleno %}
+<div class="tarjeta">
+    <p style="color: #86868b; font-size: 13px; margin: 0;">El Paralelo no presenta cupos disponibles</p>
+</div>
+{% else %}
+<div class="tarjeta" style="padding: 0; overflow-x: auto;">
+    <table style="width: 100%;">
+        <thead>
+            <tr>
+                <th style="font-weight: bold; text-align: left; color: #515154">Número de identificación</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Estudiante</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Registro de cupo</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in no_asignados %}
+            <tr>
+                <td style="font-family: monospace; text-align: left; color: #1d1d1f;">{{ e.usuario_de_sistema.identificacion }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.usuario_de_sistema.nombres }} {{ e.usuario_de_sistema.apellidos }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.get_registro_de_cupo_display }}</td>
+                <td style="text-align: left;">
+                    <form method="post" action="{% url 'agregar_estudiante' paralelo.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="estudiante" value="{{ e.id }}">
+                        <button type="submit" class="etiqueta-accion etiqueta-naranja">Agregar</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center; color: #86868b; padding: 30px;">
+                    No existen estudiantes sin asignar para esta Carrera y Jornada
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<div style="margin-top: 15px;">
+    <a href="{% url 'listar_estudiantes_paralelo' paralelo.id %}" class="boton boton-secundario">Volver</a>
+</div>
+{% endblock %}
