@@ -3,7 +3,8 @@ from datetime import time
 from poo.clases.enums.jornada import Jornada
 
 
-# Duración máxima de una sesión (bloque) en un mismo día.
+# Duración mínima y máxima de una sesión (bloque) en un mismo día.
+MIN_HORAS_POR_SESION = 1.0
 MAX_HORAS_POR_SESION = 3.0
 
 # Franja horaria permitida por jornada (patrón semanal). No cruzan medianoche
