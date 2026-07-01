@@ -31,6 +31,12 @@
     {% endif %}
 </p>
 
+{% if not tiene_horario %}
+<div class="tarjeta" style="margin-bottom: 16px;">
+    <span style="color: #b45309; font-weight: bold; font-size: 13px;">Debe registrar el horario de la Unidad curricular antes de asignar un Docente.</span>
+</div>
+{% endif %}
+
 <div class="tarjeta" style="padding: 0; overflow-x: auto;">
     <table style="width: 100%;">
         <thead>
@@ -63,7 +69,7 @@
                         <input type="hidden" name="accion" value="quitar">
                         <button type="submit" class="etiqueta-accion etiqueta-eliminar" onclick="return confirm('Confirmar acción');">Eliminar</button>
                     </form>
-                    {% elif not paralelo.docente_responsable %}
+                    {% elif not paralelo.docente_responsable and tiene_horario %}
                     <form method="post" action="{% url 'asignar_docente_paralelo' paralelo.id %}">
                         {% csrf_token %}
                         <input type="hidden" name="docente_id" value="{{ e.docente.id }}">

@@ -56,9 +56,13 @@ def asignar_docente_paralelo(request, paralelo_id):
 
     evaluaciones = servicio_evaluar_docentes_para_paralelo(paralelo)
 
+    from academico.models import Horario
+    tiene_horario = Horario.objects.filter(paralelo=paralelo).exists()
+
     return render(request, "academico/asignar_docente.html", {
         "paralelo": paralelo,
         "evaluaciones": evaluaciones,
+        "tiene_horario": tiene_horario,
         "solo_lectura": solo_lectura,
         "titulo_pagina": "Docente - NIVEC",
         "titulo": f"Asignación Docente - {paralelo.nombre} ({paralelo.unidad_curricular.nombre})",

@@ -819,6 +819,14 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
             carrera=carrera, estado=EstadoDeMalla.ACTIVA.value
         ).first()
         if not malla:
+            if PerfilEstudiante.objects.filter(
+                carrera_registrada=carrera,
+                periodo_de_nivelacion=periodo_db,
+                estado_de_matricula=EstadoDeMatricula.MATRICULADO.value,
+            ).exists():
+                resumen["advertencias"].append(
+                    f"La Carrera de {carrera.nombre} tiene estudiantes registrados pero no cuenta con una Malla curricular activa"
+                )
             continue
 
         unidades = list(malla.unidades_curriculares.all())
@@ -1160,6 +1168,9 @@ def _horarios_externos_para_paralelo(paralelo_db):
                 ids_vistos.add(h.id)
     return horarios_db
 
+def periodo_en_planificacion(periodo_db):
+    from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
+    return periodo_db.estado == EstadoDePeriodo.PLANIFICACION.value
 
 def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, espacio, tipo_de_sesion):
     from poo.clases.franja_horaria import sesion_dentro_de_franja, DURACIONES_VALIDAS, texto_franja
