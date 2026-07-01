@@ -92,6 +92,7 @@ class UnidadCurricular(models.Model):
     area_de_conocimiento = models.JSONField(default=list, verbose_name="Área(s) de conocimiento") 
     horas_totales = models.FloatField(verbose_name="Horas totales")
     horas_sincronicas = models.FloatField(verbose_name="Horas sincrónicas")
+    horas_sincronicas_semanales = models.FloatField(default=0, verbose_name="Horas sincrónicas semanales")
     horas_asincronicas = models.FloatField(verbose_name="Horas asincrónicas")
     criterio_de_aprobacion = models.FloatField(default=7.0, verbose_name="Criterio de aprobación")
     porcentaje_minimo_asistencia = models.FloatField(default=70.0, verbose_name="Porcentaje mínimo de asistencia")

@@ -7,6 +7,9 @@ from poo.clases.enums.jornada import Jornada
 MIN_HORAS_POR_SESION = 1.0
 MAX_HORAS_POR_SESION = 3.0
 
+# Duraciones permitidas para una sesión (horas enteras). El generador solo usa estas.
+DURACIONES_VALIDAS = [1, 2, 3]
+
 # Franja horaria permitida por jornada (patrón semanal). No cruzan medianoche
 # para que la aritmética de solape sea trivial.
 FRANJAS = {
