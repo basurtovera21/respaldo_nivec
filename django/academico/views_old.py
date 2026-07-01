@@ -65,17 +65,6 @@ def registrar_matricula(request):
 
 
 @login_required
-def distribuir_estudiantes(request, periodo_id):
-    periodo = get_object_or_404(PeriodoDeNivelacion, pk=periodo_id)
-    no_asignados = services.servicio_distribuir_estudiantes(periodo)
-    if no_asignados:
-        messages.warning(request, f"{len(no_asignados)} estudiante(s) sin paralelo disponible.")
-    else:
-        messages.success(request, "Todos los estudiantes fueron asignados correctamente.")
-    return redirect("listar_paralelos")
-
-
-@login_required
 def listar_evaluaciones(request):
     evaluaciones = EvaluacionAcademica.objects.all().select_related(
         "estudiante", "unidad_curricular"

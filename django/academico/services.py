@@ -27,7 +27,6 @@ from poo.clases.informe_general import InformeGeneral as InformeGeneralPOO
 from poo.clases.servicios.procesador_de_informe import ProcesadorDeInforme
 from poo.clases.cohorte_de_matricula import CohorteDeMatricula as CohorteDeMatriculaPOO
 from poo.clases.horario import Horario as HorarioPOO
-from poo.clases.servicios.distribuidor_de_estudiantes import DistribuidorDeEstudiantes
 from poo.clases.consolidado_academico import ConsolidadoAcademico as ConsolidadoAcademicoPOO
 
 from academico.models import (
@@ -471,61 +470,6 @@ def servicio_registrar_evaluacion_academica(evaluacion_academica: EvaluacionAcad
     evaluacion_academica.save()
 
 
-def servicio_distribuir_estudiantes(periodo_de_nivelacion: PeriodoDeNivelacion):
-    paralelos = Paralelo.objects.filter(periodo_de_nivelacion_base=periodo_de_nivelacion)
-    aspirantes = PerfilEstudiante.objects.filter(
-        estado_de_matricula = EstadoDeMatricula.ASPIRANTE.value,
-        carrera_registrada__campus__universidad = periodo_de_nivelacion.universidad
-    )
-
-    from usuarios.services import _construir_estudiante
-    from poo.clases.paralelo import Paralelo as ParaleloBase
-
-    paralelos_base = []
-    indice_paralelo = {}
-
-    for paralelo in paralelos:
-        paralelo_base = ParaleloBase(
-            codigo_de_paralelo = paralelo.codigo_de_paralelo,
-            nombre = paralelo.nombre,
-            jornada = obtener_enum_flexible(Jornada, paralelo.jornada),
-            modalidad = obtener_enum_flexible(Modalidad, paralelo.modalidad),
-            capacidad_maxima = paralelo.capacidad_maxima
-        )
-        paralelos_base.append(paralelo_base)
-        indice_paralelo[paralelo.codigo_de_paralelo] = paralelo
-
-    estudiantes_base = []
-    indice_estudiante = {}
-
-    for aspirante in aspirantes:
-        estudiante_base = _construir_estudiante(aspirante)
-        estudiantes_base.append(estudiante_base)
-        indice_estudiante[aspirante.identificador_institucional] = aspirante
-
-    distribuidor_de_estudiantes = DistribuidorDeEstudiantes(paralelos_base)
-    estudiantes_no_asignados_base = distribuidor_de_estudiantes.distribuir(estudiantes_base)
-
-    for paralelo_base in paralelos_base:
-        paralelo = indice_paralelo[paralelo_base.codigo_de_paralelo]
-        for estudiante_base in paralelo_base._estudiantes_matriculados:
-            perfil_estudiante = indice_estudiante.get(estudiante_base.identificador_institucional)
-            if perfil_estudiante:
-                if not MatriculaParalelo.objects.filter(estudiante=perfil_estudiante, paralelo=paralelo).exists():
-                    MatriculaParalelo.objects.create(
-                        estudiante = perfil_estudiante,
-                        paralelo = paralelo,
-                        cohorte_de_matricula = CohorteDeMatricula.objects.filter(
-                            periodo_de_nivelacion = periodo_de_nivelacion,
-                            carrera_registrada = perfil_estudiante.carrera_registrada
-                        ).first()
-                    )
-                perfil_estudiante.estado_de_matricula = EstadoDeMatricula.MATRICULADO.value
-                perfil_estudiante.save()
-
-    return [indice_estudiante[e.identificador_institucional] for e in estudiantes_no_asignados_base if e.identificador_institucional in indice_estudiante]
-
-
 def servicio_procesar_mtn(archivo, periodo_de_nivelacion: PeriodoDeNivelacion):
     from usuarios.services import servicio_estudiante_registrar_masivo_desde_excel
     from poo.clases.consolidado_academico import ConsolidadoAcademico as ConsolidadoAcademicoPOO
@@ -888,6 +832,7 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                     carrera_registrada=carrera,
                     jornada=jornada_valor,
                     periodo_de_nivelacion=periodo_db,
+                    estado_de_matricula=EstadoDeMatricula.MATRICULADO.value,
                 ).exclude(
                     estudiantes_matriculados__paralelo__periodo_de_nivelacion=periodo_db
                 ).distinct()
@@ -1119,6 +1064,10 @@ def servicio_agregar_estudiante_a_paralelo(estudiante_db, paralelo_db):
             or estudiante_db.jornada != paralelo_db.jornada):
         return (False, "El Estudiante no es compatible con el Paralelo (Carrera o Jornada)")
 
+    # Solo estudiantes con matrícula activa (no retirados ni anulados).
+    if estudiante_db.estado_de_matricula != EstadoDeMatricula.MATRICULADO.value:
+        return (False, "El Estudiante no tiene una matrícula activa")
+
     # No debe estar ya asignado a ningún paralelo del periodo.
     if MatriculaParalelo.objects.filter(estudiante=estudiante_db, paralelo__periodo_de_nivelacion=periodo).exists():
         return (False, "El Estudiante ya se encuentra asignado a un Paralelo")
@@ -1131,12 +1080,17 @@ def servicio_agregar_estudiante_a_paralelo(estudiante_db, paralelo_db):
 
     cohorte = _obtener_o_crear_cohorte(periodo, carrera)
     with transaction.atomic():
-        for paralelo_grupo_db in paralelos_grupo:
-            MatriculaParalelo.objects.get_or_create(
-                estudiante=estudiante_db,
-                paralelo=paralelo_grupo_db,
-                defaults={"cohorte_de_matricula": cohorte},
-            )
+        ya_matriculado = set(
+            MatriculaParalelo.objects.filter(
+                estudiante=estudiante_db, paralelo__in=paralelos_grupo
+            ).values_list("paralelo_id", flat=True)
+        )
+        nuevas = [
+            MatriculaParalelo(estudiante=estudiante_db, paralelo=p, cohorte_de_matricula=cohorte)
+            for p in paralelos_grupo if p.id not in ya_matriculado
+        ]
+        if nuevas:
+            MatriculaParalelo.objects.bulk_create(nuevas)
 
     servicio_recalcular_cohorte_de_carrera(periodo, carrera)
     return (True, "El Estudiante fue agregado al Paralelo correctamente")
@@ -1172,31 +1126,9 @@ def _construir_paralelo_poo_con_horarios(paralelo_db):
 def servicio_horas_agendadas_paralelo(paralelo_db):
     return _construir_paralelo_poo_con_horarios(paralelo_db).calcular_horas_agendadas()
 
-def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, espacio, numero_semana, tipo_de_sesion):
-    try:
-        numero_semana = int(numero_semana)
-    except (TypeError, ValueError):
-        return (False, "El número de semana no es válido")
-
-    try:
-        enum_dia = obtener_enum_flexible(DiaDeSemana, dia_semana)
-        enum_tipo = obtener_enum_flexible(TipoDeSesion, tipo_de_sesion)
-    except ValueError:
-        return (False, "Día o Tipo de sesión no válido")
-
-    nuevo_horario_poo = HorarioPOO(
-        dia_semana=enum_dia,
-        hora_inicio=hora_inicio,
-        hora_fin=hora_fin,
-        espacio_de_imparticion=espacio,
-        numero_semana=numero_semana,
-        tipo_de_sesion=enum_tipo,
-    )
-
-    errores_horario = nuevo_horario_poo.validar_datos_de_registro()
-    if errores_horario:
-        return (False, list(errores_horario.values())[0])
-
+def _horarios_externos_para_paralelo(paralelo_db):
+    # Sesiones del mismo paralelo lógico (otras unidades del grupo, que comparten estudiantes)
+    # + sesiones del docente responsable en otros paralelos del periodo (evita doble reserva).
     carrera = paralelo_db.unidad_curricular.malla_curricular.carrera
     paralelos_del_grupo = Paralelo.objects.filter(
         periodo_de_nivelacion=paralelo_db.periodo_de_nivelacion,
@@ -1204,25 +1136,57 @@ def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, e
         nombre=paralelo_db.nombre,
         unidad_curricular__malla_curricular__carrera=carrera,
     )
-    horarios_db_externos = list(
+    horarios_db = list(
         Horario.objects.filter(paralelo__in=paralelos_del_grupo).exclude(paralelo=paralelo_db)
     )
-    # Evita la doble reserva del docente: incluye sus sesiones en otros paralelos del periodo.
     if paralelo_db.docente_responsable_id:
-        ids_vistos = {h.id for h in horarios_db_externos}
+        ids_vistos = {h.id for h in horarios_db}
         for h in Horario.objects.filter(
             paralelo__periodo_de_nivelacion=paralelo_db.periodo_de_nivelacion,
             paralelo__docente_responsable_id=paralelo_db.docente_responsable_id,
         ).exclude(paralelo=paralelo_db):
             if h.id not in ids_vistos:
-                horarios_db_externos.append(h)
+                horarios_db.append(h)
                 ids_vistos.add(h.id)
-    horarios_externos = [_construir_horario_poo(h) for h in horarios_db_externos]
+    return horarios_db
+
+
+def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, espacio, tipo_de_sesion):
+    from poo.clases.franja_horaria import sesion_dentro_de_franja, MAX_HORAS_POR_SESION, texto_franja
+
+    try:
+        enum_dia = obtener_enum_flexible(DiaDeSemana, dia_semana)
+        enum_tipo = obtener_enum_flexible(TipoDeSesion, tipo_de_sesion)
+    except ValueError:
+        return (False, "Día o Tipo de sesión no válido")
+
+    # Patrón semanal: el horario se repite todas las semanas del periodo (numero_semana=1).
+    nuevo_horario_poo = HorarioPOO(
+        dia_semana=enum_dia,
+        hora_inicio=hora_inicio,
+        hora_fin=hora_fin,
+        espacio_de_imparticion=espacio,
+        numero_semana=1,
+        tipo_de_sesion=enum_tipo,
+    )
+
+    errores_horario = nuevo_horario_poo.validar_datos_de_registro()
+    if errores_horario:
+        return (False, list(errores_horario.values())[0])
+
+    jornada = obtener_enum_flexible(Jornada, paralelo_db.jornada)
+    if not sesion_dentro_de_franja(jornada, hora_inicio, hora_fin):
+        return (False, f"La sesión debe estar dentro de la franja de la jornada {paralelo_db.jornada} ({texto_franja(jornada)})")
+
+    if nuevo_horario_poo.determinar_duracion_horas() > MAX_HORAS_POR_SESION:
+        return (False, f"Una sesión no puede exceder {int(MAX_HORAS_POR_SESION)} horas por día")
+
+    horarios_externos = [_construir_horario_poo(h) for h in _horarios_externos_para_paralelo(paralelo_db)]
 
     paralelo_poo = _construir_paralelo_poo_con_horarios(paralelo_db)
-    horas_sincronicas = paralelo_db.unidad_curricular.horas_sincronicas
+    horas_semanales = _horas_sincronicas_semanales(paralelo_db.unidad_curricular, paralelo_db.periodo_de_nivelacion)
     resultado = paralelo_poo.validar_nuevo_horario(
-        nuevo_horario_poo, horas_sincronicas, horarios_externos
+        nuevo_horario_poo, horas_semanales, horarios_externos
     )
 
     if not resultado["ok"]:
@@ -1231,11 +1195,11 @@ def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, e
             return (
                 False,
                 f"Conflicto horario en {conflicto.dia_semana.value} "
-                f"{conflicto.hora_inicio}–{conflicto.hora_fin} (semana {conflicto.numero_semana})"
+                f"{conflicto.hora_inicio.strftime('%H:%M')}–{conflicto.hora_fin.strftime('%H:%M')}"
             )
         return (
             False,
-            f"La sesión ha excedido las horas sincrónicas registradas de la unidad curricular")
+            "La sesión excede las horas sincrónicas semanales de la unidad curricular")
 
     Horario.objects.create(
         paralelo=paralelo_db,
@@ -1243,10 +1207,85 @@ def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, e
         hora_inicio=hora_inicio,
         hora_fin=hora_fin,
         espacio_de_imparticion=espacio,
-        numero_semana=numero_semana,
+        numero_semana=1,
         tipo_de_sesion=tipo_de_sesion,
     )
     return (True, "El horario ha sido registrado correctamente")
+
+
+def _sugerir_bloque_libre(dia_poo, franja_inicio, franja_fin, bloque_horas, ocupados, tipo_sesion_poo):
+    from datetime import datetime, timedelta
+    base = datetime(2000, 1, 1, franja_inicio.hour, franja_inicio.minute)
+    tope = datetime(2000, 1, 1, franja_fin.hour, franja_fin.minute)
+    dur = timedelta(hours=bloque_horas)
+    paso = timedelta(minutes=30)
+    actual = base
+    while actual + dur <= tope:
+        h_ini = actual.time()
+        h_fin = (actual + dur).time()
+        candidato = HorarioPOO(
+            dia_semana=dia_poo, hora_inicio=h_ini, hora_fin=h_fin,
+            espacio_de_imparticion="", numero_semana=1, tipo_de_sesion=tipo_sesion_poo,
+        )
+        if not any(candidato.verificar_conflicto_horario(o) for o in ocupados):
+            return (h_ini, h_fin)
+        actual += paso
+    return None
+
+
+def servicio_generar_horario_sugerido(paralelo_db):
+    from poo.clases.franja_horaria import obtener_franja, MAX_HORAS_POR_SESION
+
+    unidad = paralelo_db.unidad_curricular
+    periodo = paralelo_db.periodo_de_nivelacion
+    jornada = obtener_enum_flexible(Jornada, paralelo_db.jornada)
+    franja = obtener_franja(jornada)
+    if not franja:
+        return (False, "La jornada del paralelo no tiene una franja horaria definida")
+    franja_inicio, franja_fin = franja
+
+    requeridas = _horas_sincronicas_semanales(unidad, periodo)
+    paralelo_poo = _construir_paralelo_poo_con_horarios(paralelo_db)
+    agendadas = paralelo_poo.calcular_horas_agendadas()
+    restante = round(requeridas - agendadas, 2)
+    if restante <= 0:
+        return (False, "El horario ya cubre las horas sincrónicas semanales requeridas")
+
+    tipo_sincronica = obtener_enum_flexible(TipoDeSesion, "Sincrónica")
+    ocupados = list(paralelo_poo.horarios) + [
+        _construir_horario_poo(h) for h in _horarios_externos_para_paralelo(paralelo_db)
+    ]
+
+    dias = list(DiaDeSemana)[:5]  # Lunes a Viernes
+    nuevos_db = []
+    creados = 0
+    for dia in dias:
+        if restante <= 0:
+            break
+        bloque = min(MAX_HORAS_POR_SESION, restante)
+        candidato = _sugerir_bloque_libre(dia, franja_inicio, franja_fin, bloque, ocupados, tipo_sincronica)
+        if not candidato:
+            continue
+        h_ini, h_fin = candidato
+        ocupados.append(HorarioPOO(
+            dia_semana=dia, hora_inicio=h_ini, hora_fin=h_fin,
+            espacio_de_imparticion="", numero_semana=1, tipo_de_sesion=tipo_sincronica,
+        ))
+        nuevos_db.append(Horario(
+            paralelo=paralelo_db, dia_semana=dia.value, hora_inicio=h_ini, hora_fin=h_fin,
+            espacio_de_imparticion="", numero_semana=1, tipo_de_sesion=tipo_sincronica.value,
+        ))
+        restante = round(restante - bloque, 2)
+        creados += 1
+
+    if not nuevos_db:
+        return (False, "No se encontraron espacios libres dentro de la franja para generar el horario")
+
+    Horario.objects.bulk_create(nuevos_db)
+    mensaje = f"Se generaron {creados} sesiones automáticamente"
+    if restante > 0:
+        mensaje += f". Faltan {restante} h por asignar (sin espacio libre suficiente en la franja)"
+    return (True, mensaje)
 
 def servicio_obtener_matriz_de_horarios(periodo_db, paralelos_db):
     from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
