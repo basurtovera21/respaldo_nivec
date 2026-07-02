@@ -405,13 +405,16 @@ def descargar_horarios_excel(request):
             jornada_nombre = jornada_valor
 
         ws = wb.create_sheet(title=str(jornada_nombre)[:31])
-        ws.append(["Código", "Paralelo", "Unidad curricular", "Día", "Hora inicio", "Hora fin", "Espacio"])
+        ws.append(["Código de paralelo", "Nombre de paralelo", "Unidad curricular", "Día", "Hora inicio", "Hora fin", "Espacio"])
 
-        horarios = Horario.objects.filter(
+        # Orden personalizado de días para ordenar Lunes primero
+        _ORDEN_DIA = {"Lunes": 1, "Martes": 2, "Miércoles": 3, "Jueves": 4, "Viernes": 5, "Sábado": 6, "Domingo": 7}
+
+        horarios = list(Horario.objects.filter(
             paralelo__in=paralelos_jornada
-        ).select_related("paralelo__unidad_curricular").order_by(
-            "paralelo__nombre", "dia_semana", "hora_inicio"
-        )
+        ).select_related("paralelo__unidad_curricular"))
+
+        horarios.sort(key=lambda h: (_ORDEN_DIA.get(h.dia_semana, 99), h.hora_inicio, h.paralelo.nombre))
 
         for h in horarios:
             ws.append([
