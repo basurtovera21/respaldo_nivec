@@ -345,3 +345,101 @@ def formalizar_evaluaciones(request, paralelo_id):
     count = servicio_formalizar_evaluaciones(paralelo)
     messages.success(request, f"{count} calificaciones formalizadas correctamente")
     return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
+
+
+
+@requiere_perfil(ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
+def informe_general(request):
+    from academico.services import servicio_generar_informe_general
+
+    universidad_usuario = _obtener_universidad_usuario(request.user)
+    if not universidad_usuario:
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    from academico.models import PeriodoDeNivelacion
+    periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario).order_by("-anio", "-numero_periodo")
+
+    periodo_id = request.GET.get("periodo")
+    periodo_seleccionado = None
+    informe = None
+
+    if periodo_id:
+        periodo_seleccionado = periodos.filter(id=periodo_id).first()
+        if periodo_seleccionado:
+            informe = servicio_generar_informe_general(periodo_seleccionado)
+
+    return render(request, "academico/informe_general.html", {
+        "periodos": periodos,
+        "periodo_seleccionado": periodo_seleccionado,
+        "informe": informe,
+        "titulo_pagina": "Informe General - NIVEC",
+        "titulo": "Informe General de Nivelación",
+    })
+
+
+@requiere_perfil(ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
+def descargar_informe_general(request):
+    from academico.services import servicio_generar_informe_general
+    import openpyxl
+    from django.http import HttpResponse
+
+    universidad_usuario = _obtener_universidad_usuario(request.user)
+    if not universidad_usuario:
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    periodo_id = request.GET.get("periodo")
+    if not periodo_id:
+        messages.error(request, "Debe especificar un Periodo")
+        return redirect("informe_general")
+
+    from academico.models import PeriodoDeNivelacion
+    periodo = PeriodoDeNivelacion.objects.filter(id=periodo_id, universidad=universidad_usuario).first()
+    if not periodo:
+        messages.error(request, "Periodo no válido")
+        return redirect("informe_general")
+
+    informe = servicio_generar_informe_general(periodo)
+    if not informe:
+        messages.warning(request, "No existen datos para generar el informe (el periodo debe estar en evaluación o cerrado)")
+        return redirect("informe_general")
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Informe General"
+
+    ws.append(["Informe General de Nivelación"])
+    ws.append(["Periodo", periodo.periodo])
+    ws.append(["Año", periodo.anio])
+    ws.append(["Estado", periodo.estado])
+    ws.append([])
+    ws.append(["Carrera", "Total evaluaciones", "Aprobados", "Reprobados", "Retirados", "Anulados", "Pendientes", "Formalizados", "% Aprobación"])
+
+    for fila in informe:
+        ws.append([
+            fila["carrera"], fila["total"], fila["aprobados"], fila["reprobados"],
+            fila["retirados"], fila["anulados"], fila["pendientes"], fila["formalizados"],
+            fila["porcentaje_aprobacion"],
+        ])
+
+    # Totals row
+    ws.append([])
+    total_eval = sum(f["total"] for f in informe)
+    total_apr = sum(f["aprobados"] for f in informe)
+    total_rep = sum(f["reprobados"] for f in informe)
+    total_ret = sum(f["retirados"] for f in informe)
+    total_anu = sum(f["anulados"] for f in informe)
+    total_pen = sum(f["pendientes"] for f in informe)
+    total_for = sum(f["formalizados"] for f in informe)
+    pct = round(total_apr / total_eval * 100, 1) if total_eval > 0 else 0
+    ws.append(["TOTAL", total_eval, total_apr, total_rep, total_ret, total_anu, total_pen, total_for, pct])
+
+    for col in range(1, 10):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 20
+
+    nombre = f"informe_general_{periodo.periodo}".lower().replace(" ", "_")
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = f'attachment; filename="{nombre}.xlsx"'
+    wb.save(response)
+    return response

@@ -222,10 +222,19 @@ def servicio_pasar_a_evaluacion(periodo_db):
 
 def servicio_finalizar_periodo_de_nivelacion(periodo_db):
     if periodo_db.estado != EstadoDePeriodo.EVALUACION.value:
-        return False
+        return (False, "El periodo debe estar en evaluación para ser cerrado")
+    
+    # Verificar que no hay evaluaciones sin formalizar
+    no_formalizadas = EvaluacionAcademica.objects.filter(
+        periodo_de_nivelacion=periodo_db,
+    ).exclude(estado_revision="Formalizado").count()
+    
+    if no_formalizadas > 0:
+        return (False, f"Existen {no_formalizadas} calificaciones sin formalizar. Todas deben estar formalizadas antes de cerrar el periodo.")
+    
     periodo_db.estado = EstadoDePeriodo.CERRADO.value
     periodo_db.save()
-    return True
+    return (True, "El periodo ha sido cerrado correctamente")
 
 
 #Malla curricular
@@ -1697,3 +1706,49 @@ def servicio_formalizar_evaluaciones(paralelo_db):
         estudiante__estudiantes_matriculados__paralelo=paralelo_db,
     ).update(estado_revision="Formalizado")
     return count
+
+
+
+def servicio_generar_informe_general(periodo_db):
+    """
+    Genera estadísticas del periodo: por carrera, cuántos aprobados, reprobados, retirados, anulados.
+    Solo disponible si el periodo está en Evaluación o Cerrado.
+    """
+    from academico.models import EvaluacionAcademica, Carrera, Paralelo
+    from django.db.models import Count, Q
+
+    if periodo_db.estado not in (EstadoDePeriodo.EVALUACION.value, EstadoDePeriodo.CERRADO.value):
+        return None
+
+    carreras = Carrera.objects.filter(campus__universidad=periodo_db.universidad)
+    informe = []
+
+    for carrera in carreras:
+        evaluaciones = EvaluacionAcademica.objects.filter(
+            periodo_de_nivelacion=periodo_db,
+            estudiante__carrera_registrada=carrera,
+        )
+        total = evaluaciones.count()
+        if total == 0:
+            continue
+
+        aprobados = evaluaciones.filter(estado_de_aprobacion="Aprobado").count()
+        reprobados = evaluaciones.filter(estado_de_aprobacion="Reprobado").count()
+        retirados = evaluaciones.filter(estado_de_aprobacion="Retirado").count()
+        anulados = evaluaciones.filter(estado_de_aprobacion="Anulado").count()
+        pendientes = evaluaciones.filter(estado_de_aprobacion="Pendiente").count()
+        formalizados = evaluaciones.filter(estado_revision="Formalizado").count()
+
+        informe.append({
+            "carrera": carrera.nombre,
+            "total": total,
+            "aprobados": aprobados,
+            "reprobados": reprobados,
+            "retirados": retirados,
+            "anulados": anulados,
+            "pendientes": pendientes,
+            "formalizados": formalizados,
+            "porcentaje_aprobacion": round(aprobados / total * 100, 1) if total > 0 else 0,
+        })
+
+    return informe

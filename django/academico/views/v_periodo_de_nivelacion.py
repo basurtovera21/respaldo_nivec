@@ -120,7 +120,11 @@ def iniciar_periodo(request, periodo_id):
 def finalizar_periodo(request, periodo_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     periodo_db = get_object_or_404(PeriodoDeNivelacion, pk=periodo_id, universidad=universidad_usuario)
-    if services.servicio_finalizar_periodo_de_nivelacion(periodo_db):
+    resultado = services.servicio_finalizar_periodo_de_nivelacion(periodo_db)
+    if isinstance(resultado, tuple):
+        ok, mensaje = resultado
+        (messages.success if ok else messages.error)(request, mensaje)
+    elif resultado:
         messages.success(request, f"El Periodo de nivelación {periodo_db.periodo} ha finalizado")
     else:
         messages.error(request, "No se ha podido finalizar el Periodo de nivelación")
