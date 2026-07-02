@@ -10,3 +10,4 @@ from .v_mtn import *
 from .v_paralelo import *
 from .v_horario import *
 from .v_asignacion_docente import *
+from .v_evaluacion import *

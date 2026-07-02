@@ -250,6 +250,8 @@ class EvaluacionAcademica(models.Model):
     porcentaje_asistencia = models.FloatField(default=0.0,  verbose_name="Porcentaje de asistencia final")
     estado_de_aprobacion = models.CharField(max_length=50, choices=cambiar_enum_a_choices(EstadoDeAprobacion), default=EstadoDeAprobacion.PENDIENTE.value,  verbose_name="Estado de aprobación")
     observacion = models.TextField(blank=True, default="",  verbose_name="Observación")
+    estado_revision = models.CharField(max_length=50, choices=[("Borrador", "Borrador"), ("En revisión", "En revisión"), ("Formalizado", "Formalizado")], default="Borrador", verbose_name="Estado de revisión")
+    periodo_de_nivelacion = models.ForeignKey('academico.PeriodoDeNivelacion', on_delete=models.PROTECT, related_name="evaluaciones", verbose_name="Periodo de nivelación", null=True, blank=True)
 
     class Meta:
         verbose_name = "Evaluación académica"
