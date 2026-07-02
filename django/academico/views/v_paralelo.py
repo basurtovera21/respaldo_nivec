@@ -448,7 +448,6 @@ def descargar_info_paralelo(request, paralelo_id):
     ws.append(["Nombre", representativo.nombre])
     ws.append(["Código", representativo.codigo_de_paralelo])
     ws.append(["Carrera", carrera.nombre])
-    ws.append(["Facultad", carrera.facultad])
     ws.append(["Jornada", representativo.get_jornada_display()])
     ws.append(["Modalidad", representativo.get_modalidad_display()])
     ws.append(["Periodo de nivelación", periodo.periodo])

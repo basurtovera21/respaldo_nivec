@@ -132,11 +132,11 @@ def servicio_coordinador_ua_registrar_masivo_desde_excel(archivo, universidad_us
         prefijo_ua = UsuarioAdministrativoBase.definir_prefijo_identificador(EnumPerfilAdministrativo.COORDINADOR_UA)
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
-                tipo_id, identificacion, nombres, apellidos, correo, ua, tipo_vinc, tiempo_dedic, carga_max, especialidades_str, jornadas_str = fila[:11]
-                if not any([tipo_id, identificacion, nombres, apellidos, correo, ua, tipo_vinc, tiempo_dedic, carga_max]): continue
-                if not all([tipo_id, identificacion, nombres, apellidos, correo, ua, tipo_vinc, tiempo_dedic, carga_max]):
+                tipo_id, identificacion, nombres, apellidos, correo, codigo_carrera, tipo_vinc, tiempo_dedic, carga_max, especialidades_str, jornadas_str = fila[:11]
+                if not any([tipo_id, identificacion, nombres, apellidos, correo, codigo_carrera, tipo_vinc, tiempo_dedic, carga_max]): continue
+                if not all([tipo_id, identificacion, nombres, apellidos, correo, codigo_carrera, tipo_vinc, tiempo_dedic, carga_max]):
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido por falta de información"); continue
-                tipo_id_str, identificacion_str, ua_str = str(tipo_id).strip().capitalize(), str(identificacion).strip(), str(ua).strip()
+                tipo_id_str, identificacion_str, codigo_carrera_str = str(tipo_id).strip().capitalize(), str(identificacion).strip(), str(codigo_carrera).strip()
                 tipo_vinc_limpio, tiempo_dedic_limpio = str(tipo_vinc).strip().lower(), str(tiempo_dedic).strip().lower()
                 if tipo_vinc_limpio not in vinc_validas or tiempo_dedic_limpio not in dedic_validas:
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (información no válida)"); continue
@@ -153,10 +153,14 @@ def servicio_coordinador_ua_registrar_masivo_desde_excel(archivo, universidad_us
                 except ValueError as e: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})"); continue
                 if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Coordinador de unidad académica ya registrado)"); continue
+                from academico.models import Carrera
+                carrera_obj = Carrera.objects.filter(codigo_de_carrera=codigo_carrera_str, campus__universidad=universidad_usuario).first()
+                if not carrera_obj:
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Código de Carrera no válido)"); continue
                 with transaction.atomic():
                     usuario = UsuarioDeSistema.objects.create(tipo_de_identificacion=tipo_id_str, identificacion=identificacion_str, nombres=str(nombres).strip(), apellidos=str(apellidos).strip(), correo_institucional=str(correo).strip(), estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value)
                     usuario.set_password(identificacion_str); usuario.save()
-                    PerfilAdministrativo.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_administrativo=generar_identificador_siguiente(PerfilAdministrativo, prefijo_ua, 'identificador_administrativo'), identificador_coordinador_ua=generar_identificador_siguiente(PerfilAdministrativo, prefijo_ua, 'identificador_coordinador_ua'), unidad_academica=ua_str, perfil_administrativo=rol_fijo)
+                    PerfilAdministrativo.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_administrativo=generar_identificador_siguiente(PerfilAdministrativo, prefijo_ua, 'identificador_administrativo'), identificador_coordinador_ua=generar_identificador_siguiente(PerfilAdministrativo, prefijo_ua, 'identificador_coordinador_ua'), carrera_asignada=carrera_obj, perfil_administrativo=rol_fijo)
                     PerfilDocente.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_institucional=generar_identificador_siguiente(PerfilDocente, "DC", 'identificador_institucional'), tipo_de_vinculacion=vinc_exacta, tiempo_de_dedicacion=dedic_exacta, carga_horaria_maxima=carga_max_float, estado_de_vinculacion=EnumEstadoDeVinculacion.ACTIVO.value, especialidades=lista_especialidades, jornadas=lista_jornadas)
                     resultado["exitosos"] += 1
             except Exception as e: resultado["advertencias"].append(f"Fila {numero_fila} omitida ({str(e)})")
