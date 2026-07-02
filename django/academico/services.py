@@ -773,13 +773,13 @@ def servicio_recalcular_cohorte_de_carrera(periodo_db, carrera):
 
 
 def _nombre_paralelo_letra(indice):
-    # 0->A, 1->B, ..., 25->Z, 26->A1, 27->B1, ..., 51->Z1, 52->A2...
+    # 0->Paralelo A, 1->Paralelo B, ..., 25->Paralelo Z, 26->Paralelo A1...
     letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     if indice < 26:
-        return letras[indice]
+        return f"Paralelo {letras[indice]}"
     ciclo = (indice - 26) // 26 + 1
     pos = (indice - 26) % 26
-    return f"{letras[pos]}{ciclo}"
+    return f"Paralelo {letras[pos]}{ciclo}"
 
 
 def servicio_generar_paralelos(periodo_db, capacidad=35):

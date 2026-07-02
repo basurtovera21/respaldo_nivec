@@ -445,7 +445,7 @@ def descargar_info_paralelo(request, paralelo_id):
 
     ws.append(["Información registrada del paralelo"])
     ws.append([])
-    ws.append(["Paralelo", representativo.nombre])
+    ws.append(["Nombre", representativo.nombre])
     ws.append(["Código", representativo.codigo_de_paralelo])
     ws.append(["Carrera", carrera.nombre])
     ws.append(["Facultad", carrera.facultad])
@@ -475,8 +475,8 @@ def descargar_info_paralelo(request, paralelo_id):
         ws.append([
             row.unidad_curricular.codigo_de_unidad,
             row.unidad_curricular.nombre,
-            docente or "—",
-            horarios_txt or "—",
+            docente,
+            horarios_txt,
         ])
 
     for col in range(1, 5):
@@ -496,53 +496,36 @@ def descargar_info_paralelo(request, paralelo_id):
         titulo_hoja = row.unidad_curricular.nombre[:31]
         ws_u = wb.create_sheet(title=titulo_hoja)
 
-        ws_u.append([f"Listado de estudiantes - {row.unidad_curricular.nombre}"])
-        ws_u.append(["Paralelo", representativo.nombre])
-        ws_u.append(["Carrera", carrera.nombre])
-        ws_u.append(["Jornada", representativo.get_jornada_display()])
-        ws_u.append(["Periodo", periodo.periodo])
-        docente = ""
-        if row.docente_responsable:
-            d = row.docente_responsable.usuario_de_sistema
-            docente = f"{d.nombres} {d.apellidos}"
-        ws_u.append(["Docente responsable", docente or "—"])
-        ws_u.append(["Total de estudiantes", matriculas.count()])
-        ws_u.append([])
-
         ws_u.append([
-            "N°",
             "Tipo de identificación",
             "Número de identificación",
             "Apellidos",
             "Nombres",
             "Correo institucional",
             "Número de matrícula",
-            "Jornada",
             "Registro de cupo",
             "Estado de matrícula",
         ])
 
-        for idx, mat in enumerate(matriculas, start=1):
+        for mat in matriculas:
             est = mat.estudiante
             usr = est.usuario_de_sistema
             ws_u.append([
-                idx,
                 usr.tipo_de_identificacion,
                 usr.identificacion,
                 usr.apellidos,
                 usr.nombres,
                 usr.correo_institucional,
                 est.numero_de_matricula,
-                est.jornada,
                 est.registro_de_cupo,
                 est.estado_de_matricula,
             ])
 
-        for col in range(1, 11):
-            ws_u.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 22
+        for col in range(1, 9):
+            ws_u.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 25
 
-    # Nombre del archivo: paralelo_LETRA_carrera
-    nombre_archivo = f"{representativo.nombre}_{carrera.nombre}".replace(" ", "_")
+    # Nombre del archivo: paralelo_letra_carrera (todo en minúscula)
+    nombre_archivo = f"{representativo.nombre}_{carrera.nombre}".lower().replace(" ", "_")
     response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     response["Content-Disposition"] = f'attachment; filename="{nombre_archivo}.xlsx"'
     wb.save(response)
