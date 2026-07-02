@@ -30,16 +30,20 @@
 </p>
 
 {% if es_evaluacion and not solo_lectura %}
-<div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
+<div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
     <a href="{% url 'cargar_calificaciones' paralelo.id %}" class="boton boton-primario">Cargar calificaciones</a>
+    {% if es_docente %}
     <form method="post" action="{% url 'pasar_a_revision' paralelo.id %}" style="margin: 0;">
         {% csrf_token %}
         <button type="submit" class="boton boton-secundario" onclick="return confirm('¿Pasar todas las calificaciones en borrador a revisión?');">Pasar a revisión</button>
     </form>
+    {% endif %}
+    {% if puede_formalizar %}
     <form method="post" action="{% url 'formalizar_evaluaciones' paralelo.id %}" style="margin: 0;">
         {% csrf_token %}
         <button type="submit" class="boton boton-secundario" onclick="return confirm('¿Formalizar todas las calificaciones en revisión? Esta acción no se puede deshacer.');">Formalizar</button>
     </form>
+    {% endif %}
 </div>
 {% endif %}
 

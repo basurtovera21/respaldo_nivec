@@ -10,17 +10,20 @@ from academico.services import (
 from usuarios.utils import (
     requiere_perfil,
     usuario_es_solo_lectura,
+    obtener_rol_usuario,
     ROL_COORDINADOR_DAN,
     ROL_DIRECTOR_DAN,
     ROL_RECTOR,
     ROL_VICERRECTOR,
+    ROL_COORDINADOR_UA,
 )
 
-ROLES_VISUALIZAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
+ROLES_VISUALIZAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_UA)
 
 @requiere_perfil(*ROLES_VISUALIZAN)
 def asignar_docente_paralelo(request, paralelo_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    perfil_admin = getattr(request.user, 'perfil_administrativo', None)
+    universidad_usuario = perfil_admin.universidad if perfil_admin else None
     if not universidad_usuario:
         messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
