@@ -73,6 +73,47 @@ def listar_horarios_paralelo(request, paralelo_id):
 
     jornada_enum = Jornada(representativo.jornada)
 
+    # Construir datos de la grilla visual (Día × Hora)
+    from poo.clases.franja_horaria import obtener_franja
+    franja = obtener_franja(jornada_enum)
+    slots_hora = []
+    if franja:
+        h = franja[0].hour
+        while h < franja[1].hour:
+            slots_hora.append(h)
+            h += 1
+
+    # Asignar colores en escalas de gris por unidad
+    _COLORES_UNIDAD = [
+        "#e8e8ed", "#d2d2d7", "#c7c7cc", "#b0b0b5", "#9a9a9f",
+        "#aeaeb2", "#dcdce0", "#c4c4c8", "#bababe", "#8e8e93",
+    ]
+    nombres_unidades = sorted(set(h.paralelo.unidad_curricular.nombre for h in horarios))
+    mapa_colores = {nombre: _COLORES_UNIDAD[i % len(_COLORES_UNIDAD)] for i, nombre in enumerate(nombres_unidades)}
+
+    dias_semana = [d.value for d in DiaDeSemana][:5]  # Lunes a Viernes
+    grilla = []  # lista de {hora, celdas: [{bloque o None} por día]}
+    for slot in slots_hora:
+        fila = {"hora": f"{slot:02d}:00", "celdas": []}
+        for dia in dias_semana:
+            bloque = None
+            for h in horarios:
+                if h.dia_semana == dia and h.hora_inicio.hour <= slot < h.hora_fin.hour:
+                    es_inicio = h.hora_inicio.hour == slot
+                    bloque = {
+                        "id": h.id,
+                        "nombre": h.paralelo.unidad_curricular.nombre,
+                        "hora_inicio": h.hora_inicio.strftime("%H:%M"),
+                        "hora_fin": h.hora_fin.strftime("%H:%M"),
+                        "espacio": h.espacio_de_imparticion or "",
+                        "color": mapa_colores.get(h.paralelo.unidad_curricular.nombre, "#e8e8ed"),
+                        "es_inicio": es_inicio,
+                        "duracion": h.hora_fin.hour - h.hora_inicio.hour,
+                    }
+                    break
+            fila["celdas"].append(bloque)
+        grilla.append(fila)
+
     return render(request, "academico/horarios_paralelo.html", {
         "representativo": representativo,
         "unidades": unidades,
@@ -81,6 +122,9 @@ def listar_horarios_paralelo(request, paralelo_id):
         "es_planificacion": periodo_en_planificacion(representativo.periodo_de_nivelacion),
         "franja": texto_franja(jornada_enum),
         "dias": [dia.value for dia in DiaDeSemana],
+        "dias_semana": dias_semana,
+        "grilla": grilla,
+        "mapa_colores": mapa_colores,
         "solo_lectura": usuario_es_solo_lectura(request.user),
         "titulo_pagina": "Horario - NIVEC",
         "titulo": f"Horarios - {representativo.nombre} ({representativo.unidad_curricular.malla_curricular.carrera.nombre})",
