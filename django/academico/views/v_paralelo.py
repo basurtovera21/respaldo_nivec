@@ -411,184 +411,112 @@ def agregar_estudiante(request, paralelo_id):
 
 
 @requiere_perfil(*ROLES_VISUALIZAN)
-def consolidado_paralelos_excel(request):
+def descargar_info_paralelo(request, paralelo_id):
     import openpyxl
     from django.http import HttpResponse
+    from academico.models import Horario
 
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
-    periodo_id = request.GET.get("periodo")
-    if not periodo_id:
-        messages.warning(request, "Especifique un Periodo de nivelación")
-        return redirect("listar_paralelos")
-
-    periodo = PeriodoDeNivelacion.objects.filter(id=periodo_id, universidad=universidad_usuario).first()
-    if not periodo:
-        messages.error(request, "Periodo de nivelación no válido")
-        return redirect("listar_paralelos")
-
-    paralelos = Paralelo.objects.filter(
-        periodo_de_nivelacion=periodo
-    ).select_related(
-        "unidad_curricular__malla_curricular__carrera",
-        "docente_responsable__usuario_de_sistema",
-        "periodo_de_nivelacion",
-    ).order_by(
-        "unidad_curricular__malla_curricular__carrera__nombre",
-        "nombre",
-        "unidad_curricular__nombre",
+    representativo = get_object_or_404(
+        Paralelo, id=paralelo_id, periodo_de_nivelacion__universidad=universidad_usuario
     )
+    carrera = representativo.unidad_curricular.malla_curricular.carrera
+    periodo = representativo.periodo_de_nivelacion
 
-    # Agrupar por paralelo lógico (carrera + jornada + nombre)
-    grupos = {}
-    for p in paralelos:
-        carrera = p.unidad_curricular.malla_curricular.carrera
-        clave = (carrera.nombre, p.jornada, p.nombre)
-        if clave not in grupos:
-            grupos[clave] = {
-                "carrera": carrera.nombre,
-                "codigo_paralelo": p.codigo_de_paralelo,
-                "nombre": p.nombre,
-                "jornada": p.get_jornada_display(),
-                "modalidad": p.get_modalidad_display(),
-                "capacidad": p.capacidad_maxima,
-                "estudiantes": MatriculaParalelo.objects.filter(paralelo=p).count(),
-                "unidades": [],
-            }
+    # Todas las filas del paralelo lógico
+    unidades_rows = Paralelo.objects.filter(
+        periodo_de_nivelacion=periodo,
+        jornada=representativo.jornada,
+        nombre=representativo.nombre,
+        unidad_curricular__malla_curricular__carrera=carrera,
+    ).select_related(
+        "unidad_curricular", "docente_responsable__usuario_de_sistema"
+    ).order_by("unidad_curricular__nombre")
+
+    wb = openpyxl.Workbook()
+
+    # === HOJA 1: Información general ===
+    ws = wb.active
+    ws.title = "Información general"
+
+    ws.append(["Información registrada del paralelo"])
+    ws.append([])
+    ws.append(["Paralelo", representativo.nombre])
+    ws.append(["Código", representativo.codigo_de_paralelo])
+    ws.append(["Carrera", carrera.nombre])
+    ws.append(["Facultad", carrera.facultad])
+    ws.append(["Jornada", representativo.get_jornada_display()])
+    ws.append(["Modalidad", representativo.get_modalidad_display()])
+    ws.append(["Periodo de nivelación", periodo.periodo])
+    ws.append(["Año", periodo.anio])
+    ws.append(["Fecha de inicio", str(periodo.fecha_inicio)])
+    ws.append(["Fecha de finalización", str(periodo.fecha_fin)])
+    ws.append(["Capacidad máxima", representativo.capacidad_maxima])
+    estudiantes_count = MatriculaParalelo.objects.filter(paralelo=representativo).count()
+    ws.append(["Estudiantes matriculados", estudiantes_count])
+    ws.append([])
+
+    # Unidades con docente y horario
+    ws.append(["Unidades curriculares"])
+    ws.append(["Código", "Nombre", "Docente responsable", "Horario semanal"])
+    for row in unidades_rows:
         docente = ""
-        if p.docente_responsable:
-            d = p.docente_responsable.usuario_de_sistema
+        if row.docente_responsable:
+            d = row.docente_responsable.usuario_de_sistema
             docente = f"{d.nombres} {d.apellidos}"
-        grupos[clave]["unidades"].append({
-            "nombre": p.unidad_curricular.nombre,
-            "codigo": p.unidad_curricular.codigo_de_unidad,
-            "docente": docente,
-        })
+        horarios_txt = ", ".join(
+            f"{h.get_dia_semana_display()} {h.hora_inicio.strftime('%H:%M')}-{h.hora_fin.strftime('%H:%M')}"
+            for h in Horario.objects.filter(paralelo=row).order_by("dia_semana", "hora_inicio")
+        )
+        ws.append([
+            row.unidad_curricular.codigo_de_unidad,
+            row.unidad_curricular.nombre,
+            docente or "—",
+            horarios_txt or "—",
+        ])
 
-    wb = openpyxl.Workbook()
-    wb.remove(wb.active)
+    for col in range(1, 5):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 35
 
-    for idx, ((carrera, jornada_val, nombre_par), grupo) in enumerate(sorted(grupos.items())):
-        titulo_hoja = f"{nombre_par[:20]} ({grupo['jornada'][:3]})"[:31]
-        ws = wb.create_sheet(title=titulo_hoja)
-
-        # Encabezado del paralelo
-        ws.append(["Consolidado de Paralelo"])
-        ws.append(["Carrera", grupo["carrera"]])
-        ws.append(["Paralelo", grupo["nombre"]])
-        ws.append(["Código", grupo["codigo_paralelo"]])
-        ws.append(["Jornada", grupo["jornada"]])
-        ws.append(["Modalidad", grupo["modalidad"]])
-        ws.append(["Capacidad máxima", grupo["capacidad"]])
-        ws.append(["Estudiantes matriculados", grupo["estudiantes"]])
-        ws.append(["Periodo", periodo.periodo])
-        ws.append([])
-
-        # Tabla de unidades
-        ws.append(["Código de unidad", "Unidad curricular", "Docente responsable"])
-        for u in grupo["unidades"]:
-            ws.append([u["codigo"], u["nombre"], u["docente"] or "—"])
-
-        for col in range(1, 4):
-            ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 35
-
-    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    response["Content-Disposition"] = f'attachment; filename="consolidado_paralelos_{periodo.periodo}.xlsx"'
-    wb.save(response)
-    return response
-
-
-
-@requiere_perfil(*ROLES_VISUALIZAN)
-def consolidado_estudiantes_excel(request):
-    import openpyxl
-    from django.http import HttpResponse
-
-    universidad_usuario = request.user.perfil_administrativo.universidad
-    if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
-        return redirect("panel_principal")
-
-    periodo_id = request.GET.get("periodo")
-    if not periodo_id:
-        messages.warning(request, "Especifique un Periodo de nivelación")
-        return redirect("listar_paralelos")
-
-    periodo = PeriodoDeNivelacion.objects.filter(id=periodo_id, universidad=universidad_usuario).first()
-    if not periodo:
-        messages.error(request, "Periodo de nivelación no válido")
-        return redirect("listar_paralelos")
-
-    paralelos = Paralelo.objects.filter(
-        periodo_de_nivelacion=periodo
+    # === HOJAS 2+: Una por unidad con listado de estudiantes ===
+    matriculas = MatriculaParalelo.objects.filter(
+        paralelo=representativo
     ).select_related(
-        "unidad_curricular__malla_curricular__carrera",
+        "estudiante__usuario_de_sistema",
     ).order_by(
-        "unidad_curricular__malla_curricular__carrera__nombre",
-        "nombre",
-        "unidad_curricular__nombre",
+        "estudiante__usuario_de_sistema__apellidos",
+        "estudiante__usuario_de_sistema__nombres",
     )
 
-    # Agrupar por paralelo lógico
-    grupos = {}
-    for p in paralelos:
-        carrera = p.unidad_curricular.malla_curricular.carrera
-        clave = (carrera.nombre, p.jornada, p.nombre)
-        if clave not in grupos:
-            grupos[clave] = {
-                "carrera": carrera.nombre,
-                "nombre": p.nombre,
-                "jornada": p.get_jornada_display(),
-                "representativo": p,
-                "unidades_rows": [],
-            }
-        grupos[clave]["unidades_rows"].append(p)
+    for row in unidades_rows:
+        titulo_hoja = row.unidad_curricular.nombre[:31]
+        ws_u = wb.create_sheet(title=titulo_hoja)
 
-    wb = openpyxl.Workbook()
-    wb.remove(wb.active)
+        ws_u.append([f"Listado de estudiantes - {row.unidad_curricular.nombre}"])
+        ws_u.append(["Paralelo", representativo.nombre])
+        ws_u.append(["Carrera", carrera.nombre])
+        ws_u.append(["Jornada", representativo.get_jornada_display()])
+        ws_u.append(["Periodo", periodo.periodo])
+        docente = ""
+        if row.docente_responsable:
+            d = row.docente_responsable.usuario_de_sistema
+            docente = f"{d.nombres} {d.apellidos}"
+        ws_u.append(["Docente responsable", docente or "—"])
+        ws_u.append(["Total de estudiantes", matriculas.count()])
+        ws_u.append([])
 
-    for (carrera_nombre, jornada_val, nombre_par), grupo in sorted(grupos.items()):
-        # Obtener estudiantes del paralelo (desde el representativo)
-        representativo = grupo["representativo"]
-        matriculas = MatriculaParalelo.objects.filter(
-            paralelo=representativo
-        ).select_related(
-            "estudiante__usuario_de_sistema",
-            "estudiante__carrera_registrada",
-        ).order_by(
-            "estudiante__usuario_de_sistema__apellidos",
-            "estudiante__usuario_de_sistema__nombres",
-        )
-
-        titulo_hoja = f"{nombre_par[:20]} ({grupo['jornada'][:3]})"[:31]
-        ws = wb.create_sheet(title=titulo_hoja)
-
-        # Encabezado
-        ws.append(["Listado de estudiantes"])
-        ws.append(["Carrera", grupo["carrera"]])
-        ws.append(["Paralelo", grupo["nombre"]])
-        ws.append(["Jornada", grupo["jornada"]])
-        ws.append(["Periodo", periodo.periodo])
-        ws.append(["Total de estudiantes", matriculas.count()])
-        ws.append([])
-
-        # Unidades del paralelo
-        ws.append(["Unidades curriculares del paralelo:"])
-        for row in grupo["unidades_rows"]:
-            ws.append(["", row.unidad_curricular.nombre])
-        ws.append([])
-
-        # Tabla de estudiantes
-        ws.append([
+        ws_u.append([
             "N°",
             "Tipo de identificación",
             "Número de identificación",
             "Apellidos",
             "Nombres",
             "Correo institucional",
+            "Número de matrícula",
             "Jornada",
             "Registro de cupo",
             "Estado de matrícula",
@@ -597,22 +525,25 @@ def consolidado_estudiantes_excel(request):
         for idx, mat in enumerate(matriculas, start=1):
             est = mat.estudiante
             usr = est.usuario_de_sistema
-            ws.append([
+            ws_u.append([
                 idx,
                 usr.tipo_de_identificacion,
                 usr.identificacion,
                 usr.apellidos,
                 usr.nombres,
                 usr.correo_institucional,
+                est.numero_de_matricula,
                 est.jornada,
                 est.registro_de_cupo,
                 est.estado_de_matricula,
             ])
 
-        for col in range(1, 10):
-            ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 25
+        for col in range(1, 11):
+            ws_u.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 22
 
+    # Nombre del archivo: paralelo_LETRA_carrera
+    nombre_archivo = f"{representativo.nombre}_{carrera.nombre}".replace(" ", "_")
     response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    response["Content-Disposition"] = f'attachment; filename="listado_estudiantes_paralelos_{periodo.periodo}.xlsx"'
+    response["Content-Disposition"] = f'attachment; filename="{nombre_archivo}.xlsx"'
     wb.save(response)
     return response
