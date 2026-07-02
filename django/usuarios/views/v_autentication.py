@@ -80,7 +80,35 @@ def panel_dan(request):
 @login_required
 @never_cache
 def panel_ua(request):
-    return render(request, "administrativo/panel_ua.html")
+    usuario = request.user
+    perfil = getattr(usuario, 'perfil_administrativo', None)
+    if not perfil:
+        return redirect('panel_principal')
+    
+    carrera = perfil.carrera_asignada
+    universidad = perfil.universidad
+    
+    # Get paralelos for their carrera in the current/latest period
+    from academico.models import Paralelo, PeriodoDeNivelacion
+    
+    periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad).order_by('-anio', '-numero_periodo')
+    
+    paralelos = []
+    periodo_actual = None
+    if carrera:
+        periodo_actual = periodos.first()
+        if periodo_actual:
+            paralelos = Paralelo.objects.filter(
+                periodo_de_nivelacion=periodo_actual,
+                unidad_curricular__malla_curricular__carrera=carrera,
+            ).select_related("unidad_curricular").order_by("nombre", "unidad_curricular__nombre")
+    
+    return render(request, "administrativo/panel_ua.html", {
+        "perfil": perfil,
+        "carrera": carrera,
+        "periodo_actual": periodo_actual,
+        "paralelos": paralelos,
+    })
 
 @login_required
 @never_cache
@@ -90,7 +118,30 @@ def panel_administrativo(request):
 @login_required
 @never_cache
 def panel_docente(request):
-    return render(request, "docente/panel_docente.html")
+    usuario = request.user
+    perfil_docente = getattr(usuario, 'perfil_docente', None)
+    if not perfil_docente:
+        return redirect('panel_principal')
+    
+    from academico.models import Paralelo, PeriodoDeNivelacion
+    
+    universidad = perfil_docente.universidad
+    periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad).order_by('-anio', '-numero_periodo') if universidad else PeriodoDeNivelacion.objects.none()
+    periodo_actual = periodos.first()
+    
+    # Get paralelos where this docente is responsible
+    paralelos = []
+    if periodo_actual:
+        paralelos = Paralelo.objects.filter(
+            periodo_de_nivelacion=periodo_actual,
+            docente_responsable=perfil_docente,
+        ).select_related("unidad_curricular__malla_curricular__carrera").order_by("nombre", "unidad_curricular__nombre")
+    
+    return render(request, "docente/panel_docente.html", {
+        "perfil_docente": perfil_docente,
+        "periodo_actual": periodo_actual,
+        "paralelos": paralelos,
+    })
 
 @login_required
 @never_cache

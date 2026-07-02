@@ -8,17 +8,27 @@ from academico.services import servicio_cargar_calificaciones_desde_excel
 from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
 from usuarios.utils import (
     requiere_perfil, usuario_es_solo_lectura,
-    ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
+    ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_UA, ROL_DOCENTE,
 )
 
-# Coordinador UA and Docente will access these too (add their roles later)
-ROLES_CARGAR = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
-ROLES_VER = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
+ROLES_CARGAR = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_COORDINADOR_UA, ROL_DOCENTE)
+ROLES_VER = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_UA, ROL_DOCENTE)
+
+
+def _obtener_universidad_usuario(user):
+    """Get universidad from perfil_administrativo or perfil_docente."""
+    perfil_admin = getattr(user, 'perfil_administrativo', None)
+    if perfil_admin:
+        return perfil_admin.universidad
+    perfil_docente = getattr(user, 'perfil_docente', None)
+    if perfil_docente:
+        return perfil_docente.universidad
+    return None
 
 
 @requiere_perfil(*ROLES_VER)
 def listar_evaluaciones_paralelo(request, paralelo_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -53,7 +63,7 @@ def listar_evaluaciones_paralelo(request, paralelo_id):
 
 @requiere_perfil(*ROLES_CARGAR)
 def cargar_calificaciones(request, paralelo_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -95,7 +105,7 @@ def cargar_calificaciones(request, paralelo_id):
 
 @requiere_perfil(*ROLES_CARGAR)
 def descargar_plantilla_calificaciones(request, paralelo_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     paralelo = get_object_or_404(
         Paralelo, id=paralelo_id, periodo_de_nivelacion__universidad=universidad_usuario
     )
@@ -134,7 +144,7 @@ def descargar_plantilla_calificaciones(request, paralelo_id):
 
 @requiere_perfil(*ROLES_VER)
 def detalle_evaluacion(request, evaluacion_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -190,7 +200,7 @@ def detalle_evaluacion(request, evaluacion_id):
 
 @requiere_perfil(*ROLES_CARGAR)
 def editar_evaluacion(request, evaluacion_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -263,7 +273,7 @@ def editar_evaluacion(request, evaluacion_id):
 @requiere_perfil(*ROLES_CARGAR)
 def pasar_a_revision(request, paralelo_id):
     from academico.services import servicio_pasar_a_revision
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -301,7 +311,7 @@ def pasar_a_revision(request, paralelo_id):
 @requiere_perfil(*ROLES_CARGAR)
 def formalizar_evaluaciones(request, paralelo_id):
     from academico.services import servicio_formalizar_evaluaciones
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
