@@ -329,6 +329,14 @@ class FormularioUnidadCurricular(forms.ModelForm):
                 errores["horas_sincronicas_semanales"] = "Debe ser un número entero de horas"
             elif sincronicas not in (None, "") and semanales > sincronicas:
                 errores["horas_sincronicas_semanales"] = "No puede superar las horas sincrónicas totales"
+            elif sincronicas not in (None, "") and semanales > 0:
+                # Validar coherencia: semanales no debe exceder las horas totales
+                # divididas en un periodo razonable (mínimo 4 semanas, máximo 24).
+                max_semanales_razonable = sincronicas / 4
+                if semanales > max_semanales_razonable:
+                    errores["horas_sincronicas_semanales"] = (
+                        f"Las horas semanales ({int(semanales)}) parecen incoherentes con las horas sincrónicas totales ({sincronicas})"
+                    )
 
         areas_texto = cleaned_data.get("areas_de_conocimiento_texto", "")
         if not areas_texto or not areas_texto.strip():
