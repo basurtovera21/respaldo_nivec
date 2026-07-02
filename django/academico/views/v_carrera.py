@@ -42,7 +42,6 @@ def descargar_plantilla_carrera(request):
         "Código de Campus (CAM...)", 
         "Nombre de la Carrera", 
         "Modalidad (Virtual, Presencial, Semipresencial)",
-        "Facultad", 
         "Vigencia SNIESE (AAAA-MM-DD)"
     ]
     ws.append(cabeceras)

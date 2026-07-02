@@ -30,6 +30,7 @@ class CoordinadorUnidadAcademica(UsuarioAdministrativo, Docente):
         )
         self.identificador_coordinador_ua = identificador_coordinador_ua
         self.unidad_academica = unidad_academica
+        self.carrera_asignada = kwargs.get('carrera_asignada', None)
         
     def iniciar_sesion(self):
         return True

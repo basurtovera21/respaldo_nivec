@@ -117,13 +117,12 @@ class FormularioCampus(forms.ModelForm):
 class FormularioCarrera(forms.ModelForm):
     class Meta:
         model = Carrera
-        fields = ("campus", "codigo_de_carrera", "nombre", "modalidad", "facultad", "vigencia_sniese")
+        fields = ("campus", "codigo_de_carrera", "nombre", "modalidad", "vigencia_sniese")
         labels = {
             "campus": "Campus registrado",
             "codigo_de_carrera": "Código de Carrera",
             "nombre": "Nombre",
             "modalidad": "Modalidad",
-            "facultad": "Facultad",
             "vigencia_sniese": "Vigencia SNIESE",
         }
         widgets = {
@@ -140,7 +139,6 @@ class FormularioCarrera(forms.ModelForm):
         self.fields['campus'].required = False
         self.fields['nombre'].required = False
         self.fields['modalidad'].required = False
-        self.fields['facultad'].required = False
         self.fields['vigencia_sniese'].required = False
         self.fields['codigo_de_carrera'].required = False
 
@@ -150,7 +148,6 @@ class FormularioCarrera(forms.ModelForm):
         campus = cleaned_data.get("campus")
         nombre = cleaned_data.get("nombre")
         modalidad = cleaned_data.get("modalidad")
-        facultad = cleaned_data.get("facultad")
         vigencia_sniese = cleaned_data.get("vigencia_sniese")
 
         errores = {}
@@ -158,15 +155,13 @@ class FormularioCarrera(forms.ModelForm):
         if not campus: errores['campus'] = "Información requerida"
         if not nombre: errores['nombre'] = "Información requerida"
         if not modalidad: errores['modalidad'] = "Información requerida"
-        if not facultad: errores['facultad'] = "Información requerida"
         if not vigencia_sniese: errores['vigencia_sniese'] = "Información requerida"
 
-        if nombre and modalidad and vigencia_sniese and facultad:
+        if nombre and modalidad and vigencia_sniese:
             carrera_poo = CarreraBase(
                 codigo_de_carrera="PENDIENTE",
                 nombre=nombre,
                 modalidad=Modalidad(modalidad),
-                facultad=facultad,
                 vigencia_sniese=vigencia_sniese
             )
 

@@ -55,7 +55,7 @@ def descargar_plantilla_coordinador_ua(request):
         "Nombres",
         "Apellidos", 
         "Correo institucional",
-        "Unidad académica",
+        "Código de Carrera (CAR...)",
         "Tipo de vinculación (Nombramiento, Contrato, Ocasional, Honorario)",
         "Tiempo de dedicación (Tiempo completo, Medio tiempo, Tiempo parcial)",
         "Carga horaria máxima (número decimal)",
@@ -104,7 +104,7 @@ def registrar_coordinador_ua(request):
 
         else:
             formulario_usuario = FormularioUsuarioDeSistema(request.POST)
-            formulario_perfil = FormularioRegistrarCoordinadorUA(request.POST)
+            formulario_perfil = FormularioRegistrarCoordinadorUA(request.POST, universidad=universidad_usuario)
             formulario_docente = FormularioDatosDocenteUA(request.POST) 
 
             if formulario_usuario.is_valid() and formulario_perfil.is_valid() and formulario_docente.is_valid():
@@ -137,7 +137,7 @@ def registrar_coordinador_ua(request):
                 
     else:
         formulario_usuario = FormularioUsuarioDeSistema()
-        formulario_perfil = FormularioRegistrarCoordinadorUA()
+        formulario_perfil = FormularioRegistrarCoordinadorUA(universidad=universidad_usuario)
         formulario_docente = FormularioDatosDocenteUA()
 
     return render(request, "usuarios/formulario_administrativo.html", {

@@ -84,6 +84,7 @@ class PerfilAdministrativo(models.Model):
     identificador_coordinador_dan = models.CharField(max_length=50, null=True, blank=True, unique=True, verbose_name="Número de identificador DAN")
     identificador_coordinador_ua = models.CharField(max_length=50, null=True, blank=True, unique=True, verbose_name="Número de identificador UA")
     unidad_academica = models.CharField(max_length=200, null=True, blank=True, verbose_name="Unidad académica")
+    carrera_asignada = models.ForeignKey('academico.Carrera', on_delete=models.SET_NULL, related_name="coordinadores_ua", verbose_name="Carrera asignada", null=True, blank=True)
     class Meta:
         verbose_name = "Perfil administrativo"; verbose_name_plural = "Perfiles administrativos"
     def __str__(self): return f"{self.perfil_administrativo.upper()}: {self.usuario_de_sistema.nombres} {self.usuario_de_sistema.apellidos}"
