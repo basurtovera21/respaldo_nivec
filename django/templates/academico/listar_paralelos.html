@@ -11,8 +11,8 @@
 {% endblock %}
 
 {% block filtros %}
-    <form method="get" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-        <label style="font-weight: bold; font-size: 13px; color: #515154;">Periodo de nivelación:</label>
+    <form method="get" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+        <label style="font-weight: bold; font-size: 13px; color: #515154;">Periodo:</label>
         <select name="periodo" onchange="this.form.submit()"
                 style="padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 13px; background: white; color: #1d1d1f; outline: none;">
             <option value=""></option>
@@ -22,7 +22,28 @@
                 </option>
             {% endfor %}
         </select>
-        {% if periodo_seleccionado %}
+
+        <label style="font-weight: bold; font-size: 13px; color: #515154;">Carrera:</label>
+        <select name="carrera" onchange="this.form.submit()"
+                style="padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 13px; background: white; color: #1d1d1f; outline: none;">
+            <option value=""></option>
+            {% for c in carreras %}
+                <option value="{{ c.id }}" {% if carrera_seleccionada.id == c.id %}selected{% endif %}>
+                    {{ c.nombre }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label style="font-weight: bold; font-size: 13px; color: #515154;">Jornada:</label>
+        <select name="jornada" onchange="this.form.submit()"
+                style="padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 13px; background: white; color: #1d1d1f; outline: none;">
+            <option value=""></option>
+            {% for j in jornadas %}
+                <option value="{{ j }}" {% if jornada_filtro == j %}selected{% endif %}>{{ j }}</option>
+            {% endfor %}
+        </select>
+
+        {% if periodo_seleccionado or carrera_seleccionada or jornada_filtro %}
             <a href="{% url 'listar_paralelos' %}" class="boton boton-secundario">Reiniciar</a>
         {% endif %}
     </form>

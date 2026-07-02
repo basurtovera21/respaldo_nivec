@@ -3,11 +3,12 @@ from django.contrib import messages
 from django.db import transaction
 from django.db.models import ProtectedError, Count
 
-from academico.models import Paralelo, PeriodoDeNivelacion, MatriculaParalelo
+from academico.models import Paralelo, PeriodoDeNivelacion, MatriculaParalelo, Carrera
 from academico.services import servicio_generar_paralelos, servicio_mover_estudiante, servicio_recalcular_cohorte_de_carrera, servicio_retirar_estudiante_de_paralelo, servicio_agregar_estudiante_a_paralelo, periodo_permite_gestion_matriculas
 from usuarios.models import PerfilEstudiante
 from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
 from poo.clases.enums.estado_de_matricula import EstadoDeMatricula
+from poo.clases.enums.jornada import Jornada
 from usuarios.utils import (
     requiere_perfil,
     usuario_es_solo_lectura,
@@ -22,10 +23,18 @@ ROLES_MODIFICAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
 
 
 def _numero_para_orden(nombre):
+    # Soporta "Paralelo N" (legacy) y letras "A", "B", ..., "A1" etc.
+    nombre = str(nombre).strip()
     try:
-        return int(str(nombre).split()[-1])
+        return int(nombre.split()[-1])
     except (ValueError, IndexError):
-        return 0
+        pass
+    # Orden por letra: A=0, B=1, ..., Z=25, A1=26, B1=27...
+    if len(nombre) == 1 and nombre.isalpha():
+        return ord(nombre.upper()) - ord('A')
+    if len(nombre) >= 2 and nombre[0].isalpha() and nombre[1:].isdigit():
+        return 26 + (int(nombre[1:]) - 1) * 26 + (ord(nombre[0].upper()) - ord('A'))
+    return 0
 
 
 def _paralelos_del_grupo(representativo):
@@ -45,6 +54,7 @@ def listar_paralelos(request):
         return redirect("panel_principal")
 
     periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario)
+    carreras = Carrera.objects.filter(campus__universidad=universidad_usuario).order_by("nombre")
 
     paralelos = Paralelo.objects.filter(
         periodo_de_nivelacion__universidad=universidad_usuario
@@ -54,10 +64,19 @@ def listar_paralelos(request):
     ).annotate(_n_estudiantes=Count("estudiantes_matriculados"))
 
     periodo_id = request.GET.get("periodo")
+    carrera_id = request.GET.get("carrera")
+    jornada_filtro = request.GET.get("jornada")
     periodo_seleccionado = None
+    carrera_seleccionada = None
+
     if periodo_id:
         paralelos = paralelos.filter(periodo_de_nivelacion__id=periodo_id)
         periodo_seleccionado = periodos.filter(id=periodo_id).first()
+    if carrera_id:
+        paralelos = paralelos.filter(unidad_curricular__malla_curricular__carrera__id=carrera_id)
+        carrera_seleccionada = carreras.filter(id=carrera_id).first()
+    if jornada_filtro:
+        paralelos = paralelos.filter(jornada=jornada_filtro)
 
     grupos = {}
     for p in paralelos:
@@ -84,7 +103,11 @@ def listar_paralelos(request):
     return render(request, "academico/listar_paralelos.html", {
         "paralelos": paralelos_agrupados,
         "periodos": periodos,
+        "carreras": carreras,
+        "jornadas": [j.value for j in Jornada],
         "periodo_seleccionado": periodo_seleccionado,
+        "carrera_seleccionada": carrera_seleccionada,
+        "jornada_filtro": jornada_filtro or "",
         "solo_lectura": usuario_es_solo_lectura(request.user),
         "titulo_pagina": "Paralelo - NIVEC",
         "titulo": "Paralelos",
