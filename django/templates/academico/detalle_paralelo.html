@@ -21,9 +21,12 @@
         </p>
     </div>
     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <a href="{% url 'descargar_info_paralelo' representativo.id %}" class="boton boton-secundario">Descargar información registrada</a>
         <a href="{% url 'listar_horarios_paralelo' representativo.id %}" class="boton boton-primario">Horarios del paralelo</a>
     </div>
+</div>
+
+<div style="margin-bottom: 16px;">
+    <a href="{% url 'descargar_info_paralelo' representativo.id %}" style="color: #0071e3; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar información registrada</a>
 </div>
 
 <div class="tarjeta" style="padding: 0; overflow-x: auto;">
