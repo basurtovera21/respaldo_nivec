@@ -772,6 +772,16 @@ def servicio_recalcular_cohorte_de_carrera(periodo_db, carrera):
     cohorte.save()
 
 
+def _nombre_paralelo_letra(indice):
+    # 0->A, 1->B, ..., 25->Z, 26->A1, 27->B1, ..., 51->Z1, 52->A2...
+    letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    if indice < 26:
+        return letras[indice]
+    ciclo = (indice - 26) // 26 + 1
+    pos = (indice - 26) % 26
+    return f"{letras[pos]}{ciclo}"
+
+
 def servicio_generar_paralelos(periodo_db, capacidad=35):
     import math
     from poo.clases.paralelo import Paralelo as ParaleloBase
@@ -912,20 +922,19 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
 
                 estudiantes_restantes = estudiantes[indice_pendiente:]
                 if estudiantes_restantes:
-                    # El número (nombre) reinicia por carrera: cada carrera empieza en "Paralelo 1".
-                    numeros_carrera = [
-                        _numero_de_grupo(nombre) for nombre in
+                    # El nombre reinicia por carrera: cada carrera empieza en "A".
+                    nombres_existentes = list(
                         Paralelo.objects.filter(
                             periodo_de_nivelacion=periodo_db,
                             unidad_curricular__malla_curricular__carrera=carrera,
                         ).values_list("nombre", flat=True).distinct()
-                    ]
-                    indice_base = max(numeros_carrera) if numeros_carrera else 0
+                    )
+                    indice_base = len(set(nombres_existentes))
                     numero_de_grupos = math.ceil(len(estudiantes_restantes) / capacidad)
                     grupos_poo = [
                         ParaleloBase(
                             codigo_de_paralelo=f"G{indice}",
-                            nombre=f"Paralelo {indice_base + indice}",
+                            nombre=_nombre_paralelo_letra(indice_base + indice - 1),
                             jornada=enum_jornada,
                             modalidad=enum_modalidad,
                             capacidad_maxima=capacidad,
@@ -939,7 +948,7 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                         miembros = list(grupo_poo._estudiantes_matriculados)
                         if not miembros:
                             continue
-                        nombre_nuevo = f"Paralelo {indice_base + indice}"
+                        nombre_nuevo = _nombre_paralelo_letra(indice_base + indice - 1)
                         # Un solo código para todo el paralelo lógico (todas sus unidades).
                         contador_codigo += 1
                         codigo_nuevo = f"PAR{contador_codigo:03d}"
