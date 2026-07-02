@@ -68,6 +68,7 @@ urlpatterns = [
     path("paralelos/<int:paralelo_id>/calificaciones/", views.listar_evaluaciones_paralelo, name="listar_evaluaciones_paralelo"),
     path("paralelos/<int:paralelo_id>/calificaciones/cargar/", views.cargar_calificaciones, name="cargar_calificaciones"),
     path("paralelos/<int:paralelo_id>/calificaciones/plantilla/", views.descargar_plantilla_calificaciones, name="descargar_plantilla_calificaciones"),
+    path("evaluacion/<int:evaluacion_id>/detalle/", views.detalle_evaluacion, name="detalle_evaluacion"),
     #Procesos académicos
     path("cohortes/", views.listar_cohortes, name="listar_cohortes"),
     path("cohortes/registrar/", views.registrar_cohorte, name="registrar_cohorte"),

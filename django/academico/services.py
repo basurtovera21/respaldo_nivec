@@ -1589,7 +1589,11 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
 
     for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
         try:
-            identificacion, parcial_1, parcial_2, asistencia = fila[:4]
+            # Columns: ID, Apellidos, Nombres, Correo, Matricula, P1, P2, Asistencia
+            identificacion = fila[0]
+            parcial_1 = fila[5] if len(fila) > 5 else None
+            parcial_2 = fila[6] if len(fila) > 6 else None
+            asistencia = fila[7] if len(fila) > 7 else None
             if not identificacion:
                 continue
             identificacion_str = str(identificacion).strip()
