@@ -136,7 +136,7 @@ def listar_paralelos(request):
         "solo_lectura": usuario_es_solo_lectura(request.user),
         "titulo_pagina": "Paralelo - NIVEC",
         "titulo": "Paralelos",
-        "url_volver": "panel_dan",
+        "url_volver": "panel_principal",
     })
 
 @requiere_perfil(*ROLES_MODIFICAN)
