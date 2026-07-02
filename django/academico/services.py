@@ -1527,6 +1527,11 @@ def servicio_asignar_docente(paralelo_db, docente_db):
     if not Horario.objects.filter(paralelo=paralelo_db).exists():
         return (False, "Debe registrar el horario de la Unidad curricular antes de asignar un Docente", None)
 
+    # Exigir que el horario esté COMPLETO (horas agendadas >= horas semanales requeridas).
+    horas_agendadas = servicio_horas_agendadas_paralelo(paralelo_db)
+    if horas_agendadas < horas_unidad:
+        return (False, f"El horario de la Unidad curricular no está completo ({horas_agendadas}/{horas_unidad} h semanales)", None)
+
     docente_poo, carga_actual = _construir_docente_poo_para_periodo(
         docente_db, periodo, paralelo_excluir_id=paralelo_db.id
     )
