@@ -1243,7 +1243,7 @@ def _sugerir_bloque_libre(dia_poo, franja_inicio, franja_fin, bloque_horas, ocup
     base = datetime(2000, 1, 1, franja_inicio.hour, franja_inicio.minute)
     tope = datetime(2000, 1, 1, franja_fin.hour, franja_fin.minute)
     dur = timedelta(hours=bloque_horas)
-    paso = timedelta(minutes=30)
+    paso = timedelta(minutes=60)
     actual = base
     while actual + dur <= tope:
         h_ini = actual.time()
