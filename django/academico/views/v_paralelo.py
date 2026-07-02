@@ -98,7 +98,7 @@ def listar_paralelos(request):
             }
         grupos[clave]["unidades"] += 1
 
-    paralelos_agrupados = sorted(grupos.values(), key=lambda g: g["_orden"])
+    paralelos_agrupados = sorted(grupos.values(), key=lambda g: g["codigo"])
 
     return render(request, "academico/listar_paralelos.html", {
         "paralelos": paralelos_agrupados,
