@@ -2,15 +2,6 @@
 {% block titulo %}NIVEC{% endblock %}
 
 {% block contenido %}
-    <style>
-        .boton-deshabilitado {
-            background: #f2f2f7;
-            color: #b0b0b5;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-    </style>
-
     <h2 style="margin-bottom: 20px;">Coordinación de admisión y nivelación</h2>
 
     <div class="tarjeta">
@@ -41,21 +32,11 @@
     </div>
 
     <div class="tarjeta">
-        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Vinculación docente</h2>
+        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Evaluación académica</h2>
+        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Calificaciones y resultados</p>
         <div class="acciones" style="margin-bottom: 0;">
-            <a href="{% url 'listar_paralelos' %}" class="boton boton-secundario">Asignaciones</a>
-            <span class="boton boton-deshabilitado">Incidencias académicas</span>
-            <span class="boton boton-deshabilitado">Evaluaciones de desempeño</span>
-        </div>
-    </div>
-
-    <div class="tarjeta">
-        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">-</h2>
-        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">-</p>
-        <div class="acciones" style="margin-bottom: 0;">
-            <span class="boton boton-deshabilitado">Cohortes de matrícula</span>
-            <span class="boton boton-deshabilitado">Evaluaciones académicas</span>
-            <span class="boton boton-deshabilitado">Informes generales</span>
+            <a href="{% url 'listar_paralelos' %}" class="boton boton-secundario">Calificaciones por paralelo</a>
+            <a href="{% url 'informe_general' %}" class="boton boton-secundario">Informe general</a>
         </div>
     </div>
 

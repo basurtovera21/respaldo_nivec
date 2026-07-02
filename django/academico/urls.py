@@ -85,6 +85,9 @@ urlpatterns = [
     path("incidencias/registrar/", views.registrar_incidencia, name="registrar_incidencia"),
     path("desempeno/registrar/", views.registrar_desempeno, name="registrar_desempeno"),
     #Distribución automática
+    #Informe general
+    path("informe-general/", views.informe_general, name="informe_general"),
+    path("informe-general/descargar/", views.descargar_informe_general, name="descargar_informe_general"),
     #Informe
     path("informes/", views.listar_informes, name="listar_informes"),
     path("informes/registrar/", views.registrar_informe, name="registrar_informe"),
