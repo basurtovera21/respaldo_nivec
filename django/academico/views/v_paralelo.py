@@ -384,3 +384,101 @@ def agregar_estudiante(request, paralelo_id):
         (messages.success if ok else messages.error)(request, mensaje)
 
     return redirect("estudiantes_disponibles", paralelo_id=paralelo.id)
+
+
+
+@requiere_perfil(*ROLES_VISUALIZAN)
+def consolidado_paralelos_excel(request):
+    import openpyxl
+    from django.http import HttpResponse
+    from academico.models import Horario
+
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    periodo_id = request.GET.get("periodo")
+    if not periodo_id:
+        messages.warning(request, "Especifique un Periodo de nivelación")
+        return redirect("listar_paralelos")
+
+    periodo = PeriodoDeNivelacion.objects.filter(id=periodo_id, universidad=universidad_usuario).first()
+    if not periodo:
+        messages.error(request, "Periodo de nivelación no válido")
+        return redirect("listar_paralelos")
+
+    paralelos = Paralelo.objects.filter(
+        periodo_de_nivelacion=periodo
+    ).select_related(
+        "unidad_curricular__malla_curricular__carrera",
+        "docente_responsable__usuario_de_sistema",
+        "periodo_de_nivelacion",
+    ).order_by(
+        "unidad_curricular__malla_curricular__carrera__nombre",
+        "nombre",
+        "unidad_curricular__nombre",
+    )
+
+    # Agrupar por paralelo lógico (carrera + jornada + nombre)
+    grupos = {}
+    for p in paralelos:
+        carrera = p.unidad_curricular.malla_curricular.carrera
+        clave = (carrera.nombre, p.jornada, p.nombre)
+        if clave not in grupos:
+            grupos[clave] = {
+                "carrera": carrera.nombre,
+                "codigo_paralelo": p.codigo_de_paralelo,
+                "nombre": p.nombre,
+                "jornada": p.get_jornada_display(),
+                "modalidad": p.get_modalidad_display(),
+                "capacidad": p.capacidad_maxima,
+                "estudiantes": MatriculaParalelo.objects.filter(paralelo=p).count(),
+                "unidades": [],
+            }
+        docente = ""
+        if p.docente_responsable:
+            d = p.docente_responsable.usuario_de_sistema
+            docente = f"{d.nombres} {d.apellidos}"
+        horarios_txt = ", ".join(
+            f"{h.get_dia_semana_display()} {h.hora_inicio.strftime('%H:%M')}-{h.hora_fin.strftime('%H:%M')}"
+            for h in Horario.objects.filter(paralelo=p).order_by("dia_semana", "hora_inicio")
+        )
+        grupos[clave]["unidades"].append({
+            "nombre": p.unidad_curricular.nombre,
+            "codigo": p.unidad_curricular.codigo_de_unidad,
+            "docente": docente,
+            "horario": horarios_txt,
+        })
+
+    wb = openpyxl.Workbook()
+    wb.remove(wb.active)
+
+    for idx, ((carrera, jornada_val, nombre_par), grupo) in enumerate(sorted(grupos.items())):
+        titulo_hoja = f"{nombre_par[:20]} ({grupo['jornada'][:3]})"[:31]
+        ws = wb.create_sheet(title=titulo_hoja)
+
+        # Encabezado del paralelo
+        ws.append(["Consolidado de Paralelo"])
+        ws.append(["Carrera", grupo["carrera"]])
+        ws.append(["Paralelo", grupo["nombre"]])
+        ws.append(["Código", grupo["codigo_paralelo"]])
+        ws.append(["Jornada", grupo["jornada"]])
+        ws.append(["Modalidad", grupo["modalidad"]])
+        ws.append(["Capacidad máxima", grupo["capacidad"]])
+        ws.append(["Estudiantes matriculados", grupo["estudiantes"]])
+        ws.append(["Periodo", periodo.periodo])
+        ws.append([])
+
+        # Tabla de unidades
+        ws.append(["Código de unidad", "Unidad curricular", "Docente responsable", "Horario semanal"])
+        for u in grupo["unidades"]:
+            ws.append([u["codigo"], u["nombre"], u["docente"] or "—", u["horario"] or "—"])
+
+        for col in range(1, 5):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 35
+
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = f'attachment; filename="consolidado_paralelos_{periodo.periodo}.xlsx"'
+    wb.save(response)
+    return response
