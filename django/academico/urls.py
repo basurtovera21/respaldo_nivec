@@ -62,6 +62,7 @@ urlpatterns = [
     path("horarios/<int:horario_id>/editar/", views.editar_horario, name="editar_horario"),
     path("horarios/<int:horario_id>/eliminar/", views.eliminar_horario, name="eliminar_horario"),
     path("horarios/matriz/", views.matriz_horarios, name="matriz_horarios"),
+    path("horarios/descargar-excel/", views.descargar_horarios_excel, name="descargar_horarios_excel"),
     path("paralelos/<int:paralelo_id>/docente/", views.asignar_docente_paralelo, name="asignar_docente_paralelo"),
     #Procesos académicos
     path("cohortes/", views.listar_cohortes, name="listar_cohortes"),

@@ -3,11 +3,11 @@ from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 
-from academico.models import Paralelo, Horario, PeriodoDeNivelacion
+from academico.models import Paralelo, Horario, PeriodoDeNivelacion, Carrera
 from academico.services import servicio_registrar_horario, servicio_horas_agendadas_paralelo, servicio_obtener_matriz_de_horarios, servicio_generar_horario_sugerido, servicio_editar_horario, periodo_en_planificacion, _horas_sincronicas_semanales
 from poo.clases.enums.dia_de_semana import DiaDeSemana
 from poo.clases.enums.jornada import Jornada
-from poo.clases.franja_horaria import texto_franja
+from poo.clases.franja_horaria import texto_franja, obtener_franja
 from usuarios.utils import (
     requiere_perfil,
     usuario_es_solo_lectura,
@@ -74,7 +74,6 @@ def listar_horarios_paralelo(request, paralelo_id):
     jornada_enum = Jornada(representativo.jornada)
 
     # Construir datos de la grilla visual (Día × Hora)
-    from poo.clases.franja_horaria import obtener_franja
     franja = obtener_franja(jornada_enum)
     slots_hora = []
     if franja:
@@ -237,6 +236,9 @@ def eliminar_horario(request, horario_id):
 
 @requiere_perfil(*ROLES_VISUALIZAN)
 def matriz_horarios(request):
+    from academico.models import Carrera
+    from poo.clases.franja_horaria import obtener_franja
+
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
         messages.warning(request, "La universidad no ha sido registrada actualmente")
@@ -245,51 +247,191 @@ def matriz_horarios(request):
     periodos = PeriodoDeNivelacion.objects.filter(
         universidad=universidad_usuario
     ).order_by("-anio", "numero_periodo")
+    carreras = Carrera.objects.filter(campus__universidad=universidad_usuario).order_by("nombre")
+    jornadas = [j.value for j in Jornada]
 
     periodo_id = request.GET.get("periodo") or None
-    grupo_clave = request.GET.get("grupo") or None
+    carrera_id = request.GET.get("carrera") or None
+    jornada_filtro = request.GET.get("jornada") or None
+    paralelo_id = request.GET.get("paralelo") or None
 
     periodo_seleccionado = None
+    carrera_seleccionada = None
     grupos = []
-    matriz = []
+    paralelo_seleccionado = None
+    grilla = []
+    dias_semana = []
+    mapa_colores = {}
+    franja = None
 
     if periodo_id:
-        periodo_seleccionado = get_object_or_404(
-            PeriodoDeNivelacion, id=periodo_id, universidad=universidad_usuario
-        )
+        periodo_seleccionado = PeriodoDeNivelacion.objects.filter(
+            id=periodo_id, universidad=universidad_usuario
+        ).first()
+    if carrera_id:
+        carrera_seleccionada = carreras.filter(id=carrera_id).first()
 
-        paralelos = Paralelo.objects.filter(
+    # Build paralelo groups based on filters
+    if periodo_seleccionado:
+        paralelos_qs = Paralelo.objects.filter(
             periodo_de_nivelacion=periodo_seleccionado
         ).select_related("unidad_curricular__malla_curricular__carrera")
 
+        if carrera_seleccionada:
+            paralelos_qs = paralelos_qs.filter(
+                unidad_curricular__malla_curricular__carrera=carrera_seleccionada
+            )
+        if jornada_filtro:
+            paralelos_qs = paralelos_qs.filter(jornada=jornada_filtro)
+
         grupos_vistos = {}
-        for p in paralelos:
-            carrera = p.unidad_curricular.malla_curricular.carrera
-            clave = f"{carrera.id}|{p.jornada}|{p.nombre}"
+        for p in paralelos_qs:
+            carrera_p = p.unidad_curricular.malla_curricular.carrera
+            clave = f"{carrera_p.id}|{p.jornada}|{p.nombre}"
             if clave not in grupos_vistos:
                 grupos_vistos[clave] = {
                     "clave": clave,
-                    "carrera": carrera.nombre,
-                    "jornada": p.get_jornada_display(),
+                    "carrera": carrera_p.nombre,
+                    "jornada_display": p.get_jornada_display(),
                     "nombre": p.nombre,
+                    "representativo_id": p.id,
                 }
-        grupos = list(grupos_vistos.values())
+        grupos = sorted(grupos_vistos.values(), key=lambda g: (g["carrera"], g["nombre"]))
 
-        if grupo_clave and grupo_clave in grupos_vistos:
-            carrera_id, jornada_valor, nombre_valor = grupo_clave.split("|", 2)
-            paralelos_grupo = paralelos.filter(
-                unidad_curricular__malla_curricular__carrera_id=carrera_id,
-                jornada=jornada_valor,
-                nombre=nombre_valor,
-            )
-            matriz = servicio_obtener_matriz_de_horarios(periodo_seleccionado, paralelos_grupo)
+        # If a paralelo is selected, build grilla
+        if paralelo_id:
+            paralelo_seleccionado = Paralelo.objects.filter(
+                id=paralelo_id, periodo_de_nivelacion=periodo_seleccionado
+            ).select_related("unidad_curricular__malla_curricular__carrera").first()
+
+            if paralelo_seleccionado:
+                unidades_rows = list(_unidades_del_grupo(paralelo_seleccionado))
+                horarios = Horario.objects.filter(
+                    paralelo__in=unidades_rows
+                ).select_related("paralelo__unidad_curricular")
+
+                jornada_enum = Jornada(paralelo_seleccionado.jornada)
+                franja_rango = obtener_franja(jornada_enum)
+                franja = texto_franja(jornada_enum)
+                slots_hora = []
+                if franja_rango:
+                    h = franja_rango[0].hour
+                    while h < franja_rango[1].hour:
+                        slots_hora.append(h)
+                        h += 1
+
+                _COLORES_UNIDAD = [
+                    "#e8e8ed", "#d2d2d7", "#c7c7cc", "#b0b0b5", "#9a9a9f",
+                    "#aeaeb2", "#dcdce0", "#c4c4c8", "#bababe", "#8e8e93",
+                ]
+                nombres_unidades = sorted(set(h.paralelo.unidad_curricular.nombre for h in horarios))
+                mapa_colores = {nombre: _COLORES_UNIDAD[i % len(_COLORES_UNIDAD)] for i, nombre in enumerate(nombres_unidades)}
+
+                dias_semana = [d.value for d in DiaDeSemana]
+                for slot in slots_hora:
+                    fila = {"hora": f"{slot:02d}:00", "celdas": []}
+                    for dia in dias_semana:
+                        bloque = None
+                        for h_obj in horarios:
+                            if h_obj.dia_semana == dia and h_obj.hora_inicio.hour <= slot < h_obj.hora_fin.hour:
+                                bloque = {
+                                    "nombre": h_obj.paralelo.unidad_curricular.nombre,
+                                    "hora_inicio": h_obj.hora_inicio.strftime("%H:%M"),
+                                    "hora_fin": h_obj.hora_fin.strftime("%H:%M"),
+                                    "slot_inicio": f"{slot:02d}:00",
+                                    "slot_fin": f"{slot+1:02d}:00",
+                                    "color": mapa_colores.get(h_obj.paralelo.unidad_curricular.nombre, "#e8e8ed"),
+                                }
+                                break
+                        fila["celdas"].append(bloque)
+                    grilla.append(fila)
 
     return render(request, "academico/matriz_horarios.html", {
         "periodos": periodos,
+        "carreras": carreras,
+        "jornadas": jornadas,
         "periodo_seleccionado": periodo_seleccionado,
+        "carrera_seleccionada": carrera_seleccionada,
+        "jornada_filtro": jornada_filtro or "",
         "grupos": grupos,
-        "grupo_seleccionado": grupo_clave,
-        "matriz": matriz,
+        "paralelo_seleccionado": paralelo_seleccionado,
+        "grilla": grilla,
+        "dias_semana": dias_semana,
+        "mapa_colores": mapa_colores,
+        "franja": franja,
         "titulo_pagina": "Horario - NIVEC",
         "titulo": "Matriz de horarios",
     })
+
+
+@requiere_perfil(*ROLES_VISUALIZAN)
+def descargar_horarios_excel(request):
+    import openpyxl
+    from django.http import HttpResponse
+    from academico.models import Carrera
+
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    periodo_id = request.GET.get("periodo")
+    carrera_id = request.GET.get("carrera")
+
+    if not periodo_id or not carrera_id:
+        messages.error(request, "Debe especificar un Periodo y una Carrera")
+        return redirect("matriz_horarios")
+
+    periodo = get_object_or_404(PeriodoDeNivelacion, id=periodo_id, universidad=universidad_usuario)
+    carrera = get_object_or_404(Carrera, id=carrera_id, campus__universidad=universidad_usuario)
+
+    paralelos = Paralelo.objects.filter(
+        periodo_de_nivelacion=periodo,
+        unidad_curricular__malla_curricular__carrera=carrera,
+    ).select_related("unidad_curricular").order_by("jornada", "nombre")
+
+    # Group by jornada
+    jornadas_dict = {}
+    for p in paralelos:
+        jornadas_dict.setdefault(p.jornada, []).append(p)
+
+    wb = openpyxl.Workbook()
+    wb.remove(wb.active)
+
+    for jornada_valor, paralelos_jornada in jornadas_dict.items():
+        try:
+            jornada_nombre = Jornada(jornada_valor).value
+        except (ValueError, KeyError):
+            jornada_nombre = jornada_valor
+
+        ws = wb.create_sheet(title=str(jornada_nombre)[:31])
+        ws.append(["Paralelo", "Unidad curricular", "Día", "Hora inicio", "Hora fin", "Espacio"])
+
+        horarios = Horario.objects.filter(
+            paralelo__in=paralelos_jornada
+        ).select_related("paralelo__unidad_curricular").order_by(
+            "paralelo__nombre", "dia_semana", "hora_inicio"
+        )
+
+        for h in horarios:
+            ws.append([
+                h.paralelo.nombre,
+                h.paralelo.unidad_curricular.nombre,
+                h.dia_semana,
+                h.hora_inicio.strftime("%H:%M"),
+                h.hora_fin.strftime("%H:%M"),
+                h.espacio_de_imparticion or "",
+            ])
+
+        for col in range(1, 7):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 25
+
+    if not wb.sheetnames:
+        ws = wb.create_sheet(title="Sin datos")
+        ws.append(["No se encontraron horarios para la carrera y periodo seleccionados"])
+
+    nombre_archivo = f"horarios_{carrera.nombre}_{periodo.periodo}".lower().replace(" ", "_")
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = f'attachment; filename="{nombre_archivo}.xlsx"'
+    wb.save(response)
+    return response

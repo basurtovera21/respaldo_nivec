@@ -33,6 +33,7 @@
     <table style="width: 100%;">
         <thead>
             <tr>
+                <th style="font-weight: bold; text-align: left; color: #515154">Código</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Unidad curricular</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Docente responsable</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Acciones</th>
@@ -41,6 +42,7 @@
         <tbody>
             {% for u in unidades %}
             <tr>
+                <td style="font-family: monospace; text-align: left; color: #1d1d1f;">{{ u.unidad_curricular.codigo_de_unidad }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ u.unidad_curricular.nombre }}</td>
                 <td style="text-align: left; color: #1d1d1f;">
                     {% if u.docente_responsable %}
@@ -58,7 +60,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="3" style="text-align: center; color: #86868b; padding: 30px;">
+                <td colspan="4" style="text-align: center; color: #86868b; padding: 30px;">
                     No existen registros actualmente
             </tr>
             {% endfor %}
