@@ -17,8 +17,6 @@ from poo.clases.enums.modalidad import Modalidad
 from poo.clases.enums.jornada import Jornada
 from poo.clases.enums.tipo_de_cohorte import TipoDeCohorte
 from poo.clases.enums.dia_de_semana import DiaDeSemana
-from poo.clases.enums.tipo_de_sesion import TipoDeSesion
-
 # POO
 from poo.clases.carrera import Carrera as CarreraBase
 from poo.clases.periodo_de_nivelacion import PeriodoDeNivelacion as PeriodoDeNivelacionBase
@@ -1130,8 +1128,6 @@ def _construir_horario_poo(horario_db):
         hora_inicio=horario_db.hora_inicio,
         hora_fin=horario_db.hora_fin,
         espacio_de_imparticion=horario_db.espacio_de_imparticion,
-        numero_semana=horario_db.numero_semana,
-        tipo_de_sesion=obtener_enum_flexible(TipoDeSesion, horario_db.tipo_de_sesion),
     )
 
 def _construir_paralelo_poo_con_horarios(paralelo_db):
@@ -1179,7 +1175,7 @@ def periodo_en_planificacion(periodo_db):
     from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
     return periodo_db.estado == EstadoDePeriodo.PLANIFICACION.value
 
-def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, espacio, tipo_de_sesion):
+def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, espacio):
     from poo.clases.franja_horaria import sesion_dentro_de_franja, DURACIONES_VALIDAS, texto_franja
 
     if not periodo_en_planificacion(paralelo_db.periodo_de_nivelacion):
@@ -1187,22 +1183,18 @@ def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, e
 
     try:
         enum_dia = obtener_enum_flexible(DiaDeSemana, dia_semana)
-        enum_tipo = obtener_enum_flexible(TipoDeSesion, tipo_de_sesion)
     except ValueError:
-        return (False, "Día o Tipo de sesión no válido")
+        return (False, "Día no válido")
 
     # Una sola sesión de la misma unidad por día.
     if Horario.objects.filter(paralelo=paralelo_db, dia_semana=dia_semana).exists():
         return (False, "La Unidad curricular ya tiene una sesión ese día (solo se permite una por día)")
 
-    # Patrón semanal: el horario se repite todas las semanas del periodo (numero_semana=1).
     nuevo_horario_poo = HorarioPOO(
         dia_semana=enum_dia,
         hora_inicio=hora_inicio,
         hora_fin=hora_fin,
         espacio_de_imparticion=espacio,
-        numero_semana=1,
-        tipo_de_sesion=enum_tipo,
     )
 
     errores_horario = nuevo_horario_poo.validar_datos_de_registro()
@@ -1242,13 +1234,11 @@ def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, e
         hora_inicio=hora_inicio,
         hora_fin=hora_fin,
         espacio_de_imparticion=espacio,
-        numero_semana=1,
-        tipo_de_sesion=tipo_de_sesion,
     )
     return (True, "El horario ha sido registrado correctamente")
 
 
-def _sugerir_bloque_libre(dia_poo, franja_inicio, franja_fin, bloque_horas, ocupados, tipo_sesion_poo):
+def _sugerir_bloque_libre(dia_poo, franja_inicio, franja_fin, bloque_horas, ocupados):
     from datetime import datetime, timedelta
     base = datetime(2000, 1, 1, franja_inicio.hour, franja_inicio.minute)
     tope = datetime(2000, 1, 1, franja_fin.hour, franja_fin.minute)
@@ -1260,7 +1250,7 @@ def _sugerir_bloque_libre(dia_poo, franja_inicio, franja_fin, bloque_horas, ocup
         h_fin = (actual + dur).time()
         candidato = HorarioPOO(
             dia_semana=dia_poo, hora_inicio=h_ini, hora_fin=h_fin,
-            espacio_de_imparticion="", numero_semana=1, tipo_de_sesion=tipo_sesion_poo,
+            espacio_de_imparticion="",
         )
         if not any(candidato.verificar_conflicto_horario(o) for o in ocupados):
             return (h_ini, h_fin)
@@ -1284,7 +1274,7 @@ def _distribucion_simetrica(horas, max_dias=7, min_h=1, max_h=3):
     return [min(base + (1 if i < extra else 0), max_h) for i in range(dias)]
 
 
-def _generar_horario_para_unidad(paralelo_unidad_db, tipo_sincronica):
+def _generar_horario_para_unidad(paralelo_unidad_db):
     from poo.clases.franja_horaria import obtener_franja
 
     jornada = obtener_enum_flexible(Jornada, paralelo_unidad_db.jornada)
@@ -1305,22 +1295,22 @@ def _generar_horario_para_unidad(paralelo_unidad_db, tipo_sincronica):
         _construir_horario_poo(h) for h in _horarios_externos_para_paralelo(paralelo_unidad_db)
     ]
     bloques = _distribucion_simetrica(restante)
-    dias = list(DiaDeSemana)  # Lunes a Domingo
+    dias = list(DiaDeSemana)
 
     nuevos_db = []
     generadas = 0.0
     for dia, bloque in zip(dias, bloques):
-        candidato = _sugerir_bloque_libre(dia, franja_inicio, franja_fin, bloque, ocupados, tipo_sincronica)
+        candidato = _sugerir_bloque_libre(dia, franja_inicio, franja_fin, bloque, ocupados)
         if not candidato:
             continue
         h_ini, h_fin = candidato
         ocupados.append(HorarioPOO(
             dia_semana=dia, hora_inicio=h_ini, hora_fin=h_fin,
-            espacio_de_imparticion="", numero_semana=1, tipo_de_sesion=tipo_sincronica,
+            espacio_de_imparticion="",
         ))
         nuevos_db.append(Horario(
             paralelo=paralelo_unidad_db, dia_semana=dia.value, hora_inicio=h_ini, hora_fin=h_fin,
-            espacio_de_imparticion="", numero_semana=1, tipo_de_sesion=tipo_sincronica.value,
+            espacio_de_imparticion="",
         ))
         generadas = round(generadas + bloque, 2)
 
@@ -1333,7 +1323,6 @@ def servicio_generar_horario_sugerido(representativo_db):
     # Genera el horario de TODO el paralelo lógico (todas sus unidades), de forma simétrica.
     if not periodo_en_planificacion(representativo_db.periodo_de_nivelacion):
         return (False, "Solo se pueden gestionar horarios en un Periodo en planificación")
-    tipo_sincronica = obtener_enum_flexible(TipoDeSesion, "Sincrónica")
     unidades = list(
         _paralelos_del_grupo_de_estudiantes(representativo_db).select_related("unidad_curricular")
     )
@@ -1341,7 +1330,7 @@ def servicio_generar_horario_sugerido(representativo_db):
     total_creados = 0
     faltantes = []
     for row in unidades:
-        creados, faltante = _generar_horario_para_unidad(row, tipo_sincronica)
+        creados, faltante = _generar_horario_para_unidad(row)
         total_creados += creados
         if faltante > 0:
             faltantes.append((row.unidad_curricular.nombre, faltante))
@@ -1358,7 +1347,7 @@ def servicio_generar_horario_sugerido(representativo_db):
     return (True, mensaje)
 
 
-def servicio_editar_horario(horario_db, dia_semana, hora_inicio, hora_fin, espacio, tipo_de_sesion):
+def servicio_editar_horario(horario_db, dia_semana, hora_inicio, hora_fin, espacio):
     from poo.clases.franja_horaria import sesion_dentro_de_franja, DURACIONES_VALIDAS, texto_franja
 
     paralelo_db = horario_db.paralelo
@@ -1366,9 +1355,8 @@ def servicio_editar_horario(horario_db, dia_semana, hora_inicio, hora_fin, espac
         return (False, "Solo se pueden gestionar horarios en un Periodo en planificación")
     try:
         enum_dia = obtener_enum_flexible(DiaDeSemana, dia_semana)
-        enum_tipo = obtener_enum_flexible(TipoDeSesion, tipo_de_sesion)
     except ValueError:
-        return (False, "Día o Tipo de sesión no válido")
+        return (False, "Día no válido")
 
     # Una sola sesión de la misma unidad por día (excluyendo la sesión editada).
     if Horario.objects.filter(paralelo=paralelo_db, dia_semana=dia_semana).exclude(id=horario_db.id).exists():
@@ -1376,7 +1364,7 @@ def servicio_editar_horario(horario_db, dia_semana, hora_inicio, hora_fin, espac
 
     nuevo = HorarioPOO(
         dia_semana=enum_dia, hora_inicio=hora_inicio, hora_fin=hora_fin,
-        espacio_de_imparticion=espacio, numero_semana=1, tipo_de_sesion=enum_tipo,
+        espacio_de_imparticion=espacio,
     )
     errores = nuevo.validar_datos_de_registro()
     if errores:
@@ -1405,8 +1393,6 @@ def servicio_editar_horario(horario_db, dia_semana, hora_inicio, hora_fin, espac
     horario_db.hora_inicio = hora_inicio
     horario_db.hora_fin = hora_fin
     horario_db.espacio_de_imparticion = espacio
-    horario_db.tipo_de_sesion = tipo_de_sesion
-    horario_db.numero_semana = 1
     horario_db.save()
     return (True, "El horario ha sido actualizado correctamente")
 
@@ -1476,7 +1462,7 @@ def _texto_motivo_no_asignable(resultado):
     if motivo == "conflicto":
         conflicto = resultado["horario_en_conflicto"]
         return (
-            f"Conflicto de Horario el día '{conflicto.dia_semana.value}'. {conflicto.hora_inicio}–{conflicto.hora_fin} (semana {conflicto.numero_semana})"
+            f"Conflicto de Horario el día '{conflicto.dia_semana.value}'. {conflicto.hora_inicio}–{conflicto.hora_fin}"
         )
     if motivo == "carga":
         return (
