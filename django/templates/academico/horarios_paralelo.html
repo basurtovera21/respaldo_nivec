@@ -42,7 +42,12 @@
 </div>
 
 {% if not todas_completas or not es_planificacion %}
-<p style="color: #b45309; font-size: 13px; font-weight: bold; margin-bottom: 16px;">{% if not todas_completas %}Horario del paralelo incompleto{% endif %}{% if not es_planificacion %} — Los horarios solo se pueden gestionar cuando el Periodo está en planificación.{% endif %}</p>
+<div style="background: #fef9ec; border: 1px solid rgba(180,83,9,0.1); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px;">
+    <span style="color: #b45309; font-size: 13px; font-weight: bold;">
+        {% if not todas_completas %}Horario del paralelo incompleto{% endif %}
+        {% if not es_planificacion %} — Los horarios solo se pueden gestionar cuando el Periodo está en planificación{% endif %}
+    </span>
+</div>
 {% endif %}
 
 {% if grilla %}
