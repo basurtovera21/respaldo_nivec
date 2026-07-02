@@ -67,15 +67,12 @@
             <tr>
                 <td class="grilla-hora">{{ fila.hora }}</td>
                 {% for celda in fila.celdas %}
-                <td style="padding: 0;">
-                    {% if celda and celda.es_inicio %}
-                    <div class="bloque-materia" style="background: {{ celda.color }}; height: {{ celda.duracion|add:0 }}00%; min-height: {{ celda.duracion }}0px;">
+                <td style="padding: 2px;">
+                    {% if celda %}
+                    <div class="bloque-materia" style="background: {{ celda.color }};">
                         {{ celda.nombre }}
-                        <span class="bloque-hora-txt">{{ celda.hora_inicio }} - {{ celda.hora_fin }}</span>
-                        {% if celda.espacio %}<span class="bloque-hora-txt">{{ celda.espacio }}</span>{% endif %}
+                        <span class="bloque-hora-txt">{{ celda.slot_inicio }} - {{ celda.slot_fin }}</span>
                     </div>
-                    {% elif celda and not celda.es_inicio %}
-                    {% else %}
                     {% endif %}
                 </td>
                 {% endfor %}
