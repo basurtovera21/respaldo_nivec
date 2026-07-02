@@ -4,10 +4,6 @@
     {% if not solo_lectura %}
     <a href="{% url 'generar_paralelos' %}" class="boton boton-primario">Crear Paralelos</a>
     {% endif %}
-    {% if periodo_seleccionado %}
-    <a href="{% url 'consolidado_paralelos_excel' %}?periodo={{ periodo_seleccionado.id }}" class="boton boton-secundario">Consolidado general</a>
-    <a href="{% url 'consolidado_estudiantes_excel' %}?periodo={{ periodo_seleccionado.id }}" class="boton boton-secundario">Listado de estudiantes</a>
-    {% endif %}
 {% endblock %}
 
 {% block filtros %}
