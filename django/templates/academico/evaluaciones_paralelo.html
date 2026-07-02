@@ -3,6 +3,26 @@
 {% block titulo %}{{ titulo_pagina|default:"NIVEC" }}{% endblock %}
 
 {% block contenido %}
+<style>
+.etiqueta-accion {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.etiqueta-naranja {
+    background-color: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ffcc80;
+}
+.etiqueta-naranja:hover {
+    background-color: #ffe0b2;
+}
+</style>
+
 <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
 <p style="color: #515154; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
     {{ paralelo.periodo_de_nivelacion.periodo }} — {{ paralelo.get_jornada_display }}
@@ -22,12 +42,15 @@
                 <th style="font-weight: bold; text-align: left; color: #515154; padding: 12px 18px;">Identificación</th>
                 <th style="font-weight: bold; text-align: left; color: #515154; padding: 12px 18px;">Apellidos</th>
                 <th style="font-weight: bold; text-align: left; color: #515154; padding: 12px 18px;">Nombres</th>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 12px 18px;">Correo</th>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 12px 18px;">N° matrícula</th>
                 <th style="font-weight: bold; text-align: left; color: #515154; padding: 12px 18px;">Parcial 1</th>
                 <th style="font-weight: bold; text-align: left; color: #515154; padding: 12px 18px;">Parcial 2</th>
                 <th style="font-weight: bold; text-align: left; color: #515154; padding: 12px 18px;">Nota final</th>
                 <th style="font-weight: bold; text-align: left; color: #515154; padding: 12px 18px;">Asistencia</th>
                 <th style="font-weight: bold; text-align: left; color: #515154; padding: 12px 18px;">Estado</th>
                 <th style="font-weight: bold; text-align: left; color: #515154; padding: 12px 18px;">Revisión</th>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 12px 18px;">Detalle</th>
             </tr>
         </thead>
         <tbody>
@@ -36,16 +59,21 @@
                 <td style="font-family: monospace; text-align: left; padding: 12px 18px;">{{ e.estudiante.usuario_de_sistema.identificacion }}</td>
                 <td style="text-align: left; padding: 12px 18px;">{{ e.estudiante.usuario_de_sistema.apellidos }}</td>
                 <td style="text-align: left; padding: 12px 18px;">{{ e.estudiante.usuario_de_sistema.nombres }}</td>
+                <td style="text-align: left; padding: 12px 18px;">{{ e.estudiante.usuario_de_sistema.correo_institucional }}</td>
+                <td style="text-align: left; padding: 12px 18px;">{{ e.estudiante.numero_de_matricula }}</td>
                 <td style="text-align: left; padding: 12px 18px;">{{ e.calificacion_parcial_1 }}</td>
                 <td style="text-align: left; padding: 12px 18px;">{{ e.calificacion_parcial_2 }}</td>
                 <td style="text-align: left; padding: 12px 18px; font-weight: bold;">{{ e.nota_final }}</td>
                 <td style="text-align: left; padding: 12px 18px;">{{ e.porcentaje_asistencia }}%</td>
                 <td style="text-align: left; padding: 12px 18px; color: {% if e.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif e.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#86868b{% endif %}; font-weight: bold;">{{ e.estado_de_aprobacion }}</td>
                 <td style="text-align: left; padding: 12px 18px;">{{ e.estado_revision }}</td>
+                <td style="text-align: left; padding: 12px 18px;">
+                    <a href="{% url 'detalle_evaluacion' e.id %}" class="etiqueta-accion etiqueta-naranja">Ver detalle</a>
+                </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="9" style="text-align: center; color: #86868b; padding: 30px;">
+                <td colspan="12" style="text-align: center; color: #86868b; padding: 30px;">
                     No existen calificaciones registradas actualmente
                 </td>
             </tr>
