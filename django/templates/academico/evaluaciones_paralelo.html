@@ -21,6 +21,7 @@
 .etiqueta-naranja:hover {
     background-color: #ffe0b2;
 }
+.etiqueta-modificar { background-color: #f0f6ff; color: #0071e3; border: 1px solid rgba(0,113,227,0.1); }
 </style>
 
 <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
@@ -31,7 +32,6 @@
 {% if es_evaluacion and not solo_lectura %}
 <div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
     <a href="{% url 'cargar_calificaciones' paralelo.id %}" class="boton boton-primario">Cargar calificaciones</a>
-    <a href="{% url 'descargar_plantilla_calificaciones' paralelo.id %}" style="color: #0071e3; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar formato</a>
 </div>
 {% endif %}
 
@@ -68,6 +68,9 @@
                 <td style="text-align: left; padding: 12px 18px; color: {% if e.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif e.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#86868b{% endif %}; font-weight: bold;">{{ e.estado_de_aprobacion }}</td>
                 <td style="text-align: left; padding: 12px 18px;">{{ e.estado_revision }}</td>
                 <td style="text-align: left; padding: 12px 18px;">
+                    {% if es_evaluacion and not solo_lectura %}
+                    <a href="{% url 'editar_evaluacion' e.id %}" class="etiqueta-accion etiqueta-modificar">Editar</a>
+                    {% endif %}
                     <a href="{% url 'detalle_evaluacion' e.id %}" class="etiqueta-accion etiqueta-naranja">Ver detalle</a>
                 </td>
             </tr>

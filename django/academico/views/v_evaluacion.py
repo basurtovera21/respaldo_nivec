@@ -185,3 +185,71 @@ def detalle_evaluacion(request, evaluacion_id):
         "titulo_pagina": "Evaluación - NIVEC",
         "titulo": f"Detalle de evaluación - {usuario.apellidos} {usuario.nombres}",
     })
+
+
+
+@requiere_perfil(*ROLES_CARGAR)
+def editar_evaluacion(request, evaluacion_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    evaluacion = get_object_or_404(EvaluacionAcademica, id=evaluacion_id)
+    paralelo = Paralelo.objects.filter(
+        unidad_curricular=evaluacion.unidad_curricular,
+        periodo_de_nivelacion=evaluacion.periodo_de_nivelacion,
+        estudiantes_matriculados__estudiante=evaluacion.estudiante,
+    ).first()
+
+    if not paralelo:
+        messages.error(request, "No se encontró el paralelo asociado")
+        return redirect("panel_principal")
+
+    periodo = evaluacion.periodo_de_nivelacion
+    if periodo and periodo.estado != EstadoDePeriodo.EVALUACION.value:
+        messages.error(request, "Solo se pueden editar calificaciones cuando el Periodo está en evaluación")
+        return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
+
+    if request.method == "POST":
+        try:
+            p1 = float(request.POST.get("parcial_1", 0))
+            p2 = float(request.POST.get("parcial_2", 0))
+            asist = float(request.POST.get("asistencia", 0))
+        except (ValueError, TypeError):
+            messages.error(request, "Los valores ingresados no son válidos")
+            return redirect("editar_evaluacion", evaluacion_id=evaluacion.id)
+
+        if not (0 <= p1 <= 10) or not (0 <= p2 <= 10):
+            messages.error(request, "Las calificaciones deben estar entre 0 y 10")
+            return redirect("editar_evaluacion", evaluacion_id=evaluacion.id)
+        if not (0 <= asist <= 100):
+            messages.error(request, "La asistencia debe estar entre 0 y 100")
+            return redirect("editar_evaluacion", evaluacion_id=evaluacion.id)
+
+        unidad = evaluacion.unidad_curricular
+        nota_final = round((p1 + p2) / 2, 2)
+        
+        if asist < unidad.porcentaje_minimo_asistencia:
+            estado = "Reprobado"
+        elif nota_final >= unidad.criterio_de_aprobacion:
+            estado = "Aprobado"
+        else:
+            estado = "Reprobado"
+
+        evaluacion.calificacion_parcial_1 = p1
+        evaluacion.calificacion_parcial_2 = p2
+        evaluacion.nota_final = nota_final
+        evaluacion.porcentaje_asistencia = asist
+        evaluacion.estado_de_aprobacion = estado
+        evaluacion.save()
+
+        messages.success(request, "La calificación ha sido actualizada correctamente")
+        return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
+
+    return render(request, "academico/editar_evaluacion.html", {
+        "evaluacion": evaluacion,
+        "paralelo": paralelo,
+        "titulo_pagina": "Editar calificación - NIVEC",
+        "titulo": f"Editar calificación - {evaluacion.estudiante.usuario_de_sistema.apellidos} {evaluacion.estudiante.usuario_de_sistema.nombres}",
+    })
