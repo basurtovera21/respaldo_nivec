@@ -212,15 +212,20 @@ def servicio_iniciar_periodo_de_nivelacion(periodo_db):
         return True
     return False
 
+def servicio_pasar_a_evaluacion(periodo_db):
+    if periodo_db.estado != EstadoDePeriodo.EN_CURSO.value:
+        return False
+    periodo_db.estado = EstadoDePeriodo.EVALUACION.value
+    periodo_db.save()
+    return True
+
+
 def servicio_finalizar_periodo_de_nivelacion(periodo_db):
-    from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
-    periodo_poo = _construir_periodo(periodo_db)
-    facade = CentroDeOperacionAcademica()
-    if facade.finalizar_periodo(periodo_poo):
-        periodo_db.estado = periodo_poo.estado.value
-        periodo_db.save()
-        return True
-    return False
+    if periodo_db.estado != EstadoDePeriodo.EVALUACION.value:
+        return False
+    periodo_db.estado = EstadoDePeriodo.CERRADO.value
+    periodo_db.save()
+    return True
 
 
 #Malla curricular
@@ -1560,3 +1565,86 @@ def servicio_quitar_docente(paralelo_db):
     paralelo_db.save(update_fields=["docente_responsable"])
 
     return (True, "El Docente ha sido desvinculado correctamente")
+
+
+
+# Carga masiva de calificaciones desde Excel
+def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curricular_db, periodo_db):
+    """
+    Excel format: Número de identificación | Parcial 1 | Parcial 2 | % Asistencia
+    Returns: {"exitosos": int, "advertencias": list, "error": str or None}
+    """
+    resultado = {"exitosos": 0, "advertencias": [], "error": None}
+    try:
+        wb = openpyxl.load_workbook(archivo)
+        ws = wb.active
+    except Exception:
+        resultado["error"] = "Documento con formato no válido"
+        return resultado
+
+    from usuarios.models import PerfilEstudiante
+
+    criterio = unidad_curricular_db.criterio_de_aprobacion
+    porcentaje_minimo = unidad_curricular_db.porcentaje_minimo_asistencia
+
+    for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+        try:
+            identificacion, parcial_1, parcial_2, asistencia = fila[:4]
+            if not identificacion:
+                continue
+            identificacion_str = str(identificacion).strip()
+
+            try:
+                p1 = float(parcial_1) if parcial_1 is not None else 0.0
+                p2 = float(parcial_2) if parcial_2 is not None else 0.0
+                asist = float(asistencia) if asistencia is not None else 0.0
+            except (ValueError, TypeError):
+                resultado["advertencias"].append(f"Fila {numero_fila} omitida (valores no válidos)")
+                continue
+
+            # Validate ranges
+            if not (0 <= p1 <= 10) or not (0 <= p2 <= 10):
+                resultado["advertencias"].append(f"Fila {numero_fila} omitida (calificaciones deben estar entre 0 y 10)")
+                continue
+            if not (0 <= asist <= 100):
+                resultado["advertencias"].append(f"Fila {numero_fila} omitida (asistencia debe estar entre 0 y 100)")
+                continue
+
+            # Find student
+            estudiante = PerfilEstudiante.objects.filter(
+                usuario_de_sistema__identificacion=identificacion_str,
+                estudiantes_matriculados__paralelo=paralelo_db,
+            ).first()
+            if not estudiante:
+                resultado["advertencias"].append(f"Fila {numero_fila} omitida (estudiante no encontrado en el paralelo)")
+                continue
+
+            # Calculate final grade and status
+            nota_final = round((p1 + p2) / 2, 2)
+            if asist < porcentaje_minimo:
+                estado = EstadoDeAprobacion.REPROBADO.value
+            elif nota_final >= criterio:
+                estado = EstadoDeAprobacion.APROBADO.value
+            else:
+                estado = EstadoDeAprobacion.REPROBADO.value
+
+            # Create or update
+            eval_obj, created = EvaluacionAcademica.objects.update_or_create(
+                estudiante=estudiante,
+                unidad_curricular=unidad_curricular_db,
+                defaults={
+                    "calificacion_parcial_1": p1,
+                    "calificacion_parcial_2": p2,
+                    "nota_final": nota_final,
+                    "porcentaje_asistencia": asist,
+                    "estado_de_aprobacion": estado,
+                    "periodo_de_nivelacion": periodo_db,
+                    "estado_revision": "Borrador",
+                }
+            )
+            resultado["exitosos"] += 1
+
+        except Exception as e:
+            resultado["advertencias"].append(f"Fila {numero_fila} omitida ({str(e)})")
+
+    return resultado

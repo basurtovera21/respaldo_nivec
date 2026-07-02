@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ titulo_pagina|default:"NIVEC" }}{% endblock %}
+
+{% block contenido %}
+<h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
+<p style="color: #515154; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
+    {{ paralelo.periodo_de_nivelacion.periodo }} — {{ paralelo.get_jornada_display }}
+</p>
+
+<div class="tarjeta" style="max-width: 520px;">
+    <p style="color: #86868b; font-size: 12px; margin-bottom: 12px;">
+        El formato debe contener: Número de identificación, Parcial 1 (0-10), Parcial 2 (0-10), Porcentaje de asistencia (0-100).
+    </p>
+    <form method="post" enctype="multipart/form-data" action="{% url 'cargar_calificaciones' paralelo.id %}">
+        {% csrf_token %}
+        <div class="campo">
+            <label style="font-weight: bold;">Archivo Excel (.xlsx)</label>
+            <input type="file" name="archivo_excel" accept=".xlsx" required>
+        </div>
+        <div style="margin-top: 16px;">
+            <button type="submit" class="boton boton-primario">Cargar</button>
+            <a href="{% url 'listar_evaluaciones_paralelo' paralelo.id %}" class="boton boton-secundario">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<div style="margin-top: 15px;">
+    <a href="{% url 'descargar_plantilla_calificaciones' paralelo.id %}" style="color: #0071e3; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar formato</a>
+</div>
+{% endblock %}

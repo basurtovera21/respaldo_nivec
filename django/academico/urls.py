@@ -28,6 +28,7 @@ urlpatterns = [
     path("periodos/eliminar/<int:periodo_id>/", views.eliminar_periodo, name="eliminar_periodo"),
     path("periodos/<int:periodo_id>/iniciar/", views.iniciar_periodo, name="iniciar_periodo"),
     path("periodos/<int:periodo_id>/finalizar/", views.finalizar_periodo, name="finalizar_periodo"),
+    path("periodos/<int:periodo_id>/evaluacion/", views.pasar_a_evaluacion, name="pasar_a_evaluacion"),
 
     #Estructura académica
     path("mallas/", views.listar_mallas, name="listar_mallas"),
@@ -64,6 +65,9 @@ urlpatterns = [
     path("horarios/matriz/", views.matriz_horarios, name="matriz_horarios"),
     path("horarios/descargar-excel/", views.descargar_horarios_excel, name="descargar_horarios_excel"),
     path("paralelos/<int:paralelo_id>/docente/", views.asignar_docente_paralelo, name="asignar_docente_paralelo"),
+    path("paralelos/<int:paralelo_id>/calificaciones/", views.listar_evaluaciones_paralelo, name="listar_evaluaciones_paralelo"),
+    path("paralelos/<int:paralelo_id>/calificaciones/cargar/", views.cargar_calificaciones, name="cargar_calificaciones"),
+    path("paralelos/<int:paralelo_id>/calificaciones/plantilla/", views.descargar_plantilla_calificaciones, name="descargar_plantilla_calificaciones"),
     #Procesos académicos
     path("cohortes/", views.listar_cohortes, name="listar_cohortes"),
     path("cohortes/registrar/", views.registrar_cohorte, name="registrar_cohorte"),
