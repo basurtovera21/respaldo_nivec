@@ -1598,6 +1598,16 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
                 continue
             identificacion_str = str(identificacion).strip()
 
+            # Validate non-empty identification
+            if not identificacion_str:
+                resultado["advertencias"].append(f"Fila {numero_fila} omitida (identificación vacía)")
+                continue
+
+            # Validate that at least one grade is provided
+            if parcial_1 is None and parcial_2 is None and asistencia is None:
+                resultado["advertencias"].append(f"Fila {numero_fila} omitida (sin calificaciones)")
+                continue
+
             try:
                 p1 = float(parcial_1) if parcial_1 is not None else 0.0
                 p2 = float(parcial_2) if parcial_2 is not None else 0.0
@@ -1632,19 +1642,28 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
             else:
                 estado = EstadoDeAprobacion.REPROBADO.value
 
-            # Create or update
-            eval_obj, created = EvaluacionAcademica.objects.update_or_create(
+            # Check if already exists
+            existing = EvaluacionAcademica.objects.filter(
                 estudiante=estudiante,
                 unidad_curricular=unidad_curricular_db,
-                defaults={
-                    "calificacion_parcial_1": p1,
-                    "calificacion_parcial_2": p2,
-                    "nota_final": nota_final,
-                    "porcentaje_asistencia": asist,
-                    "estado_de_aprobacion": estado,
-                    "periodo_de_nivelacion": periodo_db,
-                    "estado_revision": "Borrador",
-                }
+            ).first()
+            if existing:
+                resultado["advertencias"].append(
+                    f"Fila {numero_fila}: el estudiante {identificacion_str} ya tiene calificaciones registradas (no se sobreescribe)"
+                )
+                continue
+
+            # Create new
+            EvaluacionAcademica.objects.create(
+                estudiante=estudiante,
+                unidad_curricular=unidad_curricular_db,
+                calificacion_parcial_1=p1,
+                calificacion_parcial_2=p2,
+                nota_final=nota_final,
+                porcentaje_asistencia=asist,
+                estado_de_aprobacion=estado,
+                periodo_de_nivelacion=periodo_db,
+                estado_revision="Borrador",
             )
             resultado["exitosos"] += 1
 

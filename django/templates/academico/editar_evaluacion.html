@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ titulo_pagina|default:"NIVEC" }}{% endblock %}
+
+{% block contenido %}
+<h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
+<p style="color: #515154; font-size: 13px; font-weight: bold; margin-bottom: 20px;">
+    {{ evaluacion.unidad_curricular.nombre }} — {{ evaluacion.estudiante.usuario_de_sistema.identificacion }}
+</p>
+
+<div class="tarjeta" style="max-width: 520px;">
+    <form method="post" action="{% url 'editar_evaluacion' evaluacion.id %}">
+        {% csrf_token %}
+        <div class="campo">
+            <label style="font-weight: bold;">Parcial 1 (0-10)</label>
+            <input type="number" name="parcial_1" step="0.01" min="0" max="10" value="{{ evaluacion.calificacion_parcial_1 }}" class="campo-input">
+        </div>
+        <div class="campo">
+            <label style="font-weight: bold;">Parcial 2 (0-10)</label>
+            <input type="number" name="parcial_2" step="0.01" min="0" max="10" value="{{ evaluacion.calificacion_parcial_2 }}" class="campo-input">
+        </div>
+        <div class="campo">
+            <label style="font-weight: bold;">Porcentaje de asistencia (0-100)</label>
+            <input type="number" name="asistencia" step="0.01" min="0" max="100" value="{{ evaluacion.porcentaje_asistencia }}" class="campo-input">
+        </div>
+        <div style="margin-top: 16px;">
+            <button type="submit" class="boton boton-primario">Guardar</button>
+            <a href="{% url 'listar_evaluaciones_paralelo' paralelo.id %}" class="boton boton-secundario">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
