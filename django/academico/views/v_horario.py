@@ -20,7 +20,7 @@ from usuarios.utils import (
 )
 
 ROLES_VISUALIZAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_UA, ROL_DOCENTE)
-ROLES_MODIFICAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
+ROLES_MODIFICAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_COORDINADOR_UA)
 
 def _parsear_hora(valor):
     try:
@@ -141,7 +141,7 @@ def listar_horarios_paralelo(request, paralelo_id):
 
 @requiere_perfil(*ROLES_MODIFICAN)
 def registrar_horario(request, paralelo_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -175,7 +175,7 @@ def registrar_horario(request, paralelo_id):
 
 @requiere_perfil(*ROLES_MODIFICAN)
 def editar_horario(request, horario_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -216,7 +216,7 @@ def editar_horario(request, horario_id):
 
 @requiere_perfil(*ROLES_MODIFICAN)
 def generar_horario_sugerido(request, paralelo_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -233,7 +233,7 @@ def generar_horario_sugerido(request, paralelo_id):
 
 @requiere_perfil(*ROLES_MODIFICAN)
 def eliminar_horario(request, horario_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("panel_principal")

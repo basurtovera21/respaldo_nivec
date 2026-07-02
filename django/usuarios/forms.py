@@ -251,6 +251,7 @@ class FormularioModificarCoordinadorUA(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values(): field.error_messages.update({'required': ''})
         self.fields['carrera_asignada'].required = False
+        self.fields['carrera_asignada'].disabled = True
         if universidad:
             from academico.models import Carrera
             self.fields['carrera_asignada'].queryset = Carrera.objects.filter(campus__universidad=universidad)

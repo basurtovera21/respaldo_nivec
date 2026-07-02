@@ -7,7 +7,7 @@ from academico.models import Paralelo, EvaluacionAcademica, PeriodoDeNivelacion,
 from academico.services import servicio_cargar_calificaciones_desde_excel
 from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
 from usuarios.utils import (
-    requiere_perfil, usuario_es_solo_lectura,
+    requiere_perfil, usuario_es_solo_lectura, obtener_rol_usuario,
     ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_UA, ROL_DOCENTE,
 )
 
@@ -56,6 +56,8 @@ def listar_evaluaciones_paralelo(request, paralelo_id):
         "periodo": periodo,
         "es_evaluacion": periodo.estado == EstadoDePeriodo.EVALUACION.value,
         "solo_lectura": usuario_es_solo_lectura(request.user),
+        "es_docente": obtener_rol_usuario(request.user) == ROL_DOCENTE,
+        "puede_formalizar": obtener_rol_usuario(request.user) in (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_COORDINADOR_UA),
         "titulo_pagina": "Calificaciones - NIVEC",
         "titulo": f"Calificaciones - {paralelo.nombre} ({paralelo.unidad_curricular.nombre})",
     })

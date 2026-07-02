@@ -12,6 +12,7 @@ from poo.clases.enums.jornada import Jornada
 from usuarios.utils import (
     requiere_perfil,
     usuario_es_solo_lectura,
+    obtener_rol_usuario,
     ROL_COORDINADOR_DAN,
     ROL_DIRECTOR_DAN,
     ROL_RECTOR,
@@ -21,7 +22,7 @@ from usuarios.utils import (
 )
 
 ROLES_VISUALIZAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_UA, ROL_DOCENTE)
-ROLES_MODIFICAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
+ROLES_MODIFICAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_COORDINADOR_UA)
 
 
 def _obtener_universidad_usuario(user):
@@ -90,6 +91,17 @@ def listar_paralelos(request):
         carrera_seleccionada = carreras.filter(id=carrera_id).first()
     if jornada_filtro:
         paralelos = paralelos.filter(jornada=jornada_filtro)
+
+    # Role-based filtering
+    rol = obtener_rol_usuario(request.user)
+    if rol == ROL_COORDINADOR_UA:
+        perfil_admin = getattr(request.user, 'perfil_administrativo', None)
+        if perfil_admin and perfil_admin.carrera_asignada:
+            paralelos = paralelos.filter(unidad_curricular__malla_curricular__carrera=perfil_admin.carrera_asignada)
+    elif rol == ROL_DOCENTE:
+        perfil_docente = getattr(request.user, 'perfil_docente', None)
+        if perfil_docente:
+            paralelos = paralelos.filter(docente_responsable=perfil_docente)
 
     grupos = {}
     for p in paralelos:
@@ -219,6 +231,19 @@ def detalle_paralelo(request, paralelo_id):
         "docente_responsable__usuario_de_sistema",
     ).order_by("unidad_curricular__nombre")
 
+    # Role-based access control
+    rol = obtener_rol_usuario(request.user)
+    if rol == ROL_COORDINADOR_UA:
+        perfil_admin = getattr(request.user, 'perfil_administrativo', None)
+        if perfil_admin and perfil_admin.carrera_asignada and carrera != perfil_admin.carrera_asignada:
+            messages.error(request, "No tiene acceso a este paralelo")
+            return redirect("panel_principal")
+    elif rol == ROL_DOCENTE:
+        perfil_docente = getattr(request.user, 'perfil_docente', None)
+        if perfil_docente and not unidades.filter(docente_responsable=perfil_docente).exists():
+            messages.error(request, "No tiene acceso a este paralelo")
+            return redirect("panel_principal")
+
     return render(request, "academico/detalle_paralelo.html", {
         "representativo": representativo,
         "carrera": carrera,
@@ -239,6 +264,14 @@ def listar_estudiantes_paralelo(request, paralelo_id):
         Paralelo, id=paralelo_id, periodo_de_nivelacion__universidad=universidad_usuario
     )
     carrera = paralelo.unidad_curricular.malla_curricular.carrera
+
+    # Role-based access control
+    rol = obtener_rol_usuario(request.user)
+    if rol == ROL_DOCENTE:
+        perfil_docente = getattr(request.user, 'perfil_docente', None)
+        if perfil_docente and paralelo.docente_responsable != perfil_docente:
+            messages.error(request, "No tiene acceso a este paralelo")
+            return redirect("panel_principal")
 
     matriculas = MatriculaParalelo.objects.filter(
         paralelo=paralelo
