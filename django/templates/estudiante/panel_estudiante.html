@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block titulo %}Panel Estudiante — NIVEC{% endblock %}
+
+{% block contenido %}
+<h2 style="margin-bottom: 20px;">Panel del Estudiante</h2>
+
+<div class="tarjeta" style="margin-bottom: 16px;">
+    <p style="color: #515154; font-size: 13px; margin: 0;">
+        <span style="font-weight: bold;">Estudiante:</span> {{ perfil_estudiante.usuario_de_sistema.nombres }} {{ perfil_estudiante.usuario_de_sistema.apellidos }}
+        — <span style="font-weight: bold;">Matrícula:</span> {{ perfil_estudiante.numero_de_matricula }}
+        {% if periodo %} — <span style="font-weight: bold;">Periodo:</span> {{ periodo.periodo }}{% endif %}
+    </p>
+</div>
+
+{% if evaluaciones %}
+<div class="tarjeta" style="margin-bottom: 16px;">
+    <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f; margin-bottom: 12px;">Calificaciones</h3>
+    <div style="overflow-x: auto;">
+    <table style="width: 100%;">
+        <thead>
+            <tr>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 8px 12px;">Unidad curricular</th>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 8px 12px;">Parcial 1</th>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 8px 12px;">Parcial 2</th>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 8px 12px;">Nota final</th>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 8px 12px;">Asistencia</th>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 8px 12px;">Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in evaluaciones %}
+            <tr>
+                <td style="text-align: left; padding: 8px 12px;">{{ e.unidad_curricular.nombre }}</td>
+                <td style="text-align: left; padding: 8px 12px;">{{ e.calificacion_parcial_1 }}</td>
+                <td style="text-align: left; padding: 8px 12px;">{{ e.calificacion_parcial_2 }}</td>
+                <td style="text-align: left; padding: 8px 12px; font-weight: bold;">{{ e.nota_final }}</td>
+                <td style="text-align: left; padding: 8px 12px;">{{ e.porcentaje_asistencia }}%</td>
+                <td style="text-align: left; padding: 8px 12px; font-weight: bold; color: {% if e.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif e.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#86868b{% endif %};">{{ e.estado_de_aprobacion }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endif %}
+
+{% if matriculas %}
+<div class="tarjeta" style="margin-bottom: 16px;">
+    <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f; margin-bottom: 12px;">Paralelo y unidades</h3>
+    <div style="overflow-x: auto;">
+    <table style="width: 100%;">
+        <thead>
+            <tr>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 8px 12px;">Paralelo</th>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 8px 12px;">Unidad curricular</th>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 8px 12px;">Docente</th>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 8px 12px;">Jornada</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in matriculas %}
+            <tr>
+                <td style="text-align: left; padding: 8px 12px;">{{ m.paralelo.nombre }}</td>
+                <td style="text-align: left; padding: 8px 12px;">{{ m.paralelo.unidad_curricular.nombre }}</td>
+                <td style="text-align: left; padding: 8px 12px;">{% if m.paralelo.docente_responsable %}{{ m.paralelo.docente_responsable.usuario_de_sistema.nombres }} {{ m.paralelo.docente_responsable.usuario_de_sistema.apellidos }}{% else %}—{% endif %}</td>
+                <td style="text-align: left; padding: 8px 12px;">{{ m.paralelo.get_jornada_display }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endif %}
+
+{% if horarios %}
+<div class="tarjeta">
+    <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f; margin-bottom: 12px;">Horario semanal</h3>
+    <div style="overflow-x: auto;">
+    <table style="width: 100%;">
+        <thead>
+            <tr>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 8px 12px;">Día</th>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 8px 12px;">Hora inicio</th>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 8px 12px;">Hora fin</th>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 8px 12px;">Unidad curricular</th>
+                <th style="font-weight: bold; text-align: left; color: #515154; padding: 8px 12px;">Espacio</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in horarios %}
+            <tr>
+                <td style="text-align: left; padding: 8px 12px;">{{ h.get_dia_semana_display }}</td>
+                <td style="text-align: left; padding: 8px 12px;">{{ h.hora_inicio }}</td>
+                <td style="text-align: left; padding: 8px 12px;">{{ h.hora_fin }}</td>
+                <td style="text-align: left; padding: 8px 12px;">{{ h.paralelo.unidad_curricular.nombre }}</td>
+                <td style="text-align: left; padding: 8px 12px;">{{ h.espacio_de_imparticion|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endif %}
+
+{% if not matriculas and not evaluaciones %}
+<div class="tarjeta">
+    <p style="color: #86868b; font-size: 13px; margin: 0;">No tiene información académica registrada actualmente.</p>
+</div>
+{% endif %}
+{% endblock %}

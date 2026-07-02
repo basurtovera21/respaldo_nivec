@@ -348,6 +348,92 @@ def formalizar_evaluaciones(request, paralelo_id):
 
 
 
+@requiere_perfil(*ROLES_VER)
+def descargar_calificaciones_paralelo(request, paralelo_id):
+    import openpyxl
+    from django.http import HttpResponse
+    from academico.models import Horario
+
+    universidad_usuario = _obtener_universidad_usuario(request.user)
+    if not universidad_usuario:
+        return redirect("panel_principal")
+
+    paralelo = get_object_or_404(
+        Paralelo, id=paralelo_id, periodo_de_nivelacion__universidad=universidad_usuario
+    )
+    carrera = paralelo.unidad_curricular.malla_curricular.carrera
+    periodo = paralelo.periodo_de_nivelacion
+
+    # Get all paralelos of this logical group
+    unidades_rows = Paralelo.objects.filter(
+        periodo_de_nivelacion=periodo,
+        jornada=paralelo.jornada,
+        nombre=paralelo.nombre,
+        unidad_curricular__malla_curricular__carrera=carrera,
+    ).select_related("unidad_curricular").order_by("unidad_curricular__nombre")
+
+    wb = openpyxl.Workbook()
+    wb.remove(wb.active)
+
+    for row in unidades_rows:
+        titulo_hoja = row.unidad_curricular.nombre[:31]
+        ws = wb.create_sheet(title=titulo_hoja)
+
+        ws.append([
+            "Tipo de identificación",
+            "Número de identificación",
+            "Apellidos",
+            "Nombres",
+            "Correo institucional",
+            "Número de matrícula",
+            "Parcial 1",
+            "Parcial 2",
+            "Nota final",
+            "Porcentaje de asistencia",
+            "Estado de aprobación",
+            "Estado de revisión",
+        ])
+
+        evaluaciones = EvaluacionAcademica.objects.filter(
+            unidad_curricular=row.unidad_curricular,
+            periodo_de_nivelacion=periodo,
+            estudiante__estudiantes_matriculados__paralelo=row,
+        ).select_related("estudiante__usuario_de_sistema").order_by(
+            "estudiante__usuario_de_sistema__apellidos"
+        )
+
+        for ev in evaluaciones:
+            est = ev.estudiante
+            usr = est.usuario_de_sistema
+            ws.append([
+                usr.tipo_de_identificacion,
+                usr.identificacion,
+                usr.apellidos,
+                usr.nombres,
+                usr.correo_institucional,
+                est.numero_de_matricula,
+                ev.calificacion_parcial_1,
+                ev.calificacion_parcial_2,
+                ev.nota_final,
+                ev.porcentaje_asistencia,
+                ev.estado_de_aprobacion,
+                ev.estado_revision,
+            ])
+
+        for col in range(1, 13):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 22
+
+    if not wb.sheetnames:
+        ws = wb.create_sheet(title="Sin datos")
+        ws.append(["No existen calificaciones registradas"])
+
+    nombre_archivo = f"calificaciones_{paralelo.nombre}_{carrera.nombre}".lower().replace(" ", "_")
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = f'attachment; filename="{nombre_archivo}.xlsx"'
+    wb.save(response)
+    return response
+
+
 @requiere_perfil(ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
 def informe_general(request):
     from academico.services import servicio_generar_informe_general

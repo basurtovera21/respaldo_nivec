@@ -146,4 +146,40 @@ def panel_docente(request):
 @login_required
 @never_cache
 def panel_estudiante(request):
-    return render(request, "estudiante/panel_estudiante.html")
+    usuario = request.user
+    perfil_estudiante = PerfilEstudiante.objects.filter(usuario_de_sistema=usuario).first()
+    if not perfil_estudiante:
+        return redirect('sin_perfil')
+    
+    from academico.models import Paralelo, MatriculaParalelo, Horario, EvaluacionAcademica, PeriodoDeNivelacion
+    
+    periodo = perfil_estudiante.periodo_de_nivelacion
+    
+    # Get paralelo(s) where the student is enrolled
+    matriculas = MatriculaParalelo.objects.filter(
+        estudiante=perfil_estudiante,
+        paralelo__periodo_de_nivelacion=periodo,
+    ).select_related(
+        "paralelo__unidad_curricular__malla_curricular__carrera",
+        "paralelo__docente_responsable__usuario_de_sistema",
+    ).order_by("paralelo__nombre", "paralelo__unidad_curricular__nombre") if periodo else MatriculaParalelo.objects.none()
+
+    # Get evaluaciones
+    evaluaciones = EvaluacionAcademica.objects.filter(
+        estudiante=perfil_estudiante,
+        periodo_de_nivelacion=periodo,
+    ).select_related("unidad_curricular").order_by("unidad_curricular__nombre") if periodo else EvaluacionAcademica.objects.none()
+
+    # Get horarios
+    paralelo_ids = [m.paralelo_id for m in matriculas]
+    horarios = Horario.objects.filter(
+        paralelo_id__in=paralelo_ids
+    ).select_related("paralelo__unidad_curricular").order_by("dia_semana", "hora_inicio") if paralelo_ids else Horario.objects.none()
+
+    return render(request, "estudiante/panel_estudiante.html", {
+        "perfil_estudiante": perfil_estudiante,
+        "periodo": periodo,
+        "matriculas": matriculas,
+        "evaluaciones": evaluaciones,
+        "horarios": horarios,
+    })
