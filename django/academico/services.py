@@ -1480,14 +1480,24 @@ def servicio_evaluar_docentes_para_paralelo(paralelo_db):
     evaluaciones = []
     for docente_db in docentes:
         # Solo se listan los docentes COMPATIBLES CON LA JORNADA del paralelo.
-        # La carga horaria (y las demás restricciones) NO se validan aquí para
-        # listar: eso se verifica al pulsar "Asignar" (servicio_asignar_docente).
         if paralelo_db.jornada not in (docente_db.jornadas or []):
             continue
         docente_poo, carga_actual = _construir_docente_poo_para_periodo(
             docente_db, periodo, paralelo_excluir_id=paralelo_db.id
         )
         es_actual = paralelo_db.docente_responsable_id == docente_db.id
+
+        # Filtrar docentes con conflicto horario (no se muestran).
+        if not es_actual:
+            paralelo_poo = _construir_paralelo_poo_con_horarios(paralelo_db)
+            tiene_conflicto = False
+            for horario_paralelo in paralelo_poo.horarios:
+                if not docente_poo.verificar_disponibilidad_horaria(horario_paralelo):
+                    tiene_conflicto = True
+                    break
+            if tiene_conflicto:
+                continue
+
         evaluaciones.append({
             "docente": docente_db,
             "es_actual": es_actual,
