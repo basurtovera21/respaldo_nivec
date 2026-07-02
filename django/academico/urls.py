@@ -70,6 +70,8 @@ urlpatterns = [
     path("paralelos/<int:paralelo_id>/calificaciones/plantilla/", views.descargar_plantilla_calificaciones, name="descargar_plantilla_calificaciones"),
     path("evaluacion/<int:evaluacion_id>/detalle/", views.detalle_evaluacion, name="detalle_evaluacion"),
     path("evaluacion/<int:evaluacion_id>/editar/", views.editar_evaluacion, name="editar_evaluacion"),
+    path("paralelos/<int:paralelo_id>/calificaciones/revision/", views.pasar_a_revision, name="pasar_a_revision"),
+    path("paralelos/<int:paralelo_id>/calificaciones/formalizar/", views.formalizar_evaluaciones, name="formalizar_evaluaciones"),
     #Procesos académicos
     path("cohortes/", views.listar_cohortes, name="listar_cohortes"),
     path("cohortes/registrar/", views.registrar_cohorte, name="registrar_cohorte"),

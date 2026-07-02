@@ -206,6 +206,10 @@ def editar_evaluacion(request, evaluacion_id):
         messages.error(request, "No se encontró el paralelo asociado")
         return redirect("panel_principal")
 
+    if evaluacion.estado_revision == "Formalizado":
+        messages.error(request, "Las calificaciones formalizadas no se pueden editar")
+        return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
+
     periodo = evaluacion.periodo_de_nivelacion
     if periodo and periodo.estado != EstadoDePeriodo.EVALUACION.value:
         messages.error(request, "Solo se pueden editar calificaciones cuando el Periodo está en evaluación")
@@ -253,3 +257,79 @@ def editar_evaluacion(request, evaluacion_id):
         "titulo_pagina": "Editar calificación - NIVEC",
         "titulo": f"Editar calificación - {evaluacion.estudiante.usuario_de_sistema.apellidos} {evaluacion.estudiante.usuario_de_sistema.nombres}",
     })
+
+
+
+@requiere_perfil(*ROLES_CARGAR)
+def pasar_a_revision(request, paralelo_id):
+    from academico.services import servicio_pasar_a_revision
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    paralelo = get_object_or_404(
+        Paralelo, id=paralelo_id, periodo_de_nivelacion__universidad=universidad_usuario
+    )
+    periodo = paralelo.periodo_de_nivelacion
+
+    if periodo.estado != EstadoDePeriodo.EVALUACION.value:
+        messages.error(request, "Solo se puede pasar a revisión cuando el Periodo está en evaluación")
+        return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
+
+    if request.method != "POST":
+        return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
+
+    # Check there are evaluations in Borrador
+    from academico.models import EvaluacionAcademica as EA
+    borradores = EA.objects.filter(
+        unidad_curricular=paralelo.unidad_curricular,
+        periodo_de_nivelacion=periodo,
+        estado_revision="Borrador",
+        estudiante__estudiantes_matriculados__paralelo=paralelo,
+    ).count()
+
+    if borradores == 0:
+        messages.warning(request, "No existen calificaciones en borrador para pasar a revisión")
+        return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
+
+    count = servicio_pasar_a_revision(paralelo)
+    messages.success(request, f"{count} calificaciones pasadas a revisión correctamente")
+    return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
+
+
+@requiere_perfil(*ROLES_CARGAR)
+def formalizar_evaluaciones(request, paralelo_id):
+    from academico.services import servicio_formalizar_evaluaciones
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    paralelo = get_object_or_404(
+        Paralelo, id=paralelo_id, periodo_de_nivelacion__universidad=universidad_usuario
+    )
+    periodo = paralelo.periodo_de_nivelacion
+
+    if periodo.estado != EstadoDePeriodo.EVALUACION.value:
+        messages.error(request, "Solo se puede formalizar cuando el Periodo está en evaluación")
+        return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
+
+    if request.method != "POST":
+        return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
+
+    from academico.models import EvaluacionAcademica as EA
+    en_revision = EA.objects.filter(
+        unidad_curricular=paralelo.unidad_curricular,
+        periodo_de_nivelacion=periodo,
+        estado_revision="En revisión",
+        estudiante__estudiantes_matriculados__paralelo=paralelo,
+    ).count()
+
+    if en_revision == 0:
+        messages.warning(request, "No existen calificaciones en revisión para formalizar")
+        return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
+
+    count = servicio_formalizar_evaluaciones(paralelo)
+    messages.success(request, f"{count} calificaciones formalizadas correctamente")
+    return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
