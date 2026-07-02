@@ -1261,7 +1261,7 @@ def _sugerir_bloque_libre(dia_poo, franja_inicio, franja_fin, bloque_horas, ocup
     return None
 
 
-def _distribucion_simetrica(horas, max_dias=5, min_h=1, max_h=3):
+def _distribucion_simetrica(horas, max_dias=7, min_h=1, max_h=3):
     # Reparte 'horas' en bloques de HORAS ENTERAS lo más iguales posible, uno por día,
     # cada bloque entre min_h y max_h, usando hasta max_dias días.
     import math
@@ -1298,7 +1298,7 @@ def _generar_horario_para_unidad(paralelo_unidad_db, tipo_sincronica):
         _construir_horario_poo(h) for h in _horarios_externos_para_paralelo(paralelo_unidad_db)
     ]
     bloques = _distribucion_simetrica(restante)
-    dias = list(DiaDeSemana)[:5]  # Lunes a Viernes
+    dias = list(DiaDeSemana)  # Lunes a Domingo
 
     nuevos_db = []
     generadas = 0.0

@@ -91,7 +91,7 @@ def listar_horarios_paralelo(request, paralelo_id):
     nombres_unidades = sorted(set(h.paralelo.unidad_curricular.nombre for h in horarios))
     mapa_colores = {nombre: _COLORES_UNIDAD[i % len(_COLORES_UNIDAD)] for i, nombre in enumerate(nombres_unidades)}
 
-    dias_semana = [d.value for d in DiaDeSemana][:5]  # Lunes a Viernes
+    dias_semana = [d.value for d in DiaDeSemana]  # Lunes a Domingo (7 días)
     grilla = []  # lista de {hora, celdas: [{bloque o None} por día]}
     for slot in slots_hora:
         fila = {"hora": f"{slot:02d}:00", "celdas": []}
@@ -99,16 +99,13 @@ def listar_horarios_paralelo(request, paralelo_id):
             bloque = None
             for h in horarios:
                 if h.dia_semana == dia and h.hora_inicio.hour <= slot < h.hora_fin.hour:
-                    es_inicio = h.hora_inicio.hour == slot
                     bloque = {
-                        "id": h.id,
                         "nombre": h.paralelo.unidad_curricular.nombre,
                         "hora_inicio": h.hora_inicio.strftime("%H:%M"),
                         "hora_fin": h.hora_fin.strftime("%H:%M"),
-                        "espacio": h.espacio_de_imparticion or "",
+                        "slot_inicio": f"{slot:02d}:00",
+                        "slot_fin": f"{slot+1:02d}:00",
                         "color": mapa_colores.get(h.paralelo.unidad_curricular.nombre, "#e8e8ed"),
-                        "es_inicio": es_inicio,
-                        "duracion": h.hora_fin.hour - h.hora_inicio.hour,
                     }
                     break
             fila["celdas"].append(bloque)
