@@ -16,10 +16,23 @@ from usuarios.utils import (
     ROL_DIRECTOR_DAN,
     ROL_RECTOR,
     ROL_VICERRECTOR,
+    ROL_COORDINADOR_UA,
+    ROL_DOCENTE,
 )
 
-ROLES_VISUALIZAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
+ROLES_VISUALIZAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_UA, ROL_DOCENTE)
 ROLES_MODIFICAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
+
+
+def _obtener_universidad_usuario(user):
+    """Get universidad from perfil_administrativo or perfil_docente."""
+    perfil_admin = getattr(user, 'perfil_administrativo', None)
+    if perfil_admin:
+        return perfil_admin.universidad
+    perfil_docente = getattr(user, 'perfil_docente', None)
+    if perfil_docente:
+        return perfil_docente.universidad
+    return None
 
 
 def _numero_para_orden(nombre):
@@ -48,7 +61,7 @@ def _paralelos_del_grupo(representativo):
 
 @requiere_perfil(*ROLES_VISUALIZAN)
 def listar_paralelos(request):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -116,7 +129,7 @@ def listar_paralelos(request):
 
 @requiere_perfil(*ROLES_MODIFICAN)
 def generar_paralelos(request):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -167,7 +180,7 @@ def generar_paralelos(request):
 
 @requiere_perfil(*ROLES_MODIFICAN)
 def eliminar_paralelo(request, paralelo_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -191,7 +204,7 @@ def eliminar_paralelo(request, paralelo_id):
 
 @requiere_perfil(*ROLES_VISUALIZAN)
 def detalle_paralelo(request, paralelo_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -217,7 +230,7 @@ def detalle_paralelo(request, paralelo_id):
 
 @requiere_perfil(*ROLES_VISUALIZAN)
 def listar_estudiantes_paralelo(request, paralelo_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -274,7 +287,7 @@ def listar_estudiantes_paralelo(request, paralelo_id):
 
 @requiere_perfil(*ROLES_MODIFICAN)
 def mover_estudiante(request, paralelo_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -313,7 +326,7 @@ def mover_estudiante(request, paralelo_id):
 
 @requiere_perfil(*ROLES_MODIFICAN)
 def retirar_estudiante(request, paralelo_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -341,7 +354,7 @@ def retirar_estudiante(request, paralelo_id):
 
 @requiere_perfil(*ROLES_MODIFICAN)
 def estudiantes_disponibles(request, paralelo_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -390,7 +403,7 @@ def estudiantes_disponibles(request, paralelo_id):
 
 @requiere_perfil(*ROLES_MODIFICAN)
 def agregar_estudiante(request, paralelo_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -423,7 +436,7 @@ def descargar_info_paralelo(request, paralelo_id):
     from django.http import HttpResponse
     from academico.models import Horario
 
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")

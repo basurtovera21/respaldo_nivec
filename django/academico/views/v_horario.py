@@ -15,9 +15,11 @@ from usuarios.utils import (
     ROL_DIRECTOR_DAN,
     ROL_RECTOR,
     ROL_VICERRECTOR,
+    ROL_COORDINADOR_UA,
+    ROL_DOCENTE,
 )
 
-ROLES_VISUALIZAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
+ROLES_VISUALIZAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_UA, ROL_DOCENTE)
 ROLES_MODIFICAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
 
 def _parsear_hora(valor):
@@ -36,9 +38,20 @@ def _unidades_del_grupo(representativo):
     ).select_related("unidad_curricular", "docente_responsable__usuario_de_sistema").order_by("unidad_curricular__nombre")
 
 
+def _obtener_universidad_usuario(user):
+    """Get universidad from perfil_administrativo or perfil_docente."""
+    perfil_admin = getattr(user, 'perfil_administrativo', None)
+    if perfil_admin:
+        return perfil_admin.universidad
+    perfil_docente = getattr(user, 'perfil_docente', None)
+    if perfil_docente:
+        return perfil_docente.universidad
+    return None
+
+
 @requiere_perfil(*ROLES_VISUALIZAN)
 def listar_horarios_paralelo(request, paralelo_id):
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -239,7 +252,7 @@ def matriz_horarios(request):
     from academico.models import Carrera
     from poo.clases.franja_horaria import obtener_franja
 
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -370,7 +383,7 @@ def descargar_horarios_excel(request):
     from django.http import HttpResponse
     from academico.models import Carrera
 
-    universidad_usuario = request.user.perfil_administrativo.universidad
+    universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
         messages.warning(request, "La universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
