@@ -26,18 +26,28 @@
     <table style="width: 100%;">
         <thead>
             <tr>
+                <th style="font-weight: bold; text-align: left; color: #515154">Tipo de identificación</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Número de identificación</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Estudiante</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Apellidos</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Nombres</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Correo institucional</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Número de matrícula</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Registro de cupo</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Estado de matrícula</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Acción</th>
             </tr>
         </thead>
         <tbody>
             {% for e in no_asignados %}
             <tr>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.usuario_de_sistema.tipo_de_identificacion }}</td>
                 <td style="font-family: monospace; text-align: left; color: #1d1d1f;">{{ e.usuario_de_sistema.identificacion }}</td>
-                <td style="text-align: left; color: #1d1d1f;">{{ e.usuario_de_sistema.nombres }} {{ e.usuario_de_sistema.apellidos }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.usuario_de_sistema.apellidos }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.usuario_de_sistema.nombres }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.usuario_de_sistema.correo_institucional }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.numero_de_matricula }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ e.get_registro_de_cupo_display }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.get_estado_de_matricula_display }}</td>
                 <td style="text-align: left;">
                     <form method="post" action="{% url 'agregar_estudiante' paralelo.id %}">
                         {% csrf_token %}
@@ -48,7 +58,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4" style="text-align: center; color: #86868b; padding: 30px;">
+                <td colspan="9" style="text-align: center; color: #86868b; padding: 30px;">
                     No existen estudiantes sin asignar para esta Carrera y Jornada
                 </td>
             </tr>

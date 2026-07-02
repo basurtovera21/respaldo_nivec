@@ -41,14 +41,9 @@
     {% endif %}
 </div>
 
-<div class="tarjeta" style="margin-bottom: 16px;">
-    <span style="font-weight: bold; color: {% if todas_completas %}#2e7d32{% else %}#b45309{% endif %};">
-        Horario del paralelo: {% if todas_completas %}Completo{% else %}Incompleto (faltan unidades por cubrir){% endif %}
-    </span>
-    {% if not es_planificacion %}
-    <p style="color: #86868b; font-size: 12px; margin: 6px 0 0;">Los horarios solo se pueden gestionar cuando el Periodo está en planificación.</p>
-    {% endif %}
-</div>
+{% if not todas_completas or not es_planificacion %}
+<p style="color: #b45309; font-size: 13px; font-weight: bold; margin-bottom: 16px;">{% if not todas_completas %}Horario del paralelo incompleto{% endif %}{% if not es_planificacion %} — Los horarios solo se pueden gestionar cuando el Periodo está en planificación.{% endif %}</p>
+{% endif %}
 
 {% if grilla %}
 <div class="tarjeta" style="padding: 12px; overflow-x: auto; margin-bottom: 20px;">
@@ -98,25 +93,21 @@
     <table style="width: 100%;">
         <thead>
             <tr>
+                <th style="font-weight: bold; text-align: left; color: #515154">Código</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Unidad curricular</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Docente responsable</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Horas semanales</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Estado</th>
             </tr>
         </thead>
         <tbody>
             {% for u in unidades %}
             <tr>
+                <td style="text-align: left; color: #1d1d1f;">{{ u.codigo }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ u.nombre }}</td>
                 <td style="text-align: left; color: #1d1d1f;">
                     {% if u.docente %}{{ u.docente.usuario_de_sistema.nombres }} {{ u.docente.usuario_de_sistema.apellidos }}{% else %}<span style="color: #86868b;">Sin designación</span>{% endif %}
                 </td>
                 <td style="text-align: left; color: {% if u.completo %}#2e7d32{% else %}#b45309{% endif %};">{{ u.agendadas }} / {{ u.requeridas }}</td>
-                <td style="text-align: left;">
-                    <span class="etiqueta-estado" style="color: {% if u.completo %}#2e7d32{% else %}#b45309{% endif %};">
-                        {% if u.completo %}Completo{% else %}Faltan {{ u.restantes }} h{% endif %}
-                    </span>
-                </td>
             </tr>
             {% empty %}
             <tr><td colspan="4" style="text-align:center; color:#86868b; padding:20px;">No existen unidades en este paralelo</td></tr>
@@ -168,6 +159,7 @@
     <table style="width: 100%;">
         <thead>
             <tr>
+                <th style="font-weight: bold; text-align: left; color: #515154">Código</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Unidad curricular</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Día</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Inicio</th>
@@ -181,6 +173,7 @@
         <tbody>
             {% for h in horarios %}
             <tr>
+                <td style="text-align: left; color: #1d1d1f;">{{ h.paralelo.unidad_curricular.codigo_de_unidad }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ h.paralelo.unidad_curricular.nombre }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ h.get_dia_semana_display }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ h.hora_inicio }}</td>
@@ -195,7 +188,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" style="text-align: center; color: #86868b; padding: 30px;">
+                <td colspan="7" style="text-align: center; color: #86868b; padding: 30px;">
                     No existen sesiones registradas actualmente
                 </td>
             </tr>

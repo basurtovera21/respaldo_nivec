@@ -244,13 +244,6 @@ class FormularioMallaCurricular(forms.ModelForm):
 # Reemplazar FormularioUnidadCurricular en django/academico/forms.py
 
 class FormularioUnidadCurricular(forms.ModelForm):
-    areas_de_conocimiento_texto = forms.CharField(
-        label="Áreas de conocimiento",
-        required=False,
-        widget=forms.TextInput(attrs={
-        }),
-        help_text="Registre la información separada por comas"
-    )
 
     class Meta:
         model = UnidadCurricular
@@ -288,11 +281,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.required = False
-
-        if self.instance and self.instance.pk and self.instance.area_de_conocimiento:
-            self.fields["areas_de_conocimiento_texto"].initial = ", ".join(
-                self.instance.area_de_conocimiento
-            )
 
     def clean(self):
         from poo.clases.unidad_curricular import UnidadCurricular as UnidadCurricularBase
@@ -333,19 +321,12 @@ class FormularioUnidadCurricular(forms.ModelForm):
                         f"Las horas semanales ({int(semanales)}) parecen incoherentes con las horas sincrónicas totales ({sincronicas})"
                     )
 
-        areas_texto = cleaned_data.get("areas_de_conocimiento_texto", "")
-        if not areas_texto or not areas_texto.strip():
-            errores["areas_de_conocimiento_texto"] = "Información requerida"
-
         if errores:
             raise forms.ValidationError(errores)
-
-        areas_lista = [a.strip() for a in areas_texto.split(",") if a.strip()]
 
         unidad_poo = UnidadCurricularBase(
             codigo_de_unidad="PENDIENTE",
             nombre=cleaned_data.get("nombre", ""),
-            area_de_conocimiento=areas_lista,
             horas_totales=cleaned_data.get("horas_totales", 0),
             horas_sincronicas=cleaned_data.get("horas_sincronicas", 0),
             horas_asincronicas=cleaned_data.get("horas_asincronicas", 0),
@@ -370,15 +351,7 @@ class FormularioUnidadCurricular(forms.ModelForm):
                     {"La Unidad curricular ya ha sido registrada en la Malla curricular especificada"}
                 )
 
-        cleaned_data["area_de_conocimiento"] = areas_lista
         return cleaned_data
-
-    def save(self, commit=True):
-        instancia = super().save(commit=False)
-        instancia.area_de_conocimiento = self.cleaned_data.get("area_de_conocimiento", [])
-        if commit:
-            instancia.save()
-        return instancia
 
 
 from django.db.models import Q

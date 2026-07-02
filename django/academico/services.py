@@ -336,15 +336,15 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
 
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
-                (codigo_malla, nombre, areas_str, horas_totales,
+                (codigo_malla, nombre, horas_totales,
                  horas_sincronicas, horas_sincronicas_semanales, horas_asincronicas,
-                 criterio, porcentaje_asistencia) = fila[:9]
+                 criterio, porcentaje_asistencia) = fila[:8]
 
-                if not any([codigo_malla, nombre, areas_str, horas_totales,
+                if not any([codigo_malla, nombre, horas_totales,
                             horas_sincronicas, horas_asincronicas]):
                     continue
 
-                if not all([codigo_malla, nombre, areas_str, horas_totales,
+                if not all([codigo_malla, nombre, horas_totales,
                             horas_sincronicas, horas_sincronicas_semanales, horas_asincronicas]):
                     resultado["advertencias"].append(
                         f"El registro de la fila {numero_fila} fue omitido por falta de información"
@@ -394,12 +394,9 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     )
                     continue
 
-                areas_lista = [a.strip() for a in str(areas_str).split(",") if a.strip()]
-
                 unidad_poo = UnidadCurricularBase(
                     codigo_de_unidad="PENDIENTE",
                     nombre=str(nombre).strip(),
-                    area_de_conocimiento=areas_lista,
                     horas_totales=horas_totales_f,
                     horas_sincronicas=horas_sincronicas_f,
                     horas_asincronicas=horas_asincronicas_f,
@@ -422,7 +419,6 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                             UnidadCurricular, "UC", "codigo_de_unidad"
                         ),
                         nombre=unidad_poo.nombre,
-                        area_de_conocimiento=unidad_poo.area_de_conocimiento,
                         horas_totales=unidad_poo.horas_totales,
                         horas_sincronicas=unidad_poo.horas_sincronicas,
                         horas_sincronicas_semanales=horas_sincronicas_semanales_f,
@@ -454,7 +450,6 @@ def servicio_registrar_evaluacion_academica(evaluacion_academica: EvaluacionAcad
     unidad_curricular_base = UnidadCurricularBase(
         codigo_de_unidad = evaluacion_academica.unidad_curricular.codigo_de_unidad,
         nombre = evaluacion_academica.unidad_curricular.nombre,
-        area_de_conocimiento = evaluacion_academica.unidad_curricular.area_de_conocimiento,
         horas_totales = evaluacion_academica.unidad_curricular.horas_totales,
         horas_sincronicas = evaluacion_academica.unidad_curricular.horas_sincronicas,
         horas_asincronicas = evaluacion_academica.unidad_curricular.horas_asincronicas,
@@ -596,7 +591,6 @@ def _construir_unidad_poo(unidad_db):
     return UnidadCurricularBase(
         codigo_de_unidad=unidad_db.codigo_de_unidad,
         nombre=unidad_db.nombre,
-        area_de_conocimiento=unidad_db.area_de_conocimiento,
         horas_totales=unidad_db.horas_totales,
         horas_sincronicas=unidad_db.horas_sincronicas,
         horas_asincronicas=unidad_db.horas_asincronicas,
@@ -704,7 +698,6 @@ def servicio_clonar_malla_curricular(id_malla_curricular_bd, nuevo_nombre=None):
                     UnidadCurricular, "UC", "codigo_de_unidad"
                 ),
                 nombre=unidad_poo.nombre,
-                area_de_conocimiento=unidad_poo.area_de_conocimiento,
                 horas_totales=unidad_poo.horas_totales,
                 horas_sincronicas=unidad_poo.horas_sincronicas,
                 horas_asincronicas=unidad_poo.horas_asincronicas,
@@ -1475,7 +1468,7 @@ def servicio_evaluar_docentes_para_paralelo(paralelo_db):
 
     periodo = paralelo_db.periodo_de_nivelacion
     unidad = paralelo_db.unidad_curricular
-    areas = unidad.area_de_conocimiento or []
+    areas = []
     horas_unidad = _horas_sincronicas_semanales(unidad, periodo)
 
     docentes = PerfilDocente.objects.filter(
@@ -1501,7 +1494,6 @@ def servicio_evaluar_docentes_para_paralelo(paralelo_db):
             "carga_real": round(carga_actual + (horas_unidad if es_actual else 0), 2),
             "carga_maxima": docente_db.carga_horaria_maxima,
             "horas_unidad": horas_unidad,
-            "especialidad_ok": docente_poo.tiene_especialidad_para(areas),
             "activo": docente_poo.esta_activo(),
         })
     return evaluaciones
@@ -1511,7 +1503,7 @@ def servicio_asignar_docente(paralelo_db, docente_db):
 
     periodo = paralelo_db.periodo_de_nivelacion
     unidad = paralelo_db.unidad_curricular
-    areas = unidad.area_de_conocimiento or []
+    areas = []
     horas_unidad = _horas_sincronicas_semanales(unidad, periodo)
 
     if not periodo_en_planificacion(periodo):

@@ -58,6 +58,7 @@ def listar_horarios_paralelo(request, paralelo_id):
         todas_completas = todas_completas and completo
         unidades.append({
             "id": row.id,
+            "codigo": row.unidad_curricular.codigo_de_unidad,
             "nombre": row.unidad_curricular.nombre,
             "docente": row.docente_responsable,
             "agendadas": agendadas,

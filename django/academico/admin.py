@@ -106,7 +106,6 @@ class UnidadCurricularAdmin(admin.ModelAdmin):
                 "malla_curricular", 
                 "codigo_de_unidad", 
                 "nombre", 
-                "area_de_conocimiento", 
                 "horas_totales", 
                 "horas_sincronicas", 
                 "horas_asincronicas",  

@@ -63,6 +63,10 @@ def asignar_docente_paralelo(request, paralelo_id):
     horas_requeridas = _horas_sincronicas_semanales(paralelo.unidad_curricular, paralelo.periodo_de_nivelacion)
     horario_completo = horas_agendadas >= horas_requeridas
 
+    if not horario_completo:
+        messages.warning(request, "Debe completar el horario de la Unidad curricular antes de asignar un Docente")
+        return redirect("detalle_paralelo", paralelo_id=paralelo.id)
+
     return render(request, "academico/asignar_docente.html", {
         "paralelo": paralelo,
         "evaluaciones": evaluaciones,
