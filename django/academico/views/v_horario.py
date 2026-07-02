@@ -6,7 +6,6 @@ from django.contrib import messages
 from academico.models import Paralelo, Horario, PeriodoDeNivelacion
 from academico.services import servicio_registrar_horario, servicio_horas_agendadas_paralelo, servicio_obtener_matriz_de_horarios, servicio_generar_horario_sugerido, servicio_editar_horario, periodo_en_planificacion, _horas_sincronicas_semanales
 from poo.clases.enums.dia_de_semana import DiaDeSemana
-from poo.clases.enums.tipo_de_sesion import TipoDeSesion
 from poo.clases.enums.jornada import Jornada
 from poo.clases.franja_horaria import texto_franja
 from usuarios.utils import (
@@ -146,7 +145,6 @@ def registrar_horario(request, paralelo_id):
             return redirect("listar_horarios_paralelo", paralelo_id=representativo.id)
 
         dia_semana = request.POST.get("dia_semana")
-        tipo_de_sesion = "Sincrónica"
         espacio = (request.POST.get("espacio_de_imparticion") or "").strip()
         hora_inicio = _parsear_hora(request.POST.get("hora_inicio"))
         hora_fin = _parsear_hora(request.POST.get("hora_fin"))
@@ -156,7 +154,7 @@ def registrar_horario(request, paralelo_id):
             return redirect("listar_horarios_paralelo", paralelo_id=representativo.id)
 
         ok, mensaje = servicio_registrar_horario(
-            fila, dia_semana, hora_inicio, hora_fin, espacio, tipo_de_sesion
+            fila, dia_semana, hora_inicio, hora_fin, espacio
         )
         (messages.success if ok else messages.error)(request, mensaje)
 
@@ -177,7 +175,6 @@ def editar_horario(request, horario_id):
 
     if request.method == "POST":
         dia_semana = request.POST.get("dia_semana")
-        tipo_de_sesion = "Sincrónica"
         espacio = (request.POST.get("espacio_de_imparticion") or "").strip()
         hora_inicio = _parsear_hora(request.POST.get("hora_inicio"))
         hora_fin = _parsear_hora(request.POST.get("hora_fin"))
@@ -187,7 +184,7 @@ def editar_horario(request, horario_id):
             return redirect("editar_horario", horario_id=horario.id)
 
         ok, mensaje = servicio_editar_horario(
-            horario, dia_semana, hora_inicio, hora_fin, espacio, tipo_de_sesion
+            horario, dia_semana, hora_inicio, hora_fin, espacio
         )
         if ok:
             messages.success(request, mensaje)

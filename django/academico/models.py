@@ -5,7 +5,6 @@ from poo.clases.enums.estado_de_malla import EstadoDeMalla
 from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
 from poo.clases.enums.jornada import Jornada
 from poo.clases.enums.dia_de_semana import DiaDeSemana
-from poo.clases.enums.tipo_de_sesion import TipoDeSesion
 from poo.clases.enums.tipo_de_cohorte import TipoDeCohorte
 from poo.clases.enums.estado_de_cohorte import EstadoDeCohorte
 from poo.clases.enums.estado_de_aprobacion import EstadoDeAprobacion
@@ -151,9 +150,7 @@ class Horario(models.Model):
     dia_semana = models.CharField(max_length=20, choices=cambiar_enum_a_choices(DiaDeSemana), verbose_name="Día de semana")
     hora_inicio = models.TimeField(verbose_name="Hora de inicio")
     hora_fin = models.TimeField(verbose_name="Hora de finalización")
-    espacio_de_imparticion = models.CharField(max_length=200, verbose_name="Espacio de impartición")
-    numero_semana = models.IntegerField(verbose_name="Número de semana")
-    tipo_de_sesion = models.CharField(max_length=50, choices=cambiar_enum_a_choices(TipoDeSesion), verbose_name="Tipo de sesión")
+    espacio_de_imparticion = models.CharField(max_length=200, blank=True, default="", verbose_name="Espacio de impartición")
 
     class Meta:
         verbose_name = "Horario"
@@ -163,20 +160,14 @@ class Horario(models.Model):
         return f"{self.dia_semana}: {self.hora_inicio}-{self.hora_fin} ({self.paralelo.nombre})"
     
     def determinar_duracion_horas(self):
-        #poo/
         from poo.clases.horario import Horario as HorarioBase
         from poo.clases.enums.dia_de_semana import DiaDeSemana as DiaBase
-        from poo.clases.enums.modalidad import Modalidad as ModalidadBase
-        from poo.clases.enums.tipo_de_sesion import TipoDeSesion as SesionBase
         
         horario = HorarioBase(
             dia_semana=DiaBase(self.dia_semana),
             hora_inicio=self.hora_inicio,
             hora_fin=self.hora_fin,
             espacio_de_imparticion=self.espacio_de_imparticion,
-            modalidad=ModalidadBase(self.modalidad),
-            numero_semana=self.numero_semana,
-            tipo_de_sesion=SesionBase(self.tipo_de_sesion)
         )
         return horario.determinar_duracion_horas()
 
