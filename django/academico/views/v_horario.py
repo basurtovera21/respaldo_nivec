@@ -407,6 +407,7 @@ def descargar_horarios_excel(request):
         ws = wb.create_sheet(title=str(jornada_nombre)[:31])
         ws.append(["Código de paralelo", "Nombre de paralelo", "Unidad curricular", "Día", "Hora inicio", "Hora fin", "Espacio"])
 
+        # Orden personalizado de días para ordenar Lunes primero
         _ORDEN_DIA = {"Lunes": 1, "Martes": 2, "Miércoles": 3, "Jueves": 4, "Viernes": 5, "Sábado": 6, "Domingo": 7}
 
         horarios = list(Horario.objects.filter(
