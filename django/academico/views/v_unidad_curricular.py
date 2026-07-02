@@ -97,7 +97,6 @@ def descargar_plantilla_unidad(request):
     cabeceras = [
         "Código de malla (MC...)",
         "Nombre de la Unidad curricular",
-        "Áreas de conocimiento (separadas por comas)",
         "Horas totales (número decimal)",
         "Horas sincrónicas (número decimal)",
         "Horas sincrónicas semanales (número entero)",

@@ -32,9 +32,14 @@
     <table style="width: 100%;">
         <thead>
             <tr>
+                <th style="font-weight: bold; text-align: left; color: #515154">Tipo de identificación</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Número de identificación</th>
-                <th style="font-weight: bold; text-align: left; color: #515154">Estudiante registrado</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Apellidos</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Nombres</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Correo institucional</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Número de matrícula</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Registro de cupo</th>
+                <th style="font-weight: bold; text-align: left; color: #515154">Estado de matrícula</th>
                 {% if not solo_lectura and puede_gestionar %}
                 <th style="font-weight: bold; text-align: left; color: #515154">Reasignar</th>
                 <th style="font-weight: bold; text-align: left; color: #515154">Acción</th>
@@ -44,9 +49,14 @@
         <tbody>
             {% for m in matriculas %}
             <tr>
+                <td style="text-align: left; color: #1d1d1f;">{{ m.estudiante.usuario_de_sistema.tipo_de_identificacion }}</td>
                 <td style="font-family: monospace; text-align: left; color: #1d1d1f;">{{ m.estudiante.usuario_de_sistema.identificacion }}</td>
-                <td style="text-align: left; color: #1d1d1f;">{{ m.estudiante.usuario_de_sistema.nombres }} {{ m.estudiante.usuario_de_sistema.apellidos }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ m.estudiante.usuario_de_sistema.apellidos }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ m.estudiante.usuario_de_sistema.nombres }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ m.estudiante.usuario_de_sistema.correo_institucional }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ m.estudiante.numero_de_matricula }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ m.estudiante.get_registro_de_cupo_display }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ m.estudiante.get_estado_de_matricula_display }}</td>
                 {% if not solo_lectura and puede_gestionar %}
                 <td style="text-align: left;">
                     {% if destinos %}
@@ -77,7 +87,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" style="text-align: center; color: #86868b; padding: 30px;">
+                <td colspan="10" style="text-align: center; color: #86868b; padding: 30px;">
                     No existen estudiantes matriculados en este Paralelo actualmente
                 </td>
             </tr>
@@ -87,6 +97,6 @@
 </div>
 
 <div style="margin-top: 15px;">
-    <a href="{% url 'listar_paralelos' %}" class="boton boton-secundario">Volver</a>
+    <a href="{% url 'detalle_paralelo' paralelo.id %}" class="boton boton-secundario">Volver</a>
 </div>
 {% endblock %}

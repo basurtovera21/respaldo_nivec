@@ -2,10 +2,9 @@
 from poo.clases.interfaces.i_unidad_evaluable import IUnidadEvaluable
 
 class UnidadCurricular(IUnidadEvaluable):
-    def __init__(self, codigo_de_unidad: str, nombre: str, area_de_conocimiento: list, horas_totales: float, horas_sincronicas: float, horas_asincronicas: float, criterio_de_aprobacion: float = 7.0, porcentaje_minimo_asistencia: float = 70.0):
+    def __init__(self, codigo_de_unidad: str, nombre: str, horas_totales: float, horas_sincronicas: float, horas_asincronicas: float, criterio_de_aprobacion: float = 7.0, porcentaje_minimo_asistencia: float = 70.0, **kwargs):
         self.codigo_de_unidad = codigo_de_unidad
         self.nombre = nombre
-        self.area_de_conocimiento = area_de_conocimiento
         self.horas_totales = horas_totales
         self.horas_sincronicas = horas_sincronicas
         self.horas_asincronicas = horas_asincronicas
@@ -65,9 +64,6 @@ class UnidadCurricular(IUnidadEvaluable):
         if not self.nombre or not self.nombre.strip():
             errores["nombre"] = "Información requerida"
 
-        if not self.area_de_conocimiento:
-            errores["area_de_conocimiento"] = "Información requerida"
-
         errores.update(self.validar_horas())
         errores.update(self.validar_criterios())
 
@@ -77,7 +73,6 @@ class UnidadCurricular(IUnidadEvaluable):
         return {
             "Código de unidad": self.codigo_de_unidad,
             "Unidad curricular": self.nombre,
-            "Área(s) de conocimiento": self.area_de_conocimiento,
             "Horas totales": self.horas_totales,
             "Horas sincrónicas": self.horas_sincronicas,
             "Horas asincrónicas": self.horas_asincronicas,

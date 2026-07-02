@@ -359,6 +359,8 @@ def estudiantes_disponibles(request, paralelo_id):
     ocupacion = MatriculaParalelo.objects.filter(paralelo=paralelo).count()
     capacidad = paralelo.capacidad_maxima
 
+    lleno = ocupacion >= capacidad
+
     no_asignados = PerfilEstudiante.objects.filter(
         carrera_registrada=carrera,
         jornada=paralelo.jornada,
@@ -370,12 +372,16 @@ def estudiantes_disponibles(request, paralelo_id):
         "usuario_de_sistema__apellidos", "usuario_de_sistema__nombres"
     )
 
+    if not no_asignados.exists() and not lleno:
+        messages.warning(request, "No existen estudiantes sin asignar para esta Carrera y Jornada")
+        return redirect("listar_estudiantes_paralelo", paralelo_id=paralelo.id)
+
     return render(request, "academico/estudiantes_disponibles.html", {
         "paralelo": paralelo,
         "no_asignados": no_asignados,
         "ocupacion": ocupacion,
         "capacidad": capacidad,
-        "lleno": ocupacion >= capacidad,
+        "lleno": lleno,
         "titulo_pagina": "Paralelo - NIVEC",
         "titulo": f"Agregar estudiante - {paralelo.nombre}",
     })

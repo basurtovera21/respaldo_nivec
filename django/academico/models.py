@@ -87,7 +87,6 @@ class UnidadCurricular(models.Model):
     malla_curricular = models.ForeignKey(MallaCurricular, on_delete=models.PROTECT, related_name="unidades_curriculares", verbose_name="Malla curricular registrada")
     codigo_de_unidad = models.CharField(max_length=50, unique=True, verbose_name="Código de unidad curricular")
     nombre = models.CharField(max_length=200, verbose_name="Nombre")
-    area_de_conocimiento = models.JSONField(default=list, verbose_name="Área(s) de conocimiento") 
     horas_totales = models.FloatField(verbose_name="Horas totales")
     horas_sincronicas = models.FloatField(verbose_name="Horas sincrónicas")
     horas_sincronicas_semanales = models.FloatField(default=0, verbose_name="Horas sincrónicas semanales")
