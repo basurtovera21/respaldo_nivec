@@ -126,3 +126,15 @@ def finalizar_periodo(request, periodo_id):
         messages.error(request, "No se ha podido finalizar el Periodo de nivelación")
         
     return redirect("listar_periodos")
+
+
+
+@requiere_perfil(ROL_DIRECTOR_DAN)
+def pasar_a_evaluacion(request, periodo_id):
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    periodo_db = get_object_or_404(PeriodoDeNivelacion, pk=periodo_id, universidad=universidad_usuario)
+    if services.servicio_pasar_a_evaluacion(periodo_db):
+        messages.success(request, f"El Periodo de nivelación {periodo_db.periodo} pasó a evaluación")
+    else:
+        messages.error(request, "No se ha podido pasar el Periodo a evaluación (debe estar en curso)")
+    return redirect("listar_periodos")
