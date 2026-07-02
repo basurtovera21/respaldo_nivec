@@ -391,7 +391,6 @@ def agregar_estudiante(request, paralelo_id):
 def consolidado_paralelos_excel(request):
     import openpyxl
     from django.http import HttpResponse
-    from academico.models import Horario
 
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -440,15 +439,10 @@ def consolidado_paralelos_excel(request):
         if p.docente_responsable:
             d = p.docente_responsable.usuario_de_sistema
             docente = f"{d.nombres} {d.apellidos}"
-        horarios_txt = ", ".join(
-            f"{h.get_dia_semana_display()} {h.hora_inicio.strftime('%H:%M')}-{h.hora_fin.strftime('%H:%M')}"
-            for h in Horario.objects.filter(paralelo=p).order_by("dia_semana", "hora_inicio")
-        )
         grupos[clave]["unidades"].append({
             "nombre": p.unidad_curricular.nombre,
             "codigo": p.unidad_curricular.codigo_de_unidad,
             "docente": docente,
-            "horario": horarios_txt,
         })
 
     wb = openpyxl.Workbook()
@@ -471,14 +465,131 @@ def consolidado_paralelos_excel(request):
         ws.append([])
 
         # Tabla de unidades
-        ws.append(["Código de unidad", "Unidad curricular", "Docente responsable", "Horario semanal"])
+        ws.append(["Código de unidad", "Unidad curricular", "Docente responsable"])
         for u in grupo["unidades"]:
-            ws.append([u["codigo"], u["nombre"], u["docente"] or "—", u["horario"] or "—"])
+            ws.append([u["codigo"], u["nombre"], u["docente"] or "—"])
 
-        for col in range(1, 5):
+        for col in range(1, 4):
             ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 35
 
     response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     response["Content-Disposition"] = f'attachment; filename="consolidado_paralelos_{periodo.periodo}.xlsx"'
+    wb.save(response)
+    return response
+
+
+
+@requiere_perfil(*ROLES_VISUALIZAN)
+def consolidado_estudiantes_excel(request):
+    import openpyxl
+    from django.http import HttpResponse
+
+    universidad_usuario = request.user.perfil_administrativo.universidad
+    if not universidad_usuario:
+        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        return redirect("panel_principal")
+
+    periodo_id = request.GET.get("periodo")
+    if not periodo_id:
+        messages.warning(request, "Especifique un Periodo de nivelación")
+        return redirect("listar_paralelos")
+
+    periodo = PeriodoDeNivelacion.objects.filter(id=periodo_id, universidad=universidad_usuario).first()
+    if not periodo:
+        messages.error(request, "Periodo de nivelación no válido")
+        return redirect("listar_paralelos")
+
+    paralelos = Paralelo.objects.filter(
+        periodo_de_nivelacion=periodo
+    ).select_related(
+        "unidad_curricular__malla_curricular__carrera",
+    ).order_by(
+        "unidad_curricular__malla_curricular__carrera__nombre",
+        "nombre",
+        "unidad_curricular__nombre",
+    )
+
+    # Agrupar por paralelo lógico
+    grupos = {}
+    for p in paralelos:
+        carrera = p.unidad_curricular.malla_curricular.carrera
+        clave = (carrera.nombre, p.jornada, p.nombre)
+        if clave not in grupos:
+            grupos[clave] = {
+                "carrera": carrera.nombre,
+                "nombre": p.nombre,
+                "jornada": p.get_jornada_display(),
+                "representativo": p,
+                "unidades_rows": [],
+            }
+        grupos[clave]["unidades_rows"].append(p)
+
+    wb = openpyxl.Workbook()
+    wb.remove(wb.active)
+
+    for (carrera_nombre, jornada_val, nombre_par), grupo in sorted(grupos.items()):
+        # Obtener estudiantes del paralelo (desde el representativo)
+        representativo = grupo["representativo"]
+        matriculas = MatriculaParalelo.objects.filter(
+            paralelo=representativo
+        ).select_related(
+            "estudiante__usuario_de_sistema",
+            "estudiante__carrera_registrada",
+        ).order_by(
+            "estudiante__usuario_de_sistema__apellidos",
+            "estudiante__usuario_de_sistema__nombres",
+        )
+
+        titulo_hoja = f"{nombre_par[:20]} ({grupo['jornada'][:3]})"[:31]
+        ws = wb.create_sheet(title=titulo_hoja)
+
+        # Encabezado
+        ws.append(["Listado de estudiantes"])
+        ws.append(["Carrera", grupo["carrera"]])
+        ws.append(["Paralelo", grupo["nombre"]])
+        ws.append(["Jornada", grupo["jornada"]])
+        ws.append(["Periodo", periodo.periodo])
+        ws.append(["Total de estudiantes", matriculas.count()])
+        ws.append([])
+
+        # Unidades del paralelo
+        ws.append(["Unidades curriculares del paralelo:"])
+        for row in grupo["unidades_rows"]:
+            ws.append(["", row.unidad_curricular.nombre])
+        ws.append([])
+
+        # Tabla de estudiantes
+        ws.append([
+            "N°",
+            "Tipo de identificación",
+            "Número de identificación",
+            "Apellidos",
+            "Nombres",
+            "Correo institucional",
+            "Jornada",
+            "Registro de cupo",
+            "Estado de matrícula",
+        ])
+
+        for idx, mat in enumerate(matriculas, start=1):
+            est = mat.estudiante
+            usr = est.usuario_de_sistema
+            ws.append([
+                idx,
+                usr.tipo_de_identificacion,
+                usr.identificacion,
+                usr.apellidos,
+                usr.nombres,
+                usr.correo_institucional,
+                est.jornada,
+                est.registro_de_cupo,
+                est.estado_de_matricula,
+            ])
+
+        for col in range(1, 10):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 25
+
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = f'attachment; filename="listado_estudiantes_paralelos_{periodo.periodo}.xlsx"'
     wb.save(response)
     return response
