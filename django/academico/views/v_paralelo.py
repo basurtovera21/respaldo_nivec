@@ -359,7 +359,7 @@ def estudiantes_disponibles(request, paralelo_id):
     ocupacion = MatriculaParalelo.objects.filter(paralelo=paralelo).count()
     capacidad = paralelo.capacidad_maxima
 
-    if lleno:
+    if ocupacion >= capacidad:
         messages.warning(request, "El Paralelo no presenta cupos disponibles")
         return redirect("listar_estudiantes_paralelo", paralelo_id=paralelo.id)
 
