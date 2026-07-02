@@ -120,8 +120,8 @@ def listar_consolidados(request):
     return render(request, "academico/listar_consolidados.html", {
         "consolidados": consolidados,
         "solo_lectura": usuario_es_solo_lectura(request.user),
-        "titulo_pagina": "Matriz de tercer nivel - NIVEC",
-        "titulo": "Consolidados académicos",
+        "titulo_pagina": "Resumen de ingreso - NIVEC",
+        "titulo": "Resumen de ingreso MTN",
         "url_registrar": "procesar_mtn",
         "texto_registrar": "Procesar Matriz de tercer nivel",
         "url_volver": "panel_dan",

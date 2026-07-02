@@ -405,7 +405,7 @@ def descargar_horarios_excel(request):
             jornada_nombre = jornada_valor
 
         ws = wb.create_sheet(title=str(jornada_nombre)[:31])
-        ws.append(["Paralelo", "Unidad curricular", "Día", "Hora inicio", "Hora fin", "Espacio"])
+        ws.append(["Código", "Paralelo", "Unidad curricular", "Día", "Hora inicio", "Hora fin", "Espacio"])
 
         horarios = Horario.objects.filter(
             paralelo__in=paralelos_jornada
@@ -415,6 +415,7 @@ def descargar_horarios_excel(request):
 
         for h in horarios:
             ws.append([
+                h.paralelo.codigo_de_paralelo,
                 h.paralelo.nombre,
                 h.paralelo.unidad_curricular.nombre,
                 h.dia_semana,
@@ -423,7 +424,7 @@ def descargar_horarios_excel(request):
                 h.espacio_de_imparticion or "",
             ])
 
-        for col in range(1, 7):
+        for col in range(1, 8):
             ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 25
 
     if not wb.sheetnames:
