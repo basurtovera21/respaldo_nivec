@@ -32,6 +32,14 @@
 {% if es_evaluacion and not solo_lectura %}
 <div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
     <a href="{% url 'cargar_calificaciones' paralelo.id %}" class="boton boton-primario">Cargar calificaciones</a>
+    <form method="post" action="{% url 'pasar_a_revision' paralelo.id %}" style="margin: 0;">
+        {% csrf_token %}
+        <button type="submit" class="boton boton-secundario" onclick="return confirm('¿Pasar todas las calificaciones en borrador a revisión?');">Pasar a revisión</button>
+    </form>
+    <form method="post" action="{% url 'formalizar_evaluaciones' paralelo.id %}" style="margin: 0;">
+        {% csrf_token %}
+        <button type="submit" class="boton boton-secundario" onclick="return confirm('¿Formalizar todas las calificaciones en revisión? Esta acción no se puede deshacer.');">Formalizar</button>
+    </form>
 </div>
 {% endif %}
 
@@ -68,7 +76,7 @@
                 <td style="text-align: left; padding: 12px 18px; color: {% if e.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif e.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#86868b{% endif %}; font-weight: bold;">{{ e.estado_de_aprobacion }}</td>
                 <td style="text-align: left; padding: 12px 18px;">{{ e.estado_revision }}</td>
                 <td style="text-align: left; padding: 12px 18px;">
-                    {% if es_evaluacion and not solo_lectura %}
+                    {% if es_evaluacion and not solo_lectura and e.estado_revision != "Formalizado" %}
                     <a href="{% url 'editar_evaluacion' e.id %}" class="etiqueta-accion etiqueta-modificar">Editar</a>
                     {% endif %}
                     <a href="{% url 'detalle_evaluacion' e.id %}" class="etiqueta-accion etiqueta-naranja">Ver detalle</a>

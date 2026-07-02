@@ -1671,3 +1671,29 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
             resultado["advertencias"].append(f"Fila {numero_fila} omitida ({str(e)})")
 
     return resultado
+
+
+
+# ==========================================
+# Flujo de revisión de calificaciones
+# ==========================================
+def servicio_pasar_a_revision(paralelo_db):
+    """Pasa todas las evaluaciones de un paralelo+unidad de Borrador a En revisión."""
+    count = EvaluacionAcademica.objects.filter(
+        unidad_curricular=paralelo_db.unidad_curricular,
+        periodo_de_nivelacion=paralelo_db.periodo_de_nivelacion,
+        estado_revision="Borrador",
+        estudiante__estudiantes_matriculados__paralelo=paralelo_db,
+    ).update(estado_revision="En revisión")
+    return count
+
+
+def servicio_formalizar_evaluaciones(paralelo_db):
+    """Pasa todas las evaluaciones de un paralelo+unidad de En revisión a Formalizado."""
+    count = EvaluacionAcademica.objects.filter(
+        unidad_curricular=paralelo_db.unidad_curricular,
+        periodo_de_nivelacion=paralelo_db.periodo_de_nivelacion,
+        estado_revision="En revisión",
+        estudiante__estudiantes_matriculados__paralelo=paralelo_db,
+    ).update(estado_revision="Formalizado")
+    return count
