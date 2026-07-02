@@ -160,7 +160,11 @@ def modificar_administrativo(request, admin_id):
 
     if request.method == "POST":
         formulario_usuario = FormularioModificarUsuarioDeSistema(request.POST, instance=usuario)
-        formulario_perfil = FormularioModificarPerfilAdministrativo(request.POST, instance=perfil)
+        if es_coordinador_ua:
+            from usuarios.forms import FormularioModificarCoordinadorUA
+            formulario_perfil = FormularioModificarCoordinadorUA(request.POST, instance=perfil, universidad=universidad_usuario)
+        else:
+            formulario_perfil = FormularioModificarPerfilAdministrativo(request.POST, instance=perfil)
         
         if es_coordinador_ua and perfil_docente:
             formulario_docente = FormularioDatosDocenteUA(request.POST, instance=perfil_docente)
@@ -196,7 +200,11 @@ def modificar_administrativo(request, admin_id):
                 return redirect("listar_administrativos")
     else:
         formulario_usuario = FormularioModificarUsuarioDeSistema(instance=usuario)
-        formulario_perfil = FormularioModificarPerfilAdministrativo(instance=perfil)
+        if es_coordinador_ua:
+            from usuarios.forms import FormularioModificarCoordinadorUA
+            formulario_perfil = FormularioModificarCoordinadorUA(instance=perfil, universidad=universidad_usuario)
+        else:
+            formulario_perfil = FormularioModificarPerfilAdministrativo(instance=perfil)
         formulario_docente = FormularioDatosDocenteUA(instance=perfil_docente) if es_coordinador_ua and perfil_docente else None
 
     if es_coordinador_ua:
