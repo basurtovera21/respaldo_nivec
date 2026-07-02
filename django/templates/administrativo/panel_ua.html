@@ -26,6 +26,14 @@
     </div>
 </div>
 
+{% if pendientes_formalizar > 0 %}
+<div style="background: #fef9ec; border: 1px solid rgba(180,83,9,0.1); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px;">
+    <span style="color: #b45309; font-size: 13px; font-weight: bold;">
+        {{ pendientes_formalizar }} calificaciones en revisión pendientes de formalizar
+    </span>
+</div>
+{% endif %}
+
 {% if paralelos %}
 <div class="tarjeta" style="margin-top: 16px; padding: 0; overflow-x: auto;">
     <table style="width: 100%;">

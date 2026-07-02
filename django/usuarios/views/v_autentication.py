@@ -103,11 +103,22 @@ def panel_ua(request):
                 unidad_curricular__malla_curricular__carrera=carrera,
             ).select_related("unidad_curricular").order_by("nombre", "unidad_curricular__nombre")
     
+    # Count evaluaciones pending formalization for this carrera
+    from academico.models import EvaluacionAcademica
+    pendientes_formalizar = 0
+    if carrera and periodo_actual:
+        pendientes_formalizar = EvaluacionAcademica.objects.filter(
+            periodo_de_nivelacion=periodo_actual,
+            estudiante__carrera_registrada=carrera,
+            estado_revision="En revisión",
+        ).count()
+
     return render(request, "administrativo/panel_ua.html", {
         "perfil": perfil,
         "carrera": carrera,
         "periodo_actual": periodo_actual,
         "paralelos": paralelos,
+        "pendientes_formalizar": pendientes_formalizar,
     })
 
 @login_required
