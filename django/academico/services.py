@@ -1175,6 +1175,9 @@ def periodo_en_planificacion(periodo_db):
 def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, espacio, tipo_de_sesion):
     from poo.clases.franja_horaria import sesion_dentro_de_franja, DURACIONES_VALIDAS, texto_franja
 
+    if not periodo_en_planificacion(paralelo_db.periodo_de_nivelacion):
+        return (False, "Solo se pueden gestionar horarios en un Periodo en planificación")
+
     try:
         enum_dia = obtener_enum_flexible(DiaDeSemana, dia_semana)
         enum_tipo = obtener_enum_flexible(TipoDeSesion, tipo_de_sesion)
@@ -1321,6 +1324,8 @@ def _generar_horario_para_unidad(paralelo_unidad_db, tipo_sincronica):
 
 def servicio_generar_horario_sugerido(representativo_db):
     # Genera el horario de TODO el paralelo lógico (todas sus unidades), de forma simétrica.
+    if not periodo_en_planificacion(representativo_db.periodo_de_nivelacion):
+        return (False, "Solo se pueden gestionar horarios en un Periodo en planificación")
     tipo_sincronica = obtener_enum_flexible(TipoDeSesion, "Sincrónica")
     unidades = list(
         _paralelos_del_grupo_de_estudiantes(representativo_db).select_related("unidad_curricular")
@@ -1350,6 +1355,8 @@ def servicio_editar_horario(horario_db, dia_semana, hora_inicio, hora_fin, espac
     from poo.clases.franja_horaria import sesion_dentro_de_franja, DURACIONES_VALIDAS, texto_franja
 
     paralelo_db = horario_db.paralelo
+    if not periodo_en_planificacion(paralelo_db.periodo_de_nivelacion):
+        return (False, "Solo se pueden gestionar horarios en un Periodo en planificación")
     try:
         enum_dia = obtener_enum_flexible(DiaDeSemana, dia_semana)
         enum_tipo = obtener_enum_flexible(TipoDeSesion, tipo_de_sesion)
@@ -1514,6 +1521,12 @@ def servicio_asignar_docente(paralelo_db, docente_db):
     areas = unidad.area_de_conocimiento or []
     horas_unidad = _horas_sincronicas_semanales(unidad, periodo)
 
+    if not periodo_en_planificacion(periodo):
+        return (False, "Solo se puede asignar docentes en un Periodo en planificación", None)
+
+    if not Horario.objects.filter(paralelo=paralelo_db).exists():
+        return (False, "Debe registrar el horario de la Unidad curricular antes de asignar un Docente", None)
+
     docente_poo, carga_actual = _construir_docente_poo_para_periodo(
         docente_db, periodo, paralelo_excluir_id=paralelo_db.id
     )
@@ -1537,6 +1550,8 @@ def servicio_asignar_docente(paralelo_db, docente_db):
     return (True, "El Docente ha sido asignado correctamente", advertencia)
 
 def servicio_quitar_docente(paralelo_db):
+    if not periodo_en_planificacion(paralelo_db.periodo_de_nivelacion):
+        return (False, "Solo se puede modificar la asignación en un Periodo en planificación")
     docente_db = paralelo_db.docente_responsable
     if not docente_db:
         return (False, "El paralelo no tiene un docente designado actualmente")
