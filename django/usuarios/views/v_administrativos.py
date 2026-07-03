@@ -28,7 +28,7 @@ ROLES_USUARIOS_VEN = (ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
 def listar_administrativos(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     administrativos = PerfilAdministrativo.objects.filter(
@@ -71,7 +71,7 @@ def listar_administrativos(request):
         "perfil_filtro": perfil_filtro,
         "perfiles_disponibles": perfiles_disponibles,
         "titulo_pagina": "Administrativo - NIVEC",
-        "titulo": "Usuarios administrativos",
+        "titulo": "Administrativos",
         "url_registrar": "registrar_administrativo",
         "texto_registrar": "Registrar",
         "url_volver": "panel_principal",
@@ -95,7 +95,7 @@ def descargar_plantilla_administrativo(request):
         ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 40
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="formato_administrativo_nivec.xlsx"'
+    response['Content-Disposition'] = 'attachment; filename="administrativos_documento_nivec.xlsx"'
     wb.save(response)
     return response
 
@@ -103,7 +103,7 @@ def descargar_plantilla_administrativo(request):
 def registrar_administrativo(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     if request.method == "POST":
@@ -123,7 +123,7 @@ def registrar_administrativo(request):
                 messages.warning(request, advertencia)
                 
             if resultado["exitosos"] > 0:
-                messages.success(request, f"{resultado['exitosos']} Usuarios administrativos registrados correctamente")
+                messages.success(request, f"{resultado['exitosos']} Administrativos registrados correctamente")
             else:
                 messages.warning(request, "No se procesaron registros")
                 
@@ -151,7 +151,7 @@ def registrar_administrativo(request):
                     )
 
                     perfil.save()
-                messages.success(request, "El Usuario administrativo ha sido registrado correctamente")
+                messages.success(request, "El Administrativo ha sido registrado correctamente")
                 return redirect("listar_administrativos")
             
     else:
@@ -161,7 +161,7 @@ def registrar_administrativo(request):
     return render(request, "usuarios/formulario_administrativo.html", {
         "form_usuario": formulario_usuario,
         "form_perfil": formulario_perfil,
-        "titulo": "Registrar Usuario administrativo",
+        "titulo": "Registrar Administrativo",
         "boton_texto": "Registrar",
         "url_cancelar": "listar_administrativos",
         "mostrar_carga_masiva": True,
@@ -172,7 +172,7 @@ def registrar_administrativo(request):
 def modificar_administrativo(request, admin_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     perfil = get_object_or_404(PerfilAdministrativo, pk=admin_id, universidad=universidad_usuario)
@@ -180,7 +180,7 @@ def modificar_administrativo(request, admin_id):
     
     admin_poo = _crear_usuario_administrativo(perfil)
     if not admin_poo.puede_ser_modificado_o_eliminado():
-        messages.error(request, "El Usuario administrativo no puede ser modificado")
+        messages.error(request, "El Administrativo no ha podido ser modificado")
         return redirect("listar_administrativos")
 
     perfil_docente = getattr(usuario, 'perfil_docente', None)
@@ -224,7 +224,7 @@ def modificar_administrativo(request, admin_id):
                 messages.success(request, "El Coordinador de dirección de admisión y nivelación ha sido modificado correctamente")
                 return redirect("listar_coordinadores_dan")
             else:
-                messages.success(request, "El Usuario administrativo ha sido modificado correctamente")
+                messages.success(request, "El Administrativo ha sido modificado correctamente")
                 return redirect("listar_administrativos")
     else:
         formulario_usuario = FormularioModificarUsuarioDeSistema(instance=usuario)
@@ -246,7 +246,7 @@ def modificar_administrativo(request, admin_id):
     else:
         url_cancelar = "listar_administrativos"
         titulo_pagina = "Administrativo - NIVEC"
-        titulo_seccion = "Modificar Usuario administrativo"
+        titulo_seccion = "Modificar Administrativo"
 
     contexto = {
         "form_usuario": formulario_usuario,
@@ -269,14 +269,14 @@ def modificar_administrativo(request, admin_id):
 def eliminar_administrativo(request, admin_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     perfil = get_object_or_404(PerfilAdministrativo, pk=admin_id, universidad=universidad_usuario)
     
     admin_poo = _crear_usuario_administrativo(perfil)
     if not admin_poo.puede_ser_modificado_o_eliminado():
-        messages.error(request, "El Usuario administrativo no puede ser eliminado")
+        messages.error(request, "El Administrativo no ha podido ser eliminado")
         return redirect("listar_administrativos")
 
     rol_eliminado = perfil.perfil_administrativo
