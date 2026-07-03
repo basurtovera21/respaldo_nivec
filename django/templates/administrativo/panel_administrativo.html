@@ -8,11 +8,14 @@
         <a href="{% url 'detalle_universidad' %}" class="boton boton-secundario">Información institucional</a>
     </div>
 
+    {% if tiene_algun_institucional %}
     <div class="tarjeta">
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Institución</h2>
         <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Base institucional</p>
         <div class="acciones" style="margin-bottom: 0;">
+            {% if tiene_campus %}
             <a href="{% url 'listar_campus' %}" class="boton boton-secundario">Campus</a>
+            {% endif %}
             {% if tiene_carreras %}
             <a href="{% url 'listar_carreras' %}" class="boton boton-secundario">Carreras</a>
             {% endif %}
@@ -21,4 +24,29 @@
             {% endif %}
         </div>
     </div>
+    {% endif %}
+
+    {% if tiene_algun_usuario %}
+    <div class="tarjeta">
+        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Usuarios institucionales</h2>
+        <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Perfiles institucionales</p>
+        <div class="acciones" style="margin-bottom: 0;">
+            {% if tiene_administrativos %}
+            <a href="{% url 'listar_administrativos' %}" class="boton boton-secundario">Administrativos</a>
+            {% endif %}
+            {% if tiene_coordinadores_dan %}
+            <a href="{% url 'listar_coordinadores_dan' %}" class="boton boton-secundario">Coordinadores de admisión y nivelación</a>
+            {% endif %}
+            {% if tiene_coordinadores_ua %}
+            <a href="{% url 'listar_coordinadores_ua' %}" class="boton boton-secundario">Coordinadores de unidades académicas</a>
+            {% endif %}
+            {% if tiene_docentes %}
+            <a href="{% url 'listar_docentes' %}" class="boton boton-secundario">Docentes</a>
+            {% endif %}
+            {% if tiene_estudiantes %}
+            <a href="{% url 'listar_estudiantes' %}" class="boton boton-secundario">Estudiantes</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 {% endblock %}

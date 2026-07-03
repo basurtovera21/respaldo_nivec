@@ -12,7 +12,7 @@ from usuarios.forms import (
 )
 from usuarios.utils import (
     generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura,
-    ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
+    ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
 )
 
 from poo.clases.enums.estado_de_usuario import EstadoDeUsuario as EnumEstadoDeUsuario
@@ -22,7 +22,7 @@ from poo.clases.usuarios.usuario_de_sistema import UsuarioDeSistema as UsuarioDe
 
 from usuarios.services import _crear_usuario_administrativo, servicio_administrativo_registrar_masivo_desde_excel
 
-ROLES_USUARIOS_VEN = (ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
+ROLES_USUARIOS_VEN = (ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
 
 @requiere_perfil(*ROLES_USUARIOS_VEN)
 def listar_administrativos(request):
@@ -78,7 +78,7 @@ def listar_administrativos(request):
         "solo_lectura": usuario_es_solo_lectura(request.user),
     })
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def descargar_plantilla_administrativo(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -99,7 +99,7 @@ def descargar_plantilla_administrativo(request):
     wb.save(response)
     return response
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def registrar_administrativo(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -168,7 +168,7 @@ def registrar_administrativo(request):
         "url_plantilla": "descargar_plantilla_administrativo"
     })
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def modificar_administrativo(request, admin_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -265,7 +265,7 @@ def modificar_administrativo(request, admin_id):
 
     return render(request, "usuarios/formulario_administrativo.html", contexto)
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def eliminar_administrativo(request, admin_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:

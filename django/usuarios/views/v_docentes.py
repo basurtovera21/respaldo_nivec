@@ -9,7 +9,7 @@ from usuarios.models import UsuarioDeSistema, PerfilDocente, PerfilAdministrativ
 from usuarios.forms import FormularioUsuarioDeSistema, FormularioRegistrarDocente
 from usuarios.utils import (
     generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura,
-    ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
+    ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
 )
 from usuarios.services import servicio_docente_registrar_masivo_desde_excel, _crear_docente
 
@@ -17,7 +17,7 @@ from poo.clases.enums.estado_de_usuario import EstadoDeUsuario as EnumEstadoDeUs
 from poo.clases.enums.estado_de_vinculacion import EstadoDeVinculacion as EnumEstadoDeVinculacion
 from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
 
-ROLES_USUARIOS_VEN = (ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
+ROLES_USUARIOS_VEN = (ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
 
 @requiere_perfil(*ROLES_USUARIOS_VEN)
 def listar_docentes(request):
@@ -49,7 +49,7 @@ def listar_docentes(request):
         "solo_lectura": usuario_es_solo_lectura(request.user),
     })
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def descargar_plantilla_docente(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -64,7 +64,7 @@ def descargar_plantilla_docente(request):
     wb.save(response)
     return response
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def registrar_docente(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -121,7 +121,7 @@ def registrar_docente(request):
         "url_plantilla": "descargar_plantilla_docente"
     })
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def modificar_docente(request, docente_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -168,7 +168,7 @@ def modificar_docente(request, docente_id):
         "mostrar_carga_masiva": False
     })
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def eliminar_docente(request, docente_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -184,7 +184,7 @@ def eliminar_docente(request, docente_id):
         messages.error(request, "No se ha podido eliminar al Docente")
     return redirect("listar_docentes")
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def inhabilitar_docente(request, docente_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -209,7 +209,7 @@ def inhabilitar_docente(request, docente_id):
     messages.success(request, "El Docente ha sido inhabilitado correctamente")
     return redirect("listar_docentes")
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def habilitar_docente(request, docente_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
