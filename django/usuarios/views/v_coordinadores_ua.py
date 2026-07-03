@@ -50,7 +50,7 @@ def listar_coordinadores_ua(request):
         "titulo": "Coordinadores de unidades académicas",
         "url_registrar": "registrar_coordinador_ua",
         "texto_registrar": "Registrar",
-        "url_volver": "panel_director_dan",
+        "url_volver": "panel_principal",
         "solo_lectura": usuario_es_solo_lectura(request.user),
     })
 

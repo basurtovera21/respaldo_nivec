@@ -49,7 +49,7 @@ def listar_coordinadores_dan(request):
         "titulo": "Coordinadores de dirección de admisión y nivelación",
         "url_registrar": "registrar_coordinador_dan",
         "texto_registrar": "Registrar",
-        "url_volver": "panel_director_dan",
+        "url_volver": "panel_principal",
         "solo_lectura": usuario_es_solo_lectura(request.user),
     })
 
