@@ -121,16 +121,15 @@ class FormularioCampus(forms.ModelForm):
 class FormularioCarrera(forms.ModelForm):
     class Meta:
         model = Carrera
-        fields = ("campus", "codigo_de_carrera", "nombre", "modalidad", "vigencia_sniese")
+        fields = ("campus", "codigo_de_carrera", "nombre", "vigencia_sniese")
         labels = {
             "campus": "Campus registrado",
             "codigo_de_carrera": "Código de Carrera",
             "nombre": "Nombre",
-            "modalidad": "Modalidad",
             "vigencia_sniese": "Vigencia SNIESE",
         }
         widgets = {
-            "vigencia_sniese": forms.DateInput(attrs={"type": "date"}),
+            "vigencia_sniese": forms.DateInput(attrs={"type": "date"}, format='%Y-%m-%d'),
             "codigo_de_carrera": forms.TextInput(attrs={
                 'placeholder': 'El código será determinado de forma automática', 
                 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;', 
@@ -142,34 +141,36 @@ class FormularioCarrera(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['campus'].required = False
         self.fields['nombre'].required = False
-        self.fields['modalidad'].required = False
         self.fields['vigencia_sniese'].required = False
         self.fields['codigo_de_carrera'].required = False
+        if self.instance and self.instance.pk and self.instance.vigencia_sniese:
+            self.fields['vigencia_sniese'].widget.attrs['value'] = self.instance.vigencia_sniese.strftime('%Y-%m-%d')
 
     def clean(self):
         cleaned_data = super().clean()
         
         campus = cleaned_data.get("campus")
         nombre = cleaned_data.get("nombre")
-        modalidad = cleaned_data.get("modalidad")
         vigencia_sniese = cleaned_data.get("vigencia_sniese")
 
         errores = {}
 
         if not campus: errores['campus'] = "Información requerida"
         if not nombre: errores['nombre'] = "Información requerida"
-        if not modalidad: errores['modalidad'] = "Información requerida"
         if not vigencia_sniese: errores['vigencia_sniese'] = "Información requerida"
 
-        if nombre and modalidad and vigencia_sniese:
+        if nombre and vigencia_sniese:
             carrera_poo = CarreraBase(
                 codigo_de_carrera="PENDIENTE",
                 nombre=nombre,
-                modalidad=Modalidad(modalidad),
                 vigencia_sniese=vigencia_sniese
             )
 
-            if not carrera_poo.esta_activa():
+            errores_poo = carrera_poo.validar_datos_de_registro()
+            if errores_poo:
+                errores.update(errores_poo)
+
+            if "vigencia_sniese" not in errores and not carrera_poo.esta_activa():
                 errores['vigencia_sniese'] = "La vigencia SNIESE ha expirado"
 
         if campus and nombre:

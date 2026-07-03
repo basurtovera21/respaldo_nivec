@@ -28,6 +28,10 @@
         <div class="acciones" style="margin-bottom: 0;">
             <a href="{% url 'listar_paralelos' %}" class="boton boton-secundario">Paralelos</a>
             <a href="{% url 'matriz_horarios' %}" class="boton boton-secundario">Horarios</a>
+            {% if tiene_carrera %}
+            <a href="{% url 'listar_docentes' %}" class="boton boton-secundario">Docentes</a>
+            <a href="{% url 'listar_coordinadores_ua' %}" class="boton boton-secundario">Coordinadores de unidades académicas</a>
+            {% endif %}
         </div>
     </div>
 

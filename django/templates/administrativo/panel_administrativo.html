@@ -13,6 +13,9 @@
         <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Base institucional</p>
         <div class="acciones" style="margin-bottom: 0;">
             <a href="{% url 'listar_campus' %}" class="boton boton-secundario">Campus</a>
+            {% if tiene_carreras %}
+            <a href="{% url 'listar_carreras' %}" class="boton boton-secundario">Carreras</a>
+            {% endif %}
         </div>
     </div>
 {% endblock %}
