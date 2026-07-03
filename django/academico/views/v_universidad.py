@@ -17,8 +17,18 @@ def detalle_universidad(request):
 
 @requiere_perfil(ROL_DIRECTOR_DAN)
 def registrar_universidad(request):
+    from academico.models import Universidad
     if request.user.perfil_administrativo.universidad:
         return redirect("panel_principal")
+    
+    # Solo se permite una universidad en el sistema por Director DAN
+    if Universidad.objects.exists():
+        universidad_existente = Universidad.objects.first()
+        perfil = request.user.perfil_administrativo
+        perfil.universidad = universidad_existente
+        perfil.save()
+        messages.warning(request, "Ya existe una Universidad registrada en el sistema")
+        return redirect("detalle_universidad")
 
     if request.method == "POST":
         formulario_universidad = FormularioUniversidad(request.POST, request.FILES)

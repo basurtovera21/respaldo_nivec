@@ -5,7 +5,6 @@ class Universidad:
         self._codigo_sniese = codigo_sniese
         self._direccion_matriz = direccion_matriz
 
-
     @property
     def nombre(self):
         return self._nombre
@@ -34,7 +33,7 @@ class Universidad:
     def direccion_matriz(self, valor):
         self._direccion_matriz = valor
 
-    def validar_datos_de_registro(self):
+    def validar_datos_de_registro(self) -> dict:
         errores = {}
         if not self._nombre or not str(self._nombre).strip():
             errores["nombre"] = "Información requerida"
@@ -44,8 +43,5 @@ class Universidad:
             errores["codigo_sniese"] = "Información requerida"
         return errores
 
-    def obtener_nombre_completo(self):
-        return f"{self._nombre} ({self._abreviatura})"
-
     def __str__(self):
-        return self.obtener_nombre_completo()
+        return f"{self._nombre} ({self._abreviatura})"

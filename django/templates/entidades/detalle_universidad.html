@@ -10,32 +10,32 @@
         
         <div class="campo">
             <label style="font-weight: bold;">Nombre de la institución</label>
-            <div style="font-size: 13px; color: #1d1d1f; padding-top: 4px;">{{ universidad.nombre }}</div>
+            <div style="font-size: 13px; color: #253237; padding-top: 4px;">{{ universidad.nombre }}</div>
         </div>
 
         <div class="campo">
             <label style="font-weight: bold;">Abreviatura</label>
-            <div style="font-size: 13px; color: #1d1d1f; padding-top: 4px;">{{ universidad.abreviatura }}</div>
+            <div style="font-size: 13px; color: #253237; padding-top: 4px;">{{ universidad.abreviatura }}</div>
         </div>
 
         <div class="campo">
             <label style="font-weight: bold;">Código SNIESE</label>
-            <div style="font-family: monospace; font-size: 13px; color: #1d1d1f; padding-top: 4px;">{{ universidad.codigo_sniese }}</div>
+            <div style="font-family: monospace; font-size: 13px; color: #253237; padding-top: 4px;">{{ universidad.codigo_sniese }}</div>
         </div>
 
         <div class="campo">
             <label style="font-weight: bold;">Dirección de matriz</label>
-            <div style="font-size: 13px; color: #1d1d1f; padding-top: 4px;">{{ universidad.direccion_matriz }}</div>
+            <div style="font-size: 13px; color: #253237; padding-top: 4px;">{{ universidad.direccion_matriz }}</div>
         </div>
 
+        {% if universidad.identificador_visual %}
         <div class="campo">
-            <label style="font-weight: bold;">Identificador visual (logo)</label>
-            {% if universidad.identificador_visual %}
-                <div style="margin-top: 8px;">
-                    <img src="{{ universidad.identificador_visual.url }}" alt="Logo de {{ universidad.abreviatura }}" style="max-width: 150px; max-height: 75px; border-radius: 4px; border: 1px solid #d2d2d7; padding: 4px; background: white;">
-                </div>
-            {% endif %}
+            <label style="font-weight: bold;">Identificador visual</label>
+            <div style="margin-top: 8px;">
+                <img src="{{ universidad.identificador_visual.url }}" alt="Logo de {{ universidad.abreviatura }}" style="max-width: 150px; max-height: 75px; border-radius: 4px; border: 1px solid #DADBDB; padding: 4px; background: white;">
+            </div>
         </div>
+        {% endif %}
 
         <div style="margin-top: 25px; display: flex; gap: 15px;">
             {% if not solo_lectura %}
