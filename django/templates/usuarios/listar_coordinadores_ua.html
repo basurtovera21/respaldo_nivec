@@ -9,7 +9,10 @@
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Tipo de vinculación</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Tiempo de dedicación</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Carga horaria máxima</th>
+    <th style="font-weight: bold; text-align: left; color: #5c6b73">Estado de usuario</th>
+    {% if not solo_lectura %}
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
+    {% endif %}
 {% endblock %}
 
 {% block cuerpo_tabla %}
@@ -23,18 +26,17 @@
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.tipo_de_vinculacion|default:"-" }}</td>
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.tiempo_de_dedicacion|default:"-" }}</td>
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.carga_horaria_maxima|default:"0" }} horas</td>
+        <td style="text-align: left;"><span style="font-weight: bold; color: #253237; font-size: 13px;">{{ coordinador.usuario_de_sistema.estado_de_usuario }}</span></td>
+        {% if not solo_lectura %}
         <td style="text-align: left;">
-            {% if not solo_lectura %}
             <a href="{% url 'modificar_administrativo' coordinador.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
             <a href="{% url 'eliminar_administrativo' coordinador.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
-            {% else %}
-            <span style="color: #9db4c0;">—</span>
-            {% endif %}
         </td>
+        {% endif %}
     </tr>
     {% empty %}
     <tr>
-        <td colspan="9" style="text-align: center; color: #9db4c0; padding: 30px;">
+        <td colspan="{% if solo_lectura %}9{% else %}10{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>

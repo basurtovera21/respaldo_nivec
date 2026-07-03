@@ -24,7 +24,7 @@ def validar_jornadas_continuas(jornadas):
 
 class FormularioUsuarioDeSistema(forms.ModelForm):
     contrasena = forms.CharField(label="Contraseña predefinida", required=False, widget=forms.TextInput(attrs={'readonly': True, 'placeholder': 'Número de identificación registrado', 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'}))
-    estado_de_usuario = forms.ChoiceField(choices=[(EstadoDeUsuario.ACTIVO.value, 'Activo'), (EstadoDeUsuario.INACTIVO.value, 'Inactivo'), (EstadoDeUsuario.BLOQUEADO.value, 'Bloqueado')], label="Estado de usuario", widget=forms.Select(attrs={'class': 'campo-select'}))
+    estado_de_usuario = forms.ChoiceField(choices=[(EstadoDeUsuario.ACTIVO.value, 'Activo'), (EstadoDeUsuario.INACTIVO.value, 'Inactivo'), (EstadoDeUsuario.BLOQUEADO.value, 'Bloqueado')], label="Estado de usuario", widget=forms.Select(attrs={'class': 'campo-select', 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;', 'readonly': True}))
     
     class Meta:
         model = UsuarioDeSistema
@@ -35,6 +35,7 @@ class FormularioUsuarioDeSistema(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values(): field.error_messages.update({'required': ''}); field.required = False
+        self.initial['estado_de_usuario'] = EstadoDeUsuario.ACTIVO.value
         
     def clean(self):
         cleaned_data = super().clean()
