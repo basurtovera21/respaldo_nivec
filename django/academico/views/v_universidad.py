@@ -9,10 +9,14 @@ def detalle_universidad(request):
     if not universidad:
         return redirect("registrar_universidad")
 
+    from usuarios.utils import obtener_rol_usuario
+    rol = obtener_rol_usuario(request.user)
+    solo_lectura = rol in (ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN)
+
     return render(request, "entidades/detalle_universidad.html", {
         "universidad": universidad,
         "titulo_pagina": "Institución - NIVEC",
-        "solo_lectura": usuario_es_solo_lectura(request.user),
+        "solo_lectura": solo_lectura,
     })
 
 @requiere_perfil(ROL_DIRECTOR_DAN)
