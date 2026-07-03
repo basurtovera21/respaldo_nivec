@@ -49,7 +49,7 @@ class PeriodoDeNivelacion:
         if not self._numero_periodo:
             errores["numero_periodo"] = "Información requerida"
         elif self._numero_periodo not in (1, 2):
-            errores["numero_periodo"] = "Registro no válido (1 o 2)"
+            errores["numero_periodo"] = "El registro no es válido (1 o 2)"
         if not self._fecha_inicio:
             errores["fecha_inicio"] = "Información requerida"
         if not self._fecha_fin:
@@ -59,7 +59,7 @@ class PeriodoDeNivelacion:
     def validar_anio(self) -> str:
         anio_actual = date.today().year
         if self._anio and self._anio < anio_actual:
-            return "El año no puede ser menor al actual"
+            return "El registro no es válido (año menor al actual)"
         return ""
 
     def validar_fechas(self) -> bool:
