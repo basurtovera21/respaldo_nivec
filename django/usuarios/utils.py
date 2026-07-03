@@ -62,7 +62,7 @@ def requiere_perfil(*roles_permitidos):
             rol = obtener_rol_usuario(request.user)
 
             if rol is None:
-                return redirect("sin_perfil")
+                return redirect("cerrar_sesion")
 
             if rol not in roles_permitidos:
                 messages.error(request, "No tiene permisos para acceder a esta sección.")

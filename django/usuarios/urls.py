@@ -5,7 +5,6 @@ urlpatterns = [
     # Autenticación
     path("", views.iniciar_sesion, name="iniciar_sesion"),
     path("cerrar-sesion/", views.cerrar_sesion, name="cerrar_sesion"),
-    path("sin-perfil/", views.panel_sin_perfil, name="sin_perfil"),
     
     path("panel/", views.panel_principal, name="panel_principal"), 
     path("mi-perfil/", views.modificar_datos_de_usuario, name="modificar_perfil"),
