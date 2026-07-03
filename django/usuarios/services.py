@@ -31,17 +31,15 @@ def normalizar_texto(texto):
     texto = ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
     return texto
 
+
 def obtener_enum_flexible(enum_class, valor_sucio):
     if not valor_sucio:
         return None
-        
     valor_normalizado = normalizar_texto(valor_sucio)
-    
     for opcion in enum_class:
         if normalizar_texto(opcion.value) == valor_normalizado:
             return opcion
-            
-    raise ValueError(f"'{valor_sucio}' registro no válido para {enum_class.__name__}")
+    raise ValueError(f"'{valor_sucio}' registro no válido ({enum_class.__name__})")
 
 
 def servicio_iniciar_sesion(request, correo_institucional, contrasena):
@@ -52,8 +50,10 @@ def servicio_iniciar_sesion(request, correo_institucional, contrasena):
         return {"exito": exito, "mensaje": mensaje}
     return {"exito": False, "mensaje": "Las credenciales registradas no son válidas"}
 
+
 def servicio_cerrar_sesion(request):
     logout(request)
+    
 
 def servicio_administrativo_registrar_masivo_desde_excel(archivo, universidad_usuario):
     resultado = {"exitosos": 0, "advertencias": [], "error": None}

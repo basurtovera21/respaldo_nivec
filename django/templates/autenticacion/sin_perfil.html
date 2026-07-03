@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block titulo %}Perfil no definido - NIVEC{% endblock %}
+{% block titulo %}NIVEC{% endblock %}
 
 {% block navbar %}{% endblock %}
 
 {% block contenido %}
 <div class="tarjeta" style="text-align:center; padding:40px;">
     <h2 style="font-weight: bold;">El usuario no presenta un perfil definido</h2>
-    <p style="margin:16px 0; color: #515154; font-weight: bold;">Perfil no configurado actualmente</p>
+    <p style="margin:16px 0; color: #515154; font-weight: bold;">El perfil no ha sido configurado actualmente</p>
     <a href="{% url 'cerrar_sesion' %}" class="boton boton-secundario">Cerrar sesión</a>
 </div>
 {% endblock %}
