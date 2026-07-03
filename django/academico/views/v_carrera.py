@@ -7,9 +7,9 @@ import openpyxl
 from academico.models import Carrera, Campus
 from academico.forms import FormularioCarrera
 from academico.services import servicio_carrera_registrar_masivo_desde_excel
-from usuarios.utils import generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR
+from usuarios.utils import generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN
 
-@requiere_perfil(ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN)
 def listar_carreras(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -20,16 +20,40 @@ def listar_carreras(request):
         messages.warning(request, "No existen registros de Campus actualmente")
         return redirect("panel_principal")
 
-    carreras = Carrera.objects.filter(campus__universidad=universidad_usuario).select_related("campus")
-    
+    carreras = Carrera.objects.filter(
+        campus__universidad=universidad_usuario
+    ).select_related("campus").order_by("codigo_de_carrera")
+
+    campus_disponibles = Campus.objects.filter(universidad=universidad_usuario).order_by("nombre")
+
+    # Filtro por campus
+    campus_filtro = request.GET.get("campus", "")
+    if campus_filtro:
+        carreras = carreras.filter(campus_id=campus_filtro)
+
+    # Buscador por nombre
+    busqueda = request.GET.get("busqueda", "").strip()
+    if busqueda:
+        carreras = carreras.filter(nombre__icontains=busqueda)
+
+    tiene_registros = Carrera.objects.filter(campus__universidad=universidad_usuario).exists()
+
+    from usuarios.utils import obtener_rol_usuario
+    rol = obtener_rol_usuario(request.user)
+    solo_lectura = rol in (ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN)
+
     return render(request, "entidades/listar_carreras.html", {
         "carreras": carreras,
+        "campus_disponibles": campus_disponibles,
+        "campus_filtro": campus_filtro,
+        "busqueda": busqueda,
+        "tiene_registros": tiene_registros,
         "titulo_pagina": "Carrera - NIVEC",
         "titulo": "Carreras",
         "url_registrar": "registrar_carrera",
         "texto_registrar": "Registrar",
         "url_volver": "panel_principal",
-        "solo_lectura": usuario_es_solo_lectura(request.user),
+        "solo_lectura": solo_lectura,
     })
 
 @requiere_perfil(ROL_DIRECTOR_DAN)
@@ -83,6 +107,7 @@ def registrar_carrera(request):
             if formulario.is_valid():
                 nueva_carrera = formulario.save(commit=False)
                 nueva_carrera.codigo_de_carrera = generar_identificador_siguiente(Carrera, 'CAR', 'codigo_de_carrera')
+                nueva_carrera.modalidad = "Presencial"
                 nueva_carrera.save()
                 messages.success(request, "La Carrera ha sido registrada correctamente")
                 return redirect("listar_carreras")
@@ -111,8 +136,12 @@ def modificar_carrera(request, carrera_id):
 
     if request.method == "POST":
         formulario = FormularioCarrera(request.POST, instance=carrera)
+        formulario.fields['campus'].queryset = Campus.objects.filter(universidad=universidad_usuario)
         if formulario.is_valid():
-            formulario.save()
+            carrera_modificada = formulario.save(commit=False)
+            if not carrera_modificada.modalidad:
+                carrera_modificada.modalidad = carrera.modalidad
+            carrera_modificada.save()
             messages.success(request, "La Carrera ha sido modificada correctamente")
             return redirect("listar_carreras")
     else:
