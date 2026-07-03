@@ -8,7 +8,7 @@
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Configuración institucional</h2>
         <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Parámetros base</p>
         <div class="acciones" style="margin-bottom: 0;">
-            <a href="{% if user.perfil_administrativo.universidad %}{% url 'detalle_universidad' %}{% else %}{% url 'registrar_universidad' %}{% endif %}" class="boton boton-secundario">Universidad</a>
+            <a href="{% if user.perfil_administrativo.universidad %}{% url 'detalle_universidad' %}{% else %}{% url 'registrar_universidad' %}{% endif %}" class="boton boton-secundario">Institución</a>
             {% if tiene_universidad %}
             <a href="{% url 'listar_campus' %}" class="boton boton-secundario">Campus</a>
             {% if tiene_campus %}
