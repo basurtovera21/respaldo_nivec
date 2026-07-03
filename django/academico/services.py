@@ -71,12 +71,22 @@ def servicio_campus_registrar_masivo_desde_excel(archivo, universidad_usuario):
             try:
                 nombre, direccion, provincia = fila[0], fila[1], fila[2]
                 if not nombre and not direccion and not provincia: continue
-                if not nombre or not direccion or not provincia:
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido por falta de información")
+
+                campus_poo = CampusBase(
+                    codigo_de_campus="PENDIENTE",
+                    nombre=str(nombre).strip() if nombre else "",
+                    direccion_fisica=str(direccion).strip() if direccion else "",
+                    provincia=str(provincia).strip() if provincia else "",
+                )
+
+                errores_validacion = campus_poo.validar_datos_de_carga_masiva()
+                if errores_validacion:
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido por falta de información"
+                    )
                     continue
 
-                nombre_normalizado = CampusBase.normalizar_nombre(nombre)
-                if nombre_normalizado in nombres_registrados:
+                if campus_poo.es_registro_duplicado(nombres_registrados):
                     resultado["advertencias"].append(
                         f"El registro de la fila {numero_fila} fue omitido (el Campus ya existe)"
                     )
@@ -86,14 +96,14 @@ def servicio_campus_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     Campus.objects.create(
                         universidad=universidad_usuario,
                         codigo_de_campus=generar_identificador_siguiente(Campus, 'CAM', 'codigo_de_campus'),
-                        nombre=nombre,
-                        direccion_fisica=direccion,
-                        provincia=provincia
+                        nombre=campus_poo.nombre,
+                        direccion_fisica=campus_poo.direccion_fisica,
+                        provincia=campus_poo.provincia
                     )
                     resultado["exitosos"] += 1
-                    nombres_registrados.add(nombre_normalizado)
+                    nombres_registrados.add(CampusBase.normalizar_nombre(campus_poo.nombre))
             except Exception as e:
-                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido({str(e)})")
+                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})")
                 
     except Exception:
         resultado["error"] = "Ha ocurrido un error al procesar el documento"

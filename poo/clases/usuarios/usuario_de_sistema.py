@@ -78,6 +78,16 @@ class UsuarioDeSistema(metaclass=ABCMeta):
         return estado_de_usuario_actual == EstadoDeUsuario.ACTIVO.value
 
     @staticmethod
+    def obtener_mensaje_estado_no_valido(estado_de_usuario_actual: str) -> str:
+        if estado_de_usuario_actual == EstadoDeUsuario.BLOQUEADO.value:
+            return "El Usuario ha sido bloqueado indefinidamente"
+        elif estado_de_usuario_actual == EstadoDeUsuario.INACTIVO.value:
+            return "El Usuario se encuentra inactivo"
+        elif estado_de_usuario_actual == EstadoDeUsuario.PENDIENTE.value:
+            return "El Usuario está pendiente de activación"
+        return "El Usuario no puede iniciar sesión"
+
+    @staticmethod
     def validar_contrasena(nueva_contrasena: str, confirmar_contrasena: str = None):
         if confirmar_contrasena is not None and nueva_contrasena != confirmar_contrasena:
             raise ValueError("Las contraseñas registradas no coinciden")
@@ -89,3 +99,17 @@ class UsuarioDeSistema(metaclass=ABCMeta):
             raise ValueError(f"La contraseña debe contener un máximo de {UsuarioDeSistema._MAXIMO_CARACTERES_CONTRASENA} caracteres")
 
         return True
+
+    @staticmethod
+    def validar_correo_institucional(correo: str) -> bool:
+        if not correo or not str(correo).strip():
+            return False
+        correo_limpio = str(correo).strip()
+        return "@" in correo_limpio and "." in correo_limpio.split("@")[-1]
+
+    @staticmethod
+    def validar_identificacion(identificacion: str) -> bool:
+        if not identificacion or not str(identificacion).strip():
+            return False
+        identificacion_limpia = str(identificacion).strip()
+        return len(identificacion_limpia) >= 5
