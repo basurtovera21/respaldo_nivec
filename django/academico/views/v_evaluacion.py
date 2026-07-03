@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 import openpyxl
 
@@ -525,6 +526,75 @@ def descargar_informe_general(request):
         ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 20
 
     nombre = f"informe_general_{periodo.periodo}".lower().replace(" ", "_")
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = f'attachment; filename="{nombre}.xlsx"'
+    wb.save(response)
+    return response
+
+
+
+@login_required
+def descargar_constancia_estudiante(request):
+    import openpyxl
+    from django.http import HttpResponse
+    from usuarios.models import PerfilEstudiante
+    from academico.models import EvaluacionAcademica, MatriculaParalelo
+
+    usuario = request.user
+    perfil_estudiante = PerfilEstudiante.objects.filter(usuario_de_sistema=usuario).first()
+    if not perfil_estudiante:
+        messages.error(request, "No se encontró el perfil de estudiante")
+        return redirect("panel_principal")
+
+    periodo = perfil_estudiante.periodo_de_nivelacion
+    if not periodo:
+        messages.warning(request, "No tiene un periodo de nivelación asignado")
+        return redirect("panel_principal")
+
+    evaluaciones = EvaluacionAcademica.objects.filter(
+        estudiante=perfil_estudiante,
+        periodo_de_nivelacion=periodo,
+    ).select_related("unidad_curricular").order_by("unidad_curricular__nombre")
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Constancia"
+
+    # Header
+    ws.append(["Constancia de resultados académicos"])
+    ws.append([])
+    ws.append(["Estudiante", f"{usuario.apellidos} {usuario.nombres}"])
+    ws.append(["Identificación", usuario.identificacion])
+    ws.append(["Correo institucional", usuario.correo_institucional])
+    ws.append(["Número de matrícula", perfil_estudiante.numero_de_matricula])
+    ws.append(["Carrera", perfil_estudiante.carrera_registrada.nombre if perfil_estudiante.carrera_registrada else ""])
+    ws.append(["Jornada", perfil_estudiante.jornada])
+    ws.append(["Periodo de nivelación", periodo.periodo])
+    ws.append(["Año", periodo.anio])
+    ws.append([])
+
+    # Results table
+    ws.append(["Unidad curricular", "Parcial 1", "Parcial 2", "Nota final", "% Asistencia", "Estado de aprobación"])
+    for ev in evaluaciones:
+        ws.append([
+            ev.unidad_curricular.nombre,
+            ev.calificacion_parcial_1,
+            ev.calificacion_parcial_2,
+            ev.nota_final,
+            ev.porcentaje_asistencia,
+            ev.estado_de_aprobacion,
+        ])
+
+    ws.append([])
+    # Overall status
+    if evaluaciones.exists():
+        todos_aprobados = all(ev.estado_de_aprobacion == "Aprobado" for ev in evaluaciones)
+        ws.append(["Resultado general", "APROBADO" if todos_aprobados else "NO APROBADO"])
+
+    for col in range(1, 7):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 25
+
+    nombre = f"constancia_{usuario.identificacion}_{periodo.periodo}".lower().replace(" ", "_")
     response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     response["Content-Disposition"] = f'attachment; filename="{nombre}.xlsx"'
     wb.save(response)

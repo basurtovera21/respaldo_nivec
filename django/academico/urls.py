@@ -73,6 +73,8 @@ urlpatterns = [
     path("paralelos/<int:paralelo_id>/calificaciones/revision/", views.pasar_a_revision, name="pasar_a_revision"),
     path("paralelos/<int:paralelo_id>/calificaciones/formalizar/", views.formalizar_evaluaciones, name="formalizar_evaluaciones"),
     path("paralelos/<int:paralelo_id>/calificaciones/descargar/", views.descargar_calificaciones_paralelo, name="descargar_calificaciones_paralelo"),
+    path("constancia/", views.descargar_constancia_estudiante, name="descargar_constancia_estudiante"),
+    path("horarios/docente/", views.horario_consolidado_docente, name="horario_consolidado_docente"),
     #Procesos académicos
     path("cohortes/", views.listar_cohortes, name="listar_cohortes"),
     path("cohortes/registrar/", views.registrar_cohorte, name="registrar_cohorte"),

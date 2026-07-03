@@ -452,3 +452,73 @@ def descargar_horarios_excel(request):
     response["Content-Disposition"] = f'attachment; filename="{nombre_archivo}.xlsx"'
     wb.save(response)
     return response
+
+
+
+@requiere_perfil(*ROLES_VISUALIZAN)
+def horario_consolidado_docente(request):
+    from usuarios.models import PerfilDocente
+    from poo.clases.franja_horaria import obtener_franja
+
+    perfil_docente = getattr(request.user, 'perfil_docente', None)
+    if not perfil_docente:
+        messages.error(request, "No se encontró el perfil de docente")
+        return redirect("panel_principal")
+
+    universidad = perfil_docente.universidad
+    periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad).order_by('-anio', '-numero_periodo') if universidad else PeriodoDeNivelacion.objects.none()
+    periodo_actual = periodos.first()
+
+    horarios = []
+    grilla = []
+    dias_semana = [d.value for d in DiaDeSemana]
+    mapa_colores = {}
+    franja = ""
+
+    if periodo_actual:
+        paralelos_docente = Paralelo.objects.filter(
+            periodo_de_nivelacion=periodo_actual,
+            docente_responsable=perfil_docente,
+        ).select_related("unidad_curricular")
+
+        horarios = Horario.objects.filter(
+            paralelo__in=paralelos_docente
+        ).select_related("paralelo__unidad_curricular").order_by("dia_semana", "hora_inicio")
+
+        # Build grid covering the widest franja the docente has sessions in
+        if horarios.exists():
+            min_hora = min(h.hora_inicio.hour for h in horarios)
+            max_hora = max(h.hora_fin.hour for h in horarios)
+            slots_hora = list(range(min_hora, max_hora))
+
+            _COLORES = ["#e8e8ed", "#d2d2d7", "#c7c7cc", "#b0b0b5", "#9a9a9f", "#aeaeb2", "#dcdce0", "#c4c4c8", "#bababe", "#8e8e93"]
+            nombres_unidades = sorted(set(h.paralelo.unidad_curricular.nombre for h in horarios))
+            mapa_colores = {nombre: _COLORES[i % len(_COLORES)] for i, nombre in enumerate(nombres_unidades)}
+
+            for slot in slots_hora:
+                fila = {"hora": f"{slot:02d}:00", "celdas": []}
+                for dia in dias_semana:
+                    celda = None
+                    for h in horarios:
+                        if h.dia_semana == dia and h.hora_inicio.hour <= slot < h.hora_fin.hour:
+                            celda = {
+                                "nombre": h.paralelo.unidad_curricular.nombre,
+                                "paralelo": h.paralelo.nombre,
+                                "slot_inicio": f"{slot:02d}:00",
+                                "slot_fin": f"{slot+1:02d}:00",
+                                "color": mapa_colores.get(h.paralelo.unidad_curricular.nombre, "#e8e8ed"),
+                            }
+                            break
+                    fila["celdas"].append(celda)
+                grilla.append(fila)
+
+    return render(request, "docente/horario_consolidado.html", {
+        "perfil_docente": perfil_docente,
+        "periodo_actual": periodo_actual,
+        "horarios": horarios,
+        "grilla": grilla,
+        "dias_semana": dias_semana,
+        "mapa_colores": mapa_colores,
+        "titulo_pagina": "Horario Docente - NIVEC",
+        "titulo": "Horario consolidado",
+    })
