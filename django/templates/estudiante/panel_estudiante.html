@@ -14,7 +14,7 @@
 
 {% if evaluaciones %}
 <div style="margin-bottom: 16px;">
-    <a href="{% url 'descargar_constancia_estudiante' %}" style="color: #0071e3; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar constancia de resultados</a>
+    <a href="{% url 'descargar_constancia_estudiante' %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar constancia de resultados</a>
 </div>
 {% endif %}
 
@@ -41,7 +41,7 @@
                 <td style="text-align: left; padding: 8px 12px;">{{ e.calificacion_parcial_2 }}</td>
                 <td style="text-align: left; padding: 8px 12px; font-weight: bold;">{{ e.nota_final }}</td>
                 <td style="text-align: left; padding: 8px 12px;">{{ e.porcentaje_asistencia }}%</td>
-                <td style="text-align: left; padding: 8px 12px; font-weight: bold; color: {% if e.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif e.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#86868b{% endif %};">{{ e.estado_de_aprobacion }}</td>
+                <td style="text-align: left; padding: 8px 12px; font-weight: bold; color: {% if e.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif e.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#9db4c0{% endif %};">{{ e.estado_de_aprobacion }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -110,7 +110,7 @@
 
 {% if not matriculas and not evaluaciones %}
 <div class="tarjeta">
-    <p style="color: #86868b; font-size: 13px; margin: 0;">No tiene información académica registrada actualmente.</p>
+    <p style="color: #9db4c0; font-size: 13px; margin: 0;">No tiene información académica registrada actualmente.</p>
 </div>
 {% endif %}
 {% endblock %}

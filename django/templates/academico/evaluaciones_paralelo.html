@@ -14,14 +14,14 @@
     white-space: nowrap;
 }
 .etiqueta-naranja {
-    background-color: #fff3e0;
-    color: #e65100;
-    border: 1px solid #ffcc80;
+    background: #9db4c0;
+    color: #253237;
+    border: none;
 }
 .etiqueta-naranja:hover {
-    background-color: #ffe0b2;
+    opacity: 0.85;
 }
-.etiqueta-modificar { background-color: #f0f6ff; color: #0071e3; border: 1px solid rgba(0,113,227,0.1); }
+.etiqueta-modificar { background: #5c6b73; color: white; border: none; }
 </style>
 
 <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
@@ -77,7 +77,7 @@
                 <td style="text-align: left; padding: 12px 18px;">{{ e.calificacion_parcial_2 }}</td>
                 <td style="text-align: left; padding: 12px 18px; font-weight: bold;">{{ e.nota_final }}</td>
                 <td style="text-align: left; padding: 12px 18px;">{{ e.porcentaje_asistencia }}%</td>
-                <td style="text-align: left; padding: 12px 18px; color: {% if e.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif e.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#86868b{% endif %}; font-weight: bold;">{{ e.estado_de_aprobacion }}</td>
+                <td style="text-align: left; padding: 12px 18px; color: {% if e.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif e.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#9db4c0{% endif %}; font-weight: bold;">{{ e.estado_de_aprobacion }}</td>
                 <td style="text-align: left; padding: 12px 18px;">{{ e.estado_revision }}</td>
                 <td style="text-align: left; padding: 12px 18px;">
                     {% if es_evaluacion and not solo_lectura and e.estado_revision != "Formalizado" %}
@@ -88,7 +88,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="12" style="text-align: center; color: #86868b; padding: 30px;">
+                <td colspan="12" style="text-align: center; color: #9db4c0; padding: 30px;">
                     No existen calificaciones registradas actualmente
                 </td>
             </tr>

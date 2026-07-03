@@ -10,46 +10,47 @@
     }
     
     .etiqueta-accion {
-        padding: 5px 12px; /* Ajustado ligeramente al quitar el borde */
-        border-radius: 6px; 
+        padding: 6px 14px;
+        border-radius: 6px;
         font-size: 12px;
         text-decoration: none;
         display: inline-block;
         font-weight: bold;
         transition: all 0.2s ease;
-        border: none; /* Estilo plano acorde a base.html */
+        border: none;
+        cursor: pointer;
     }
     
-    /* Acción Principal / Modificar (Usa tu color #9db4c0) */
+    /* Acción ligera (izquierda, más clara) */
+    .etiqueta-naranja {
+        background: #9db4c0;
+        color: #253237;
+        margin-right: 8px;
+    }
+    
+    .etiqueta-naranja:hover {
+        opacity: 0.85;
+    }
+    
+    /* Acción media (centro) */
     .etiqueta-modificar {
-        background-color: #f1f7f9; 
-        color: #9db4c0;            
+        background: #5c6b73;
+        color: white;
         margin-right: 8px;
     }
     
     .etiqueta-modificar:hover {
-        background-color: #e3eff3; 
+        opacity: 0.85;
     }
     
-    /* Acción Crítica / Eliminar (Usa el rojo carmín #B22222) */
+    /* Acción fuerte (derecha, más oscura) */
     .etiqueta-eliminar {
-        background-color: #fdf2f2; 
-        color: #B22222;            
+        background: #253237;
+        color: white;
     }
     
     .etiqueta-eliminar:hover {
-        background-color: #fae3e3; 
-    }
-
-    /* Acción Secundaria / Alternativa (Reemplaza el naranja por tu #5c6b73) */
-    .etiqueta-naranja {
-        background-color: #eef2f3;
-        color: #5c6b73;
-        margin-right: 8px;
-    }
-
-    .etiqueta-naranja:hover {
-        background-color: #e2e9ec;
+        opacity: 0.85;
     }
 </style>
 

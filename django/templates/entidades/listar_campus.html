@@ -1,11 +1,21 @@
 {% extends "base_listar.html" %}
 
+{% block filtros %}
+<form method="get" style="margin-bottom: 16px;">
+    <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Buscar por nombre..."
+           oninput="this.form.submit()"
+           style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; min-width: 300px; font-weight: 500;">
+</form>
+{% endblock %}
+
 {% block cabeceras_tabla %}
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Código de Campus</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Nombre</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Dirección física</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Provincia</th>
+    {% if not solo_lectura %}
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
+    {% endif %}
 {% endblock %}
 
 {% block cuerpo_tabla %}
@@ -15,20 +25,18 @@
         <td style="text-align: left;">{{ c.nombre }}</td>
         <td style="text-align: left;">{{ c.direccion_fisica }}</td>
         <td style="text-align: left;">{{ c.provincia }}</td>
+        {% if not solo_lectura %}
         <td style="text-align: left;">
-            {% if not solo_lectura %}
             <a href="{% url 'modificar_campus' c.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
             <a href="{% url 'eliminar_campus' c.id %}" 
                onclick="return confirm('Confirmar acción');"
                class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
-            {% else %}
-            <span style="color: #86868b;">—</span>
-            {% endif %}
         </td>
+        {% endif %}
     </tr>
     {% empty %}
     <tr>
-        <td colspan="5" style="text-align: center; color: #86868b; padding: 30px;">
+        <td colspan="{% if solo_lectura %}4{% else %}5{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>
