@@ -55,7 +55,13 @@ def panel_principal(request):
 @login_required
 @never_cache
 def panel_director_dan(request):
-    return render(request, "administrativo/panel_director_dan.html")
+    tiene_universidad = False
+    perfil = getattr(request.user, 'perfil_administrativo', None)
+    if perfil and perfil.universidad:
+        tiene_universidad = True
+    return render(request, "administrativo/panel_director_dan.html", {
+        "tiene_universidad": tiene_universidad,
+    })
 
 @login_required
 @never_cache

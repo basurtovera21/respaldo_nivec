@@ -25,7 +25,7 @@ class Universidad(models.Model):
     nombre = models.CharField(max_length=200, verbose_name="Nombre de la institución")
     abreviatura = models.CharField(max_length=20, verbose_name="Abreviatura")
     codigo_sniese = models.CharField(max_length=50, unique=True, verbose_name="Código SNIESE")
-    direccion_matriz = models.CharField(max_length=300, verbose_name="Dirección de matriz")
+    direccion_matriz = models.CharField(max_length=300, blank=True, default="", verbose_name="Dirección de matriz")
     identificador_visual = models.ImageField(upload_to="logos/", null=True, blank=True, verbose_name="Identificador visual")
 
     class Meta:

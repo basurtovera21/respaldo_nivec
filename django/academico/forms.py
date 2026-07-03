@@ -25,8 +25,13 @@ class FormularioUniversidad(BaseModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        for field in self.fields.values():
-            field.required = False
+        # Required fields
+        self.fields['nombre'].required = False
+        self.fields['abreviatura'].required = False
+        self.fields['codigo_sniese'].required = False
+        # Optional fields
+        self.fields['direccion_matriz'].required = False
+        self.fields['identificador_visual'].required = False
 
     def clean(self):
         from poo.clases.universidad import Universidad as UniversidadBase
@@ -38,7 +43,6 @@ class FormularioUniversidad(BaseModelForm):
             abreviatura=cleaned_data.get("abreviatura", ""),
             codigo_sniese=cleaned_data.get("codigo_sniese", ""),
             direccion_matriz=cleaned_data.get("direccion_matriz", ""),
-            identificador_visual=cleaned_data.get("identificador_visual"),
         )
 
         errores = universidad_poo.validar_datos_de_registro()
