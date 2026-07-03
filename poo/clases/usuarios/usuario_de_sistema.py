@@ -27,7 +27,6 @@ class UsuarioDeSistema(metaclass=ABCMeta):
         self._estado_de_usuario = EstadoDeUsuario.PENDIENTE
         super().__init__()
 
-    # --- Propiedades ---
 
     @property
     def tipo_de_identificacion(self):
@@ -70,13 +69,9 @@ class UsuarioDeSistema(metaclass=ABCMeta):
         UsuarioDeSistema.validar_contrasena(nueva_contrasena)
         self.__contrasena = nueva_contrasena
 
-    # --- Métodos abstractos ---
-
     @abstractmethod
-    def iniciar_sesion(self) -> bool:
+    def iniciar_sesion(self):
         pass
-
-    # --- Métodos de negocio ---
 
     def puede_iniciar_sesion(self) -> bool:
         return self._estado_de_usuario == EstadoDeUsuario.ACTIVO
@@ -101,8 +96,6 @@ class UsuarioDeSistema(metaclass=ABCMeta):
 
     def bloquear(self):
         self._estado_de_usuario = EstadoDeUsuario.BLOQUEADO
-
-    # --- Validaciones estáticas ---
 
     @staticmethod
     def validar_estado_de_usuario(estado_de_usuario_actual: str) -> bool:

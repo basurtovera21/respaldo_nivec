@@ -22,7 +22,6 @@ def generar_identificador_siguiente(modelo, prefijo, nombre_campo):
 
     return f"{prefijo}{siguiente_correlativo:03d}"
 
-
 ROL_RECTOR = EnumPerfilAdministrativo.RECTOR.value
 ROL_VICERRECTOR = EnumPerfilAdministrativo.VICERRECTOR_ACADEMICO.value
 ROL_DIRECTOR_DAN = EnumPerfilAdministrativo.DIRECTOR_DAN.value
@@ -30,7 +29,6 @@ ROL_COORDINADOR_DAN = EnumPerfilAdministrativo.COORDINADOR_DAN.value
 ROL_COORDINADOR_UA = EnumPerfilAdministrativo.COORDINADOR_UA.value
 ROL_DOCENTE = "DOCENTE"
 ROL_ESTUDIANTE = "ESTUDIANTE"
-
 ROLES_SOLO_LECTURA = (ROL_RECTOR, ROL_VICERRECTOR)
 
 def obtener_rol_usuario(usuario):

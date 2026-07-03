@@ -31,7 +31,6 @@ def normalizar_texto(texto):
     texto = ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
     return texto
 
-
 def obtener_enum_flexible(enum_class, valor_sucio):
     if not valor_sucio:
         return None
@@ -40,7 +39,6 @@ def obtener_enum_flexible(enum_class, valor_sucio):
         if normalizar_texto(opcion.value) == valor_normalizado:
             return opcion
     raise ValueError(f"'{valor_sucio}' registro no válido ({enum_class.__name__})")
-
 
 def servicio_iniciar_sesion(request, correo_institucional, contrasena):
     usuario_de_sistema_django = authenticate(request, username=correo_institucional, password=contrasena)
@@ -51,23 +49,21 @@ def servicio_iniciar_sesion(request, correo_institucional, contrasena):
     if not estado_valido:
         estado_actual = usuario_de_sistema_django.estado_de_usuario
         if estado_actual == EnumEstadoDeUsuario.BLOQUEADO.value:
-            mensaje = "El usuario ha sido bloqueado indefinidamente"
+            mensaje = "El Usuario ha sido bloqueado indefinidamente"
         elif estado_actual == EnumEstadoDeUsuario.INACTIVO.value:
-            mensaje = "El usuario se encuentra inactivo actualmente"
+            mensaje = "El Usuario se encuentra inactivo"
         elif estado_actual == EnumEstadoDeUsuario.PENDIENTE.value:
-            mensaje = "El usuario está pendiente de activación"
+            mensaje = "El Usuario está pendiente de activación"
         else:
-            mensaje = "El usuario no puede iniciar sesión"
+            mensaje = "El Usuario no puede iniciar sesión"
         return {"exito": False, "mensaje": mensaje}
-
+    
     login(request, usuario_de_sistema_django)
     return {"exito": True, "mensaje": ""}
-
 
 def servicio_cerrar_sesion(request):
     logout(request)
     
-
 def servicio_administrativo_registrar_masivo_desde_excel(archivo, universidad_usuario):
     resultado = {"exitosos": 0, "advertencias": [], "error": None}
     try:
