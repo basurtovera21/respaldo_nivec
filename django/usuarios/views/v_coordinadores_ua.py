@@ -90,6 +90,11 @@ def registrar_coordinador_ua(request):
         messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
+    from academico.models import Carrera
+    if not Carrera.objects.filter(campus__universidad=universidad_usuario).exists():
+        messages.warning(request, "No existen registros de Carreras actualmente")
+        return redirect("panel_principal")
+
     if request.method == "POST":
         if 'archivo_excel' in request.FILES:
             archivo = request.FILES['archivo_excel']
