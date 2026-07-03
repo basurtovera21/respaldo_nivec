@@ -78,7 +78,7 @@ def listar_administrativos(request):
         "solo_lectura": usuario_es_solo_lectura(request.user),
     })
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def descargar_plantilla_administrativo(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -99,7 +99,7 @@ def descargar_plantilla_administrativo(request):
     wb.save(response)
     return response
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def registrar_administrativo(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -168,7 +168,7 @@ def registrar_administrativo(request):
         "url_plantilla": "descargar_plantilla_administrativo"
     })
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def modificar_administrativo(request, admin_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -265,7 +265,7 @@ def modificar_administrativo(request, admin_id):
 
     return render(request, "usuarios/formulario_administrativo.html", contexto)
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def eliminar_administrativo(request, admin_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:

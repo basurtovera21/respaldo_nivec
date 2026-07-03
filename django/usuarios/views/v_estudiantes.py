@@ -66,7 +66,7 @@ def listar_estudiantes(request):
         "solo_lectura": usuario_es_solo_lectura(request.user),
     })
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def descargar_plantilla_estudiante(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -89,7 +89,7 @@ def descargar_plantilla_estudiante(request):
     wb.save(response)
     return response
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def registrar_estudiante(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -166,7 +166,7 @@ def registrar_estudiante(request):
         "url_plantilla": "descargar_plantilla_estudiante"
     })
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def modificar_estudiante(request, estudiante_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -216,7 +216,7 @@ def modificar_estudiante(request, estudiante_id):
         "mostrar_carga_masiva": False
     })
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def eliminar_estudiante(request, estudiante_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -231,7 +231,7 @@ def eliminar_estudiante(request, estudiante_id):
     messages.success(request, "El Estudiante ha sido eliminado correctamente")
     return redirect("listar_estudiantes")
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def formalizar_matricula(request, estudiante_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -249,7 +249,7 @@ def formalizar_matricula(request, estudiante_id):
     messages.success(request, "La matrícula del Estudiante ha sido formalizada correctamente")
     return redirect("listar_estudiantes")
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def anular_matricula(request, estudiante_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -271,7 +271,7 @@ def anular_matricula(request, estudiante_id):
     messages.success(request, "La matrícula del Estudiante ha sido anulada correctamente")
     return redirect("listar_estudiantes")
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def solicitar_retiro(request, estudiante_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:

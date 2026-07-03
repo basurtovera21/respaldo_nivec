@@ -53,7 +53,7 @@ def listar_coordinadores_dan(request):
         "solo_lectura": usuario_es_solo_lectura(request.user),
     })
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def descargar_plantilla_coordinador_dan(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -76,7 +76,7 @@ def descargar_plantilla_coordinador_dan(request):
     wb.save(response)
     return response
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def registrar_coordinador_dan(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:

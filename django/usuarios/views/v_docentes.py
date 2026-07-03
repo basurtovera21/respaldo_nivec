@@ -49,7 +49,7 @@ def listar_docentes(request):
         "solo_lectura": usuario_es_solo_lectura(request.user),
     })
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def descargar_plantilla_docente(request):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -64,7 +64,7 @@ def descargar_plantilla_docente(request):
     wb.save(response)
     return response
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def registrar_docente(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -121,7 +121,7 @@ def registrar_docente(request):
         "url_plantilla": "descargar_plantilla_docente"
     })
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def modificar_docente(request, docente_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -168,7 +168,7 @@ def modificar_docente(request, docente_id):
         "mostrar_carga_masiva": False
     })
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def eliminar_docente(request, docente_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -184,7 +184,7 @@ def eliminar_docente(request, docente_id):
         messages.error(request, "No se ha podido eliminar al Docente")
     return redirect("listar_docentes")
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def inhabilitar_docente(request, docente_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -209,7 +209,7 @@ def inhabilitar_docente(request, docente_id):
     messages.success(request, "El Docente ha sido inhabilitado correctamente")
     return redirect("listar_docentes")
 
-@requiere_perfil(ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def habilitar_docente(request, docente_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
