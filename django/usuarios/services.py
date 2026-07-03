@@ -47,15 +47,7 @@ def servicio_iniciar_sesion(request, correo_institucional, contrasena):
 
     estado_valido = UsuarioDeSistemaBase.validar_estado_de_usuario(usuario_de_sistema_django.estado_de_usuario)
     if not estado_valido:
-        estado_actual = usuario_de_sistema_django.estado_de_usuario
-        if estado_actual == EnumEstadoDeUsuario.BLOQUEADO.value:
-            mensaje = "El Usuario ha sido bloqueado indefinidamente"
-        elif estado_actual == EnumEstadoDeUsuario.INACTIVO.value:
-            mensaje = "El Usuario se encuentra inactivo"
-        elif estado_actual == EnumEstadoDeUsuario.PENDIENTE.value:
-            mensaje = "El Usuario está pendiente de activación"
-        else:
-            mensaje = "El Usuario no puede iniciar sesión"
+        mensaje = UsuarioDeSistemaBase.obtener_mensaje_estado_no_valido(usuario_de_sistema_django.estado_de_usuario)
         return {"exito": False, "mensaje": mensaje}
     
     login(request, usuario_de_sistema_django)
