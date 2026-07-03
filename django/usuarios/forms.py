@@ -41,10 +41,17 @@ class FormularioUsuarioDeSistema(forms.ModelForm):
         errores = {field: "Información requerida" for field in ["tipo_de_identificacion", "identificacion", "nombres", "apellidos", "correo_institucional", "estado_de_usuario"] if not cleaned_data.get(field)}
         
         if cleaned_data.get("identificacion") and "identificacion" not in errores:
-            try: 
-                UsuarioDeSistemaBase.validar_contrasena(cleaned_data["identificacion"])
-            except ValueError as e: 
-                errores['identificacion'] = str(e)
+            if not UsuarioDeSistemaBase.validar_identificacion(cleaned_data["identificacion"]):
+                errores['identificacion'] = "Número de identificación no válido"
+            else:
+                try: 
+                    UsuarioDeSistemaBase.validar_contrasena(cleaned_data["identificacion"])
+                except ValueError as e: 
+                    errores['identificacion'] = str(e)
+
+        if cleaned_data.get("correo_institucional") and "correo_institucional" not in errores:
+            if not UsuarioDeSistemaBase.validar_correo_institucional(cleaned_data["correo_institucional"]):
+                errores['correo_institucional'] = "Correo institucional no válido"
                 
         if errores: raise forms.ValidationError(errores)
         return cleaned_data
