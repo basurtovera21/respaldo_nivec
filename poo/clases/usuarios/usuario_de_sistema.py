@@ -107,9 +107,9 @@ class UsuarioDeSistema(metaclass=ABCMeta):
             raise ValueError("Las contraseñas registradas no coinciden")
 
         if len(nueva_contrasena) < UsuarioDeSistema._MINIMO_CARACTERES_CONTRASENA:
-            raise ValueError(f"mínimo {UsuarioDeSistema._MINIMO_CARACTERES_CONTRASENA} caracteres")
+            raise ValueError(f"La contraseña debe contener un mínimo de {UsuarioDeSistema._MINIMO_CARACTERES_CONTRASENA} caracteres")
 
         if len(nueva_contrasena) > UsuarioDeSistema._MAXIMO_CARACTERES_CONTRASENA:
-            raise ValueError(f"máximo {UsuarioDeSistema._MAXIMO_CARACTERES_CONTRASENA} caracteres")
+            raise ValueError(f"La contraseña debe contener un máximo de {UsuarioDeSistema._MAXIMO_CARACTERES_CONTRASENA} caracteres")
 
         return True

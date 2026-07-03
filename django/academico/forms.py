@@ -52,7 +52,7 @@ class FormularioUniversidad(BaseModelForm):
                 existentes = existentes.exclude(pk=self.instance.pk)
             if existentes.exists():
                 raise forms.ValidationError(
-                    {"codigo_sniese": "La institución ya ha sido registrada"}
+                    {"codigo_sniese": "La Institución ya ha sido registrada"}
                 )
 
         return cleaned_data

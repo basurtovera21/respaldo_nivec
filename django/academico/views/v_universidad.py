@@ -8,7 +8,7 @@ def detalle_universidad(request):
     universidad = request.user.perfil_administrativo.universidad
     if not universidad:
         return redirect("registrar_universidad")
-        
+
     return render(request, "entidades/detalle_universidad.html", {
         "universidad": universidad,
         "titulo_pagina": "Universidad - NIVEC",

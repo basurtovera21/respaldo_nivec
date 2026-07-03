@@ -7,15 +7,11 @@ from usuarios.forms import FormularioModificarUsuarioDeSistema
 @login_required
 def modificar_datos_de_usuario(request):
     usuario_actual = request.user
-    
     if request.method == "POST":
         formulario = FormularioModificarUsuarioDeSistema(request.POST, instance=usuario_actual)
-        
-        # Eliminamos el campo 'estado_de_usuario' para que no se procese aquí
         if 'estado_de_usuario' in formulario.fields:
             del formulario.fields['estado_de_usuario']
 
-        # Solo bloqueamos la identidad y el correo
         for campo in ["tipo_de_identificacion", "identificacion", "correo_institucional"]:
             if campo in formulario.fields:
                 formulario.fields[campo].disabled = True
@@ -37,7 +33,6 @@ def modificar_datos_de_usuario(request):
     else:
         formulario = FormularioModificarUsuarioDeSistema(instance=usuario_actual)
 
-        # Eliminamos el campo 'estado_de_usuario' para que no se renderice en el HTML
         if 'estado_de_usuario' in formulario.fields:
             del formulario.fields['estado_de_usuario']
 
