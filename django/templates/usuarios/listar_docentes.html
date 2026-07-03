@@ -33,14 +33,14 @@
             margin-right: 8px;
         }
         .etiqueta-modificar {
-            background-color: #f0f6ff; 
-            color: #0071e3;            
-            border: 1px solid rgba(0, 113, 227, 0.1);
+            background: #5c6b73; 
+            color: white;            
+            border: none;
         }
         .etiqueta-inhabilitar {
-            background-color: #fff7ed; 
-            color: #c2410c; 
-            border: 1px solid rgba(194, 65, 12, 0.1);
+            background: #253237; 
+            color: white; 
+            border: none;
         }
     </style>
 
@@ -76,13 +76,13 @@
                onclick="return confirm('Confirmar acción');" 
                class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
             {% else %}
-            <span style="color: #86868b;">—</span>
+            <span style="color: #9db4c0;">—</span>
             {% endif %}
         </td>
     </tr>
     {% empty %}
     <tr>
-        <td colspan="9" style="text-align: center; color: #86868b; padding: 30px;">
+        <td colspan="9" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>

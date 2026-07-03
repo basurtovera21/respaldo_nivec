@@ -9,8 +9,8 @@
         padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: bold;
         border: none; cursor: pointer; text-decoration: none; display: inline-block;
     }
-    .etiqueta-naranja { background-color: #fef9ec; color: #b45309; border: 1px solid rgba(180,83,9,0.1); }
-    .etiqueta-eliminar { background-color: #fdf2f2; color: #c81e1e; border: 1px solid rgba(200,30,30,0.1); }
+    .etiqueta-naranja { background: #9db4c0; color: #253237; border: none; }
+    .etiqueta-eliminar { background: #253237; color: white; border: none; }
     .etiqueta-estado {
         background-color: #f2f2f7; padding: 4px 8px; border-radius: 6px;
         font-size: 12px; font-weight: bold; color: #1d1d1f;
@@ -27,11 +27,11 @@
     {% if paralelo.docente_responsable %}
         {{ paralelo.docente_responsable.usuario_de_sistema.nombres }} {{ paralelo.docente_responsable.usuario_de_sistema.apellidos }}
     {% else %}
-        <span style="color: #86868b;">Sin designación</span>
+        <span style="color: #9db4c0;">Sin designación</span>
     {% endif %}
 </p>
 
-<p style="color: #86868b; font-size: 12px; margin-bottom: 16px;">
+<p style="color: #9db4c0; font-size: 12px; margin-bottom: 16px;">
     El listado muestra únicamente los docentes que no presentan conflictos con el horario registrado.
 </p>
 
@@ -79,7 +79,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" style="text-align: center; color: #86868b; padding: 30px;">
+                <td colspan="6" style="text-align: center; color: #9db4c0; padding: 30px;">
                     No existen docentes compatibles con la jornada del paralelo
                 </td>
             </tr>

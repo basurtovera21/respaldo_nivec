@@ -9,7 +9,7 @@
 </p>
 
 <div class="tarjeta" style="max-width: 520px;">
-    <p style="color: #86868b; font-size: 12px; margin-bottom: 12px;">
+    <p style="color: #9db4c0; font-size: 12px; margin-bottom: 12px;">
         El formato debe contener: Número de identificación, Parcial 1 (0-10), Parcial 2 (0-10), Porcentaje de asistencia (0-100).
     </p>
     <form method="post" enctype="multipart/form-data" action="{% url 'cargar_calificaciones' paralelo.id %}">
@@ -26,6 +26,6 @@
 </div>
 
 <div style="margin-top: 15px;">
-    <a href="{% url 'descargar_plantilla_calificaciones' paralelo.id %}" style="color: #0071e3; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar formato</a>
+    <a href="{% url 'descargar_plantilla_calificaciones' paralelo.id %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar formato</a>
 </div>
 {% endblock %}

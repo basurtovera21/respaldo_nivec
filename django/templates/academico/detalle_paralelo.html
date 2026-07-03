@@ -9,8 +9,8 @@
         padding: 4px 12px; border-radius: 6px; font-size: 12px; text-decoration: none;
         display: inline-block; font-weight: bold; margin-right: 8px;
     }
-    .etiqueta-modificar { background-color: #f0f6ff; color: #0071e3; border: 1px solid rgba(0,113,227,0.1); }
-    .etiqueta-naranja { background-color: #fef9ec; color: #b45309; border: 1px solid rgba(180,83,9,0.1); }
+    .etiqueta-modificar { background: #5c6b73; color: white; border: none; }
+    .etiqueta-naranja { background: #9db4c0; color: #253237; border: none; }
 </style>
 
 <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
@@ -26,9 +26,9 @@
 </div>
 
 <div style="margin-bottom: 16px;">
-    <a href="{% url 'descargar_info_paralelo' representativo.id %}" style="color: #0071e3; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar información registrada</a>
+    <a href="{% url 'descargar_info_paralelo' representativo.id %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar información registrada</a>
     &nbsp;&nbsp;
-    <a href="{% url 'descargar_calificaciones_paralelo' representativo.id %}" style="color: #0071e3; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar calificaciones</a>
+    <a href="{% url 'descargar_calificaciones_paralelo' representativo.id %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar calificaciones</a>
 </div>
 
 <div class="tarjeta" style="padding: 0; overflow-x: auto;">
@@ -50,7 +50,7 @@
                     {% if u.docente_responsable %}
                         {{ u.docente_responsable.usuario_de_sistema.nombres }} {{ u.docente_responsable.usuario_de_sistema.apellidos }}
                     {% else %}
-                        <span style="color: #86868b;">Sin designación</span>
+                        <span style="color: #9db4c0;">Sin designación</span>
                     {% endif %}
                 </td>
                 <td style="text-align: left; white-space: nowrap;">
@@ -63,7 +63,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4" style="text-align: center; color: #86868b; padding: 30px;">
+                <td colspan="4" style="text-align: center; color: #9db4c0; padding: 30px;">
                     No existen registros actualmente
             </tr>
             {% endfor %}

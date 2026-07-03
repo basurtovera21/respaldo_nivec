@@ -16,10 +16,15 @@ def listar_campus(request):
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
-    campus = Campus.objects.filter(universidad=universidad_usuario)
+    campus = Campus.objects.filter(universidad=universidad_usuario).order_by("codigo_de_campus")
+
+    busqueda = request.GET.get("busqueda", "").strip()
+    if busqueda:
+        campus = campus.filter(nombre__icontains=busqueda)
     
     return render(request, "entidades/listar_campus.html", {
         "campus": campus,
+        "busqueda": busqueda,
         "titulo_pagina": "Campus - NIVEC",
         "titulo": "Campus",
         "url_registrar": "registrar_campus",

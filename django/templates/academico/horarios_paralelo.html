@@ -9,14 +9,14 @@
         padding: 4px 12px; border-radius: 6px; font-size: 12px; text-decoration: none;
         display: inline-block; font-weight: bold; margin-right: 6px;
     }
-    .etiqueta-modificar { background-color: #f0f6ff; color: #0071e3; border: 1px solid rgba(0,113,227,0.1); }
-    .etiqueta-eliminar { background-color: #fdf2f2; color: #c81e1e; border: 1px solid rgba(200,30,30,0.1); }
+    .etiqueta-modificar { background: #5c6b73; color: white; border: none; }
+    .etiqueta-eliminar { background: #253237; color: white; border: none; }
     .etiqueta-estado { background-color: #f2f2f7; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
 
     .grilla-horario { width: 100%; border-collapse: collapse; }
     .grilla-horario th, .grilla-horario td { border: 1px solid #e4e4e9; text-align: center; vertical-align: top; padding: 0; height: 48px; min-width: 120px; }
     .grilla-horario th { background: #f7f7f9; font-size: 12px; font-weight: bold; color: #5c6b73; padding: 10px 8px; }
-    .grilla-hora { font-size: 11px; color: #86868b; width: 60px; padding: 4px 8px !important; text-align: right !important; }
+    .grilla-hora { font-size: 11px; color: #9db4c0; width: 60px; padding: 4px 8px !important; text-align: right !important; }
     .bloque-materia {
         border-radius: 6px; padding: 6px 8px; margin: 2px 4px;
         font-size: 11px; font-weight: bold; color: #1d1d1f;
@@ -110,12 +110,12 @@
                 <td style="text-align: left; color: #1d1d1f;">{{ u.codigo }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ u.nombre }}</td>
                 <td style="text-align: left; color: #1d1d1f;">
-                    {% if u.docente %}{{ u.docente.usuario_de_sistema.nombres }} {{ u.docente.usuario_de_sistema.apellidos }}{% else %}<span style="color: #86868b;">Sin designación</span>{% endif %}
+                    {% if u.docente %}{{ u.docente.usuario_de_sistema.nombres }} {{ u.docente.usuario_de_sistema.apellidos }}{% else %}<span style="color: #9db4c0;">Sin designación</span>{% endif %}
                 </td>
                 <td style="text-align: left; color: {% if u.completo %}#2e7d32{% else %}#b45309{% endif %};">{{ u.agendadas }} / {{ u.requeridas }}</td>
             </tr>
             {% empty %}
-            <tr><td colspan="4" style="text-align:center; color:#86868b; padding:20px;">No existen unidades en este paralelo</td></tr>
+            <tr><td colspan="4" style="text-align:center; color:#9db4c0; padding:20px;">No existen unidades en este paralelo</td></tr>
             {% endfor %}
         </tbody>
     </table>
@@ -124,7 +124,7 @@
 {% if not solo_lectura and es_planificacion %}
 <div class="tarjeta" style="margin-bottom: 20px;">
     <h2 style="font-size: 15px; font-weight: bold; margin-bottom: 4px;">Agregar sesión</h2>
-    <p style="color: #86868b; font-size: 12px; margin-bottom: 12px;">
+    <p style="color: #9db4c0; font-size: 12px; margin-bottom: 12px;">
         La sesión debe estar dentro de la franja {{ franja }} y durar 1, 2 o 3 horas.
     </p>
     <form method="post" action="{% url 'registrar_horario' representativo.id %}">
@@ -193,7 +193,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7" style="text-align: center; color: #86868b; padding: 30px;">
+                <td colspan="7" style="text-align: center; color: #9db4c0; padding: 30px;">
                     No existen sesiones registradas actualmente
                 </td>
             </tr>

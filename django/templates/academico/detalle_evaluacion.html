@@ -25,7 +25,7 @@
         <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Parcial 2</td><td style="padding: 6px 0;">{{ evaluacion.calificacion_parcial_2 }}</td></tr>
         <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Nota final</td><td style="padding: 6px 0; font-weight: bold;">{{ nota_actual }}</td></tr>
         <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Porcentaje de asistencia</td><td style="padding: 6px 0;">{{ asistencia_actual }}%</td></tr>
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Estado de aprobación</td><td style="padding: 6px 0; font-weight: bold; color: {% if evaluacion.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif evaluacion.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#86868b{% endif %};">{{ evaluacion.estado_de_aprobacion }}</td></tr>
+        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Estado de aprobación</td><td style="padding: 6px 0; font-weight: bold; color: {% if evaluacion.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif evaluacion.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#9db4c0{% endif %};">{{ evaluacion.estado_de_aprobacion }}</td></tr>
     </table>
 </div>
 

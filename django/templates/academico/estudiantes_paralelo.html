@@ -9,7 +9,7 @@
         padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: bold;
         border: none; cursor: pointer; text-decoration: none; display: inline-block;
     }
-    .etiqueta-eliminar { background-color: #fdf2f2; color: #c81e1e; border: 1px solid rgba(200,30,30,0.1); }
+    .etiqueta-eliminar { background: #253237; color: white; border: none; }
     .campo-select-linea {
         padding: 6px 10px; border: 1px solid #d2d2d7; border-radius: 8px;
         font-size: 13px; background: white; color: #1d1d1f;
@@ -73,7 +73,7 @@
                         <button type="submit" class="boton boton-secundario" style="cursor: pointer;">Reasignar</button>
                     </form>
                     {% else %}
-                    <span style="color: #86868b;">No existen otros paralelos</span>
+                    <span style="color: #9db4c0;">No existen otros paralelos</span>
                     {% endif %}
                 </td>
                 <td style="text-align: left;">
@@ -87,7 +87,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="10" style="text-align: center; color: #86868b; padding: 30px;">
+                <td colspan="10" style="text-align: center; color: #9db4c0; padding: 30px;">
                     No existen estudiantes matriculados en este Paralelo actualmente
                 </td>
             </tr>
