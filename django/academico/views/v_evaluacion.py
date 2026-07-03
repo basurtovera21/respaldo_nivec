@@ -435,7 +435,7 @@ def descargar_calificaciones_paralelo(request, paralelo_id):
     return response
 
 
-@requiere_perfil(ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
 def informe_general(request):
     from academico.services import servicio_generar_informe_general
 
@@ -465,7 +465,7 @@ def informe_general(request):
     })
 
 
-@requiere_perfil(ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
+@requiere_perfil(ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
 def descargar_informe_general(request):
     from academico.services import servicio_generar_informe_general
     import openpyxl
