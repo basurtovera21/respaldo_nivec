@@ -73,30 +73,6 @@ class UsuarioDeSistema(metaclass=ABCMeta):
     def iniciar_sesion(self):
         pass
 
-    def puede_iniciar_sesion(self) -> bool:
-        return self._estado_de_usuario == EstadoDeUsuario.ACTIVO
-
-    def esta_activo(self) -> bool:
-        return self._estado_de_usuario == EstadoDeUsuario.ACTIVO
-
-    def esta_bloqueado(self) -> bool:
-        return self._estado_de_usuario == EstadoDeUsuario.BLOQUEADO
-
-    def esta_inactivo(self) -> bool:
-        return self._estado_de_usuario == EstadoDeUsuario.INACTIVO
-
-    def esta_pendiente(self) -> bool:
-        return self._estado_de_usuario == EstadoDeUsuario.PENDIENTE
-
-    def activar(self):
-        self._estado_de_usuario = EstadoDeUsuario.ACTIVO
-
-    def inactivar(self):
-        self._estado_de_usuario = EstadoDeUsuario.INACTIVO
-
-    def bloquear(self):
-        self._estado_de_usuario = EstadoDeUsuario.BLOQUEADO
-
     @staticmethod
     def validar_estado_de_usuario(estado_de_usuario_actual: str) -> bool:
         return estado_de_usuario_actual == EstadoDeUsuario.ACTIVO.value
