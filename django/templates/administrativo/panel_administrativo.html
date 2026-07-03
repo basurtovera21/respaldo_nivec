@@ -3,11 +3,11 @@
 
 {% block contenido %}
     <h2 style="margin-bottom: 4px;">Panel institucional</h2>
-    <p style="color: #515154; margin-bottom: 20px; font-size: 13px; font-weight: bold;">Visualización institucional (solo lectura)</p>
+    <p style="color: #5c6b73; margin-bottom: 20px; font-size: 13px; font-weight: bold;">Visualización institucional (solo lectura)</p>
 
     <div class="tarjeta">
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Configuración institucional</h2>
-        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Parámetros base</p>
+        <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Parámetros base</p>
         <div class="acciones" style="margin-bottom: 0;">
             {% if user.perfil_administrativo.universidad %}
             <a href="{% url 'detalle_universidad' %}" class="boton boton-secundario">Universidad</a>
@@ -20,7 +20,7 @@
 
     <div class="tarjeta">
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Usuarios de sistema</h2>
-        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Perfiles institucionales</p>
+        <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Perfiles institucionales</p>
         <div class="acciones" style="margin-bottom: 0;">
             <a href="{% url 'listar_administrativos' %}" class="boton boton-secundario">Administrativos</a>
             <a href="{% url 'listar_coordinadores_dan' %}" class="boton boton-secundario">Coordinadores de admisión y nivelación</a>
@@ -32,7 +32,7 @@
 
     <div class="tarjeta">
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Estructura académica</h2>
-        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Mallas, unidades, paralelos y horarios</p>
+        <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Mallas, unidades, paralelos y horarios</p>
         <div class="acciones" style="margin-bottom: 0;">
             <a href="{% url 'listar_mallas' %}" class="boton boton-secundario">Mallas curriculares</a>
             <a href="{% url 'listar_unidades' %}" class="boton boton-secundario">Unidades curriculares</a>
@@ -43,7 +43,7 @@
 
     <div class="tarjeta">
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Procesamiento de MTN</h2>
-        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Resumen de ingreso</p>
+        <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Resumen de ingreso</p>
         <div class="acciones" style="margin-bottom: 0;">
             <a href="{% url 'listar_consolidados' %}" class="boton boton-secundario">Resumen de ingreso MTN</a>
         </div>
@@ -51,7 +51,7 @@
 
     <div class="tarjeta">
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Evaluación académica</h2>
-        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Resultados y descargas</p>
+        <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Resultados y descargas</p>
         <div class="acciones" style="margin-bottom: 0;">
             <a href="{% url 'listar_paralelos' %}" class="boton boton-secundario">Calificaciones por paralelo</a>
             <a href="{% url 'informe_general' %}" class="boton boton-secundario">Informe general</a>

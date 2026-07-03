@@ -11,7 +11,7 @@
 {% else %}
 
 <div class="tarjeta" style="margin-bottom: 16px;">
-    <p style="color: #515154; font-size: 13px; margin: 0;">
+    <p style="color: #5c6b73; font-size: 13px; margin: 0;">
         <span style="font-weight: bold;">Carrera asignada:</span> {{ carrera.nombre }}
         {% if periodo_actual %} — <span style="font-weight: bold;">Periodo:</span> {{ periodo_actual.periodo }} ({{ periodo_actual.estado }}){% endif %}
     </p>
@@ -19,7 +19,7 @@
 
 <div class="tarjeta">
     <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Gestión académica</h2>
-    <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Paralelos y calificaciones de su carrera</p>
+    <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Paralelos y calificaciones de su carrera</p>
     <div class="acciones" style="margin-bottom: 0;">
         <a href="{% url 'listar_paralelos' %}?carrera={{ carrera.id }}" class="boton boton-secundario">Paralelos</a>
         <a href="{% url 'matriz_horarios' %}?carrera={{ carrera.id }}" class="boton boton-secundario">Horarios</a>
@@ -39,9 +39,9 @@
     <table style="width: 100%;">
         <thead>
             <tr>
-                <th style="font-weight: bold; text-align: left; color: #515154; padding: 12px 18px;">Paralelo</th>
-                <th style="font-weight: bold; text-align: left; color: #515154; padding: 12px 18px;">Unidad curricular</th>
-                <th style="font-weight: bold; text-align: left; color: #515154; padding: 12px 18px;">Acciones</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Paralelo</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Unidad curricular</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Acciones</th>
             </tr>
         </thead>
         <tbody>
