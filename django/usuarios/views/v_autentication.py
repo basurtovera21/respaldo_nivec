@@ -150,6 +150,7 @@ def panel_administrativo(request):
     tiene_algun_usuario = tiene_coordinadores_dan or tiene_coordinadores_ua or tiene_docentes or tiene_estudiantes
     tiene_algun_institucional = tiene_campus or tiene_carreras or tiene_periodos
     return render(request, "administrativo/panel_administrativo.html", {
+        "tiene_universidad": universidad is not None,
         "tiene_campus": tiene_campus,
         "tiene_carreras": tiene_carreras,
         "tiene_periodos": tiene_periodos,
