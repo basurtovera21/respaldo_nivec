@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block filtros %}
-    <form method="get" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+    <form method="get" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
         <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Periodo de nivelación</span>
         <select name="periodo" onchange="this.form.submit()"
                 style="padding: 8px 12px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit;">
@@ -20,6 +20,9 @@
                 </option>
             {% endfor %}
         </select>
+        <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Nombre o Apellidos..."
+               oninput="this.form.submit()"
+               style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; min-width: 300px; font-weight: 500; font-family: inherit;">
     </form>
 {% endblock %}
 

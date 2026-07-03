@@ -27,9 +27,20 @@ def listar_docentes(request):
         return redirect("panel_principal")
 
     docentes = PerfilDocente.objects.filter(universidad=universidad_usuario).select_related("usuario_de_sistema")
-    
+
+    busqueda = request.GET.get("busqueda", "").strip()
+    if busqueda:
+        from django.db.models import Q
+        docentes = docentes.filter(
+            Q(usuario_de_sistema__nombres__icontains=busqueda) |
+            Q(usuario_de_sistema__apellidos__icontains=busqueda)
+        )
+
+    docentes = docentes.order_by("-identificador_institucional")
+
     return render(request, "usuarios/listar_docentes.html", {
         "docentes": docentes,
+        "busqueda": busqueda,
         "titulo_pagina": "Docente - NIVEC",
         "titulo": "Docentes",
         "url_registrar": "registrar_docente",

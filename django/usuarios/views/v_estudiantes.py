@@ -42,10 +42,20 @@ def listar_estudiantes(request):
     )
     if periodo_seleccionado:
         estudiantes = estudiantes.filter(periodo_de_nivelacion=periodo_seleccionado)
-    estudiantes = estudiantes.select_related("usuario_de_sistema", "carrera_registrada", "campus_registrado")
-    
+
+    busqueda = request.GET.get("busqueda", "").strip()
+    if busqueda:
+        from django.db.models import Q
+        estudiantes = estudiantes.filter(
+            Q(usuario_de_sistema__nombres__icontains=busqueda) |
+            Q(usuario_de_sistema__apellidos__icontains=busqueda)
+        )
+
+    estudiantes = estudiantes.select_related("usuario_de_sistema", "carrera_registrada", "campus_registrado").order_by("-identificador_institucional")
+
     return render(request, "usuarios/listar_estudiantes.html", {
         "estudiantes": estudiantes,
+        "busqueda": busqueda,
         "periodos": periodos,
         "periodo_seleccionado": periodo_seleccionado,
         "titulo_pagina": "Estudiante - NIVEC",

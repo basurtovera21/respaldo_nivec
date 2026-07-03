@@ -39,9 +39,37 @@ def listar_administrativos(request):
             EnumPerfilAdministrativo.COORDINADOR_UA.value
         ]
     ).select_related("usuario_de_sistema")
-    
+
+    busqueda = request.GET.get("busqueda", "").strip()
+    if busqueda:
+        from django.db.models import Q
+        administrativos = administrativos.filter(
+            Q(usuario_de_sistema__nombres__icontains=busqueda) |
+            Q(usuario_de_sistema__apellidos__icontains=busqueda)
+        )
+
+    perfil_filtro = request.GET.get("perfil", "").strip()
+    perfiles_disponibles = list(
+        administrativos.values_list("perfil_administrativo", flat=True).distinct()
+    )
+    if perfil_filtro:
+        administrativos = administrativos.filter(perfil_administrativo=perfil_filtro)
+
+    # Order: Director DAN first, then by identificador_administrativo descending
+    from django.db.models import Case, When, Value, IntegerField
+    administrativos = administrativos.annotate(
+        es_director=Case(
+            When(perfil_administrativo=EnumPerfilAdministrativo.DIRECTOR_DAN.value, then=Value(0)),
+            default=Value(1),
+            output_field=IntegerField(),
+        )
+    ).order_by("es_director", "-identificador_administrativo")
+
     return render(request, "usuarios/listar_administrativos.html", {
         "administrativos": administrativos,
+        "busqueda": busqueda,
+        "perfil_filtro": perfil_filtro,
+        "perfiles_disponibles": perfiles_disponibles,
         "titulo_pagina": "Administrativo - NIVEC",
         "titulo": "Usuarios administrativos",
         "url_registrar": "registrar_administrativo",

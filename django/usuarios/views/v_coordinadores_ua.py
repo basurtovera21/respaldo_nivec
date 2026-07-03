@@ -32,9 +32,20 @@ def listar_coordinadores_ua(request):
         universidad=universidad_usuario,
         perfil_administrativo=EnumPerfilAdministrativo.COORDINADOR_UA.value
     ).select_related("usuario_de_sistema").prefetch_related("usuario_de_sistema__perfil_docente")
-    
+
+    busqueda = request.GET.get("busqueda", "").strip()
+    if busqueda:
+        from django.db.models import Q
+        coordinadores = coordinadores.filter(
+            Q(usuario_de_sistema__nombres__icontains=busqueda) |
+            Q(usuario_de_sistema__apellidos__icontains=busqueda)
+        )
+
+    coordinadores = coordinadores.order_by("-identificador_coordinador_ua")
+
     return render(request, "usuarios/listar_coordinadores_ua.html", {
         "coordinadores": coordinadores,
+        "busqueda": busqueda,
         "titulo_pagina": "Coordinador de unidad académica - NIVEC",
         "titulo": "Coordinadores de unidades académicas",
         "url_registrar": "registrar_coordinador_ua",
@@ -113,12 +124,13 @@ def registrar_coordinador_ua(request):
                     usuario.set_password(usuario.identificacion)
                     usuario.save()
                     
-                    enum_perfil = EnumPerfilAdministrativo(formulario_perfil.cleaned_data.get('perfil_administrativo'))
-                    prefijo = UsuarioAdministrativoBase.definir_prefijo_identificador(enum_perfil)
-
                     perfil = formulario_perfil.save(commit=False)
+                    perfil.perfil_administrativo = EnumPerfilAdministrativo.COORDINADOR_UA.value
                     perfil.usuario_de_sistema = usuario
                     perfil.universidad = universidad_usuario
+
+                    enum_perfil = EnumPerfilAdministrativo(perfil.perfil_administrativo)
+                    prefijo = UsuarioAdministrativoBase.definir_prefijo_identificador(enum_perfil)
                     perfil.identificador_administrativo = generar_identificador_siguiente(PerfilAdministrativo, prefijo, 'identificador_administrativo')
                     perfil.identificador_coordinador_ua = generar_identificador_siguiente(PerfilAdministrativo, prefijo, 'identificador_coordinador_ua')
                     perfil.save()

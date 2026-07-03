@@ -214,13 +214,14 @@ class FormularioModificarPerfilAdministrativo(forms.ModelForm):
 
 class FormularioRegistrarCoordinadorDAN(FormularioPerfilAdministrativo):
     class Meta(FormularioPerfilAdministrativo.Meta):
-        fields = ("identificador_coordinador_dan", "perfil_administrativo")
+        fields = ("identificador_coordinador_dan",)
         widgets = {"identificador_coordinador_dan": forms.TextInput(attrs={'readonly': True, 'placeholder': 'El identificador será definido de forma automática', 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'})}
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['perfil_administrativo'].choices = [(perfil_administrativo.PerfilAdministrativo.COORDINADOR_DAN.value, 'Coordinador de dirección de admisión y nivelación')]
-        self.fields['perfil_administrativo'].widget.attrs.update({'readonly': True, 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'})
+        self.fields.pop('perfil_administrativo', None)
         self.fields['identificador_coordinador_dan'].required = False
+    def clean(self):
+        return self.cleaned_data
 
 class FormularioModificarCoordinadorDAN(forms.ModelForm):
     class Meta:
@@ -233,21 +234,20 @@ class FormularioModificarCoordinadorDAN(forms.ModelForm):
 
 class FormularioRegistrarCoordinadorUA(FormularioPerfilAdministrativo):
     class Meta(FormularioPerfilAdministrativo.Meta):
-        fields = ("identificador_coordinador_ua", "carrera_asignada", "perfil_administrativo")
+        fields = ("identificador_coordinador_ua", "carrera_asignada")
         widgets = {"identificador_coordinador_ua": forms.TextInput(attrs={'readonly': True, 'placeholder': 'El identificador será definido de forma automática', 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'}), "carrera_asignada": forms.Select(attrs={'class': 'campo-select'})}
     def __init__(self, *args, **kwargs):
         universidad = kwargs.pop('universidad', None)
         super().__init__(*args, **kwargs)
+        self.fields.pop('perfil_administrativo', None)
         for field in self.fields.values(): field.error_messages.update({'required': ''})
-        self.fields['perfil_administrativo'].choices = [(perfil_administrativo.PerfilAdministrativo.COORDINADOR_UA.value, 'Coordinador de unidad académica')]
-        self.fields['perfil_administrativo'].widget.attrs.update({'readonly': True, 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'})
         self.fields['identificador_coordinador_ua'].required = False
         self.fields['carrera_asignada'].required = False
         if universidad:
             from academico.models import Carrera
             self.fields['carrera_asignada'].queryset = Carrera.objects.filter(campus__universidad=universidad)
     def clean(self):
-        cleaned_data = super().clean()
+        cleaned_data = self.cleaned_data
         if not cleaned_data.get("carrera_asignada"): raise forms.ValidationError({'carrera_asignada': "Información requerida"})
         return cleaned_data
 
