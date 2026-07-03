@@ -66,7 +66,7 @@ class Campus:
         return errores
 
     def es_registro_duplicado(self, nombres_existentes: set) -> bool:
-        nombre_normalizado = Campus.normalizar_nombre(self._nombre)
+        nombre_normalizado = self.__class__.normalizar_nombre(self._nombre)
         return nombre_normalizado in nombres_existentes
 
     def __str__(self):

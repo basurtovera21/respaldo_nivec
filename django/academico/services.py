@@ -60,17 +60,18 @@ def servicio_campus_registrar_masivo_desde_excel(archivo, universidad_usuario):
         wb = openpyxl.load_workbook(archivo)
         ws = wb.active
 
-        nombres_registrados = {
-            CampusBase.normalizar_nombre(nombre_existente)
-            for nombre_existente in Campus.objects.filter(
-                universidad=universidad_usuario
-            ).values_list("nombre", flat=True)
-        }
+        nombres_registrados = set()
+        for nombre_existente in Campus.objects.filter(universidad=universidad_usuario).values_list("nombre", flat=True):
+            nombres_registrados.add(normalizar_texto(nombre_existente))
 
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
-                nombre, direccion, provincia = fila[0], fila[1], fila[2]
-                if not nombre and not direccion and not provincia: continue
+                nombre = fila[0] if len(fila) > 0 else None
+                direccion = fila[1] if len(fila) > 1 else None
+                provincia = fila[2] if len(fila) > 2 else None
+
+                if not nombre and not direccion and not provincia:
+                    continue
 
                 campus_poo = CampusBase(
                     codigo_de_campus="PENDIENTE",
@@ -86,7 +87,8 @@ def servicio_campus_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     )
                     continue
 
-                if campus_poo.es_registro_duplicado(nombres_registrados):
+                nombre_normalizado = normalizar_texto(campus_poo.nombre)
+                if nombre_normalizado in nombres_registrados:
                     resultado["advertencias"].append(
                         f"El registro de la fila {numero_fila} fue omitido (el Campus ya existe)"
                     )
@@ -101,7 +103,7 @@ def servicio_campus_registrar_masivo_desde_excel(archivo, universidad_usuario):
                         provincia=campus_poo.provincia
                     )
                     resultado["exitosos"] += 1
-                    nombres_registrados.add(CampusBase.normalizar_nombre(campus_poo.nombre))
+                    nombres_registrados.add(nombre_normalizado)
             except Exception as e:
                 resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})")
                 
