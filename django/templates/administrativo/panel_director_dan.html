@@ -13,8 +13,6 @@
             <a href="{% url 'listar_campus' %}" class="boton boton-secundario">Campus</a>
             {% if tiene_campus %}
             <a href="{% url 'listar_carreras' %}" class="boton boton-secundario">Carreras</a>
-            {% else %}
-            <span class="boton" style="background: #F4F4F4; color: #9db4c0; cursor: not-allowed; pointer-events: none;">Carreras</span>
             {% endif %}
             <a href="{% url 'listar_periodos' %}" class="boton boton-secundario">Periodos de nivelación</a>
             {% endif %}
