@@ -44,11 +44,24 @@ def obtener_enum_flexible(enum_class, valor_sucio):
 
 def servicio_iniciar_sesion(request, correo_institucional, contrasena):
     usuario_de_sistema_django = authenticate(request, username=correo_institucional, password=contrasena)
-    if usuario_de_sistema_django is not None:
-        exito, mensaje = UsuarioDeSistemaBase.validar_estado_de_usuario(usuario_de_sistema_django.estado_de_usuario)
-        if exito: login(request, usuario_de_sistema_django)
-        return {"exito": exito, "mensaje": mensaje}
-    return {"exito": False, "mensaje": "Las credenciales registradas no son válidas"}
+    if usuario_de_sistema_django is None:
+        return {"exito": False, "mensaje": "Las credenciales registradas no son válidas"}
+
+    estado_valido = UsuarioDeSistemaBase.validar_estado_de_usuario(usuario_de_sistema_django.estado_de_usuario)
+    if not estado_valido:
+        estado_actual = usuario_de_sistema_django.estado_de_usuario
+        if estado_actual == EnumEstadoDeUsuario.BLOQUEADO.value:
+            mensaje = "El usuario ha sido bloqueado indefinidamente"
+        elif estado_actual == EnumEstadoDeUsuario.INACTIVO.value:
+            mensaje = "El usuario se encuentra inactivo actualmente"
+        elif estado_actual == EnumEstadoDeUsuario.PENDIENTE.value:
+            mensaje = "El usuario está pendiente de activación"
+        else:
+            mensaje = "El usuario no puede iniciar sesión"
+        return {"exito": False, "mensaje": mensaje}
+
+    login(request, usuario_de_sistema_django)
+    return {"exito": True, "mensaje": ""}
 
 
 def servicio_cerrar_sesion(request):
