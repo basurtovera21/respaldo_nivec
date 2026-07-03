@@ -31,6 +31,8 @@
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Usuarios institucionales</h2>
         <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Perfiles institucionales</p>
         <div class="acciones" style="margin-bottom: 0;">
+            <a href="{% url 'listar_administrativos' %}" class="boton boton-secundario">Administrativos</a>
+            <a href="{% url 'listar_coordinadores_dan' %}" class="boton boton-secundario">Coordinadores de admisión y nivelación</a>
             {% if tiene_carreras %}
             <a href="{% url 'listar_coordinadores_ua' %}" class="boton boton-secundario">Coordinadores de unidades académicas</a>
             <a href="{% url 'listar_docentes' %}" class="boton boton-secundario">Docentes</a>

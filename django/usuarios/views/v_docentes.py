@@ -9,7 +9,7 @@ from usuarios.models import UsuarioDeSistema, PerfilDocente, PerfilAdministrativ
 from usuarios.forms import FormularioUsuarioDeSistema, FormularioRegistrarDocente
 from usuarios.utils import (
     generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura,
-    ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
+    ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
 )
 from usuarios.services import servicio_docente_registrar_masivo_desde_excel, _crear_docente
 
@@ -17,7 +17,7 @@ from poo.clases.enums.estado_de_usuario import EstadoDeUsuario as EnumEstadoDeUs
 from poo.clases.enums.estado_de_vinculacion import EstadoDeVinculacion as EnumEstadoDeVinculacion
 from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
 
-ROLES_USUARIOS_VEN = (ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
+ROLES_USUARIOS_VEN = (ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
 
 @requiere_perfil(*ROLES_USUARIOS_VEN)
 def listar_docentes(request):
