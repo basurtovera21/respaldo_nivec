@@ -26,8 +26,6 @@ def cerrar_sesion(request):
     return redirect("iniciar_sesion")
 
 
-def panel_sin_perfil(request):
-    return render(request, "autenticacion/sin_perfil.html")
 
 
 @login_required
@@ -51,7 +49,7 @@ def panel_principal(request):
      
     elif PerfilEstudiante.objects.filter(usuario_de_sistema=usuario).exists():
         return redirect('panel_estudiante') 
-    return redirect('sin_perfil')
+    return redirect('cerrar_sesion')
 
 
 @login_required
@@ -147,7 +145,7 @@ def panel_estudiante(request):
     usuario = request.user
     perfil_estudiante = PerfilEstudiante.objects.filter(usuario_de_sistema=usuario).first()
     if not perfil_estudiante:
-        return redirect('sin_perfil')
+        return redirect('cerrar_sesion')
     
     from academico.models import Paralelo, MatriculaParalelo, Horario, EvaluacionAcademica, PeriodoDeNivelacion
     
