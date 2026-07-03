@@ -6,9 +6,9 @@ import openpyxl
 from academico.models import Campus
 from academico.forms import FormularioCampus
 from academico.services import servicio_campus_registrar_masivo_desde_excel
-from usuarios.utils import generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR
+from usuarios.utils import generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN
 
-@requiere_perfil(ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN)
 def listar_campus(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -22,7 +22,11 @@ def listar_campus(request):
         campus = campus.filter(nombre__icontains=busqueda)
 
     tiene_registros = Campus.objects.filter(universidad=universidad_usuario).exists()
-    
+
+    from usuarios.utils import obtener_rol_usuario
+    rol = obtener_rol_usuario(request.user)
+    solo_lectura = rol in (ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN)
+
     return render(request, "entidades/listar_campus.html", {
         "campus": campus,
         "busqueda": busqueda,
@@ -32,7 +36,7 @@ def listar_campus(request):
         "url_registrar": "registrar_campus",
         "texto_registrar": "Registrar",
         "url_volver": "panel_principal",
-        "solo_lectura": usuario_es_solo_lectura(request.user),
+        "solo_lectura": solo_lectura,
     })
     
 @requiere_perfil(ROL_DIRECTOR_DAN)

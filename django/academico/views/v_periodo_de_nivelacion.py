@@ -6,9 +6,9 @@ from academico.models import PeriodoDeNivelacion
 from academico.forms import FormularioPeriodoDeNivelacion
 from academico import services
 
-from usuarios.utils import generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR
+from usuarios.utils import generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN
 
-@requiere_perfil(ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN)
 def listar_periodos(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -16,7 +16,11 @@ def listar_periodos(request):
         return redirect("panel_principal")
 
     periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario).order_by("-anio", "-numero_periodo")
-    
+
+    from usuarios.utils import obtener_rol_usuario
+    rol = obtener_rol_usuario(request.user)
+    solo_lectura = rol in (ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN)
+
     return render(request, "academico/listar_periodos.html", {
         "periodos": periodos,
         "titulo_pagina": "Periodo de nivelación - NIVEC",
@@ -24,7 +28,7 @@ def listar_periodos(request):
         "url_registrar": "registrar_periodo",
         "texto_registrar": "Registrar",
         "url_volver": "panel_principal",
-        "solo_lectura": usuario_es_solo_lectura(request.user),
+        "solo_lectura": solo_lectura,
     })
 
 @requiere_perfil(ROL_DIRECTOR_DAN)

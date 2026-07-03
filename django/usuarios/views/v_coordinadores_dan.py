@@ -31,9 +31,20 @@ def listar_coordinadores_dan(request):
         universidad=universidad_usuario,
         perfil_administrativo=EnumPerfilAdministrativo.COORDINADOR_DAN.value
     ).select_related("usuario_de_sistema")
-    
+
+    busqueda = request.GET.get("busqueda", "").strip()
+    if busqueda:
+        from django.db.models import Q
+        coordinadores = coordinadores.filter(
+            Q(usuario_de_sistema__nombres__icontains=busqueda) |
+            Q(usuario_de_sistema__apellidos__icontains=busqueda)
+        )
+
+    coordinadores = coordinadores.order_by("-identificador_coordinador_dan")
+
     return render(request, "usuarios/listar_coordinadores_dan.html", {
         "coordinadores": coordinadores,
+        "busqueda": busqueda,
         "titulo_pagina": "Coordinador de dirección de admisión y nivelación - NIVEC",
         "titulo": "Coordinadores de dirección de admisión y nivelación",
         "url_registrar": "registrar_coordinador_dan",
@@ -106,6 +117,7 @@ def registrar_coordinador_dan(request):
                     usuario.save()
                     
                     perfil = formulario_perfil.save(commit=False)
+                    perfil.perfil_administrativo = EnumPerfilAdministrativo.COORDINADOR_DAN.value
                     perfil.usuario_de_sistema = usuario
                     perfil.universidad = universidad_usuario
                     
