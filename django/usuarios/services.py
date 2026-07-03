@@ -76,7 +76,7 @@ def servicio_administrativo_registrar_masivo_desde_excel(archivo, universidad_us
                 # Validar perfil via POO
                 perfil_exacto = UsuarioAdministrativoBase.obtener_perfil_exacto(perfil_str, perfiles_permitidos)
                 if not perfil_exacto:
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Tipo de perfil no válido)"); continue
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (perfil no válido)"); continue
 
                 # Validar identificación via POO
                 try: UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
@@ -84,7 +84,7 @@ def servicio_administrativo_registrar_masivo_desde_excel(archivo, universidad_us
 
                 # Validar correo via POO
                 if not UsuarioDeSistemaBase.validar_correo_institucional(correo_str):
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Correo institucional no válido)"); continue
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (correo institucional no válido)"); continue
 
                 # Verificar duplicados
                 if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
