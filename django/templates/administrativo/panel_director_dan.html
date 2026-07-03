@@ -31,6 +31,8 @@
             {% if tiene_carreras %}
             <a href="{% url 'listar_coordinadores_ua' %}" class="boton boton-secundario">Coordinadores de unidades académicas</a>
             <a href="{% url 'listar_docentes' %}" class="boton boton-secundario">Docentes</a>
+            {% endif %}
+            {% if tiene_periodos %}
             <a href="{% url 'listar_estudiantes' %}" class="boton boton-secundario">Estudiantes</a>
             {% endif %}
         </div>
