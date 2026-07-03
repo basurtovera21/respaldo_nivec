@@ -20,10 +20,13 @@ def listar_campus(request):
     busqueda = request.GET.get("busqueda", "").strip()
     if busqueda:
         campus = campus.filter(nombre__icontains=busqueda)
+
+    tiene_registros = Campus.objects.filter(universidad=universidad_usuario).exists()
     
     return render(request, "entidades/listar_campus.html", {
         "campus": campus,
         "busqueda": busqueda,
+        "tiene_registros": tiene_registros,
         "titulo_pagina": "Campus - NIVEC",
         "titulo": "Campus",
         "url_registrar": "registrar_campus",
