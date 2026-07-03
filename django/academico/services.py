@@ -61,7 +61,7 @@ def servicio_campus_registrar_masivo_desde_excel(archivo, universidad_usuario):
         ws = wb.active
 
         nombres_registrados = {
-            CampusBase.normalizar_nombre(nombre_existente)
+            str(nombre_existente).strip().lower()
             for nombre_existente in Campus.objects.filter(
                 universidad=universidad_usuario
             ).values_list("nombre", flat=True)
@@ -69,13 +69,17 @@ def servicio_campus_registrar_masivo_desde_excel(archivo, universidad_usuario):
 
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
-                nombre, direccion, provincia = fila[0], fila[1], fila[2]
+                nombre = fila[0] if len(fila) > 0 else None
+                direccion = fila[1] if len(fila) > 1 else None
+                provincia = fila[2] if len(fila) > 2 else None
+                
                 if not nombre and not direccion and not provincia: continue
-                if not nombre or not direccion or not provincia:
+                if not nombre or not direccion:
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido por falta de información")
                     continue
 
-                nombre_normalizado = CampusBase.normalizar_nombre(nombre)
+                nombre_str = str(nombre).strip()
+                nombre_normalizado = nombre_str.lower()
                 if nombre_normalizado in nombres_registrados:
                     resultado["advertencias"].append(
                         f"El registro de la fila {numero_fila} fue omitido (el Campus ya existe)"
@@ -86,9 +90,9 @@ def servicio_campus_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     Campus.objects.create(
                         universidad=universidad_usuario,
                         codigo_de_campus=generar_identificador_siguiente(Campus, 'CAM', 'codigo_de_campus'),
-                        nombre=nombre,
-                        direccion_fisica=direccion,
-                        provincia=provincia
+                        nombre=nombre_str,
+                        direccion_fisica=str(direccion).strip(),
+                        provincia=str(provincia).strip() if provincia else ""
                     )
                     resultado["exitosos"] += 1
                     nombres_registrados.add(nombre_normalizado)
