@@ -12,7 +12,7 @@ from usuarios.forms import (
 )
 from usuarios.utils import (
     generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura,
-    ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
+    ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
 )
 
 from poo.clases.enums.estado_de_usuario import EstadoDeUsuario as EnumEstadoDeUsuario
@@ -22,7 +22,7 @@ from poo.clases.usuarios.usuario_de_sistema import UsuarioDeSistema as UsuarioDe
 
 from usuarios.services import _crear_usuario_administrativo, servicio_administrativo_registrar_masivo_desde_excel
 
-ROLES_USUARIOS_VEN = (ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
+ROLES_USUARIOS_VEN = (ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
 
 @requiere_perfil(*ROLES_USUARIOS_VEN)
 def listar_administrativos(request):

@@ -9,7 +9,7 @@ from usuarios.models import UsuarioDeSistema, PerfilAdministrativo, PerfilDocent
 from usuarios.forms import FormularioUsuarioDeSistema, FormularioRegistrarCoordinadorUA, FormularioDatosDocenteUA
 from usuarios.utils import (
     generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura,
-    ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
+    ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
 )
 
 from poo.clases.usuarios.usuario_administrativo import UsuarioAdministrativo as UsuarioAdministrativoBase
@@ -19,7 +19,7 @@ from poo.clases.enums.estado_de_vinculacion import EstadoDeVinculacion
 
 from usuarios.services import servicio_coordinador_ua_registrar_masivo_desde_excel
 
-ROLES_USUARIOS_VEN = (ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
+ROLES_USUARIOS_VEN = (ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_RECTOR, ROL_VICERRECTOR)
 
 @requiere_perfil(*ROLES_USUARIOS_VEN)
 def listar_coordinadores_ua(request):
@@ -50,7 +50,7 @@ def listar_coordinadores_ua(request):
         "titulo": "Coordinadores de unidades académicas",
         "url_registrar": "registrar_coordinador_ua",
         "texto_registrar": "Registrar",
-        "url_volver": "panel_director_dan",
+        "url_volver": "panel_principal",
         "solo_lectura": usuario_es_solo_lectura(request.user),
     })
 
