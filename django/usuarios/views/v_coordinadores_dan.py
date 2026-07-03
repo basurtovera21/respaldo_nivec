@@ -24,7 +24,7 @@ ROLES_USUARIOS_VEN = (ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_RECTOR, ROL_VIC
 def listar_coordinadores_dan(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     coordinadores = PerfilAdministrativo.objects.filter(
@@ -72,7 +72,7 @@ def descargar_plantilla_coordinador_dan(request):
         ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 40
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="formato_coordinador_dan_nivec.xlsx"'
+    response['Content-Disposition'] = 'attachment; filename="coordinador_dan_documento_nivec.xlsx"'
     wb.save(response)
     return response
 
@@ -80,7 +80,7 @@ def descargar_plantilla_coordinador_dan(request):
 def registrar_coordinador_dan(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     if request.method == "POST":

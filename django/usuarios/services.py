@@ -123,7 +123,7 @@ def servicio_coordinador_dan_registrar_masivo_desde_excel(archivo, universidad_u
                 try: UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
                 except ValueError as e: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})"); continue
                 if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Coordinador de dirección de admisión y nivelación ya registrado)"); continue
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (el Coordinador de dirección de admisión y nivelación ya ha sido registrado)"); continue
                 with transaction.atomic():
                     usuario = UsuarioDeSistema.objects.create(tipo_de_identificacion=tipo_id_str, identificacion=identificacion_str, nombres=str(nombres).strip(), apellidos=str(apellidos).strip(), correo_institucional=str(correo).strip(), estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value)
                     usuario.set_password(identificacion_str); usuario.save()
@@ -161,15 +161,15 @@ def servicio_coordinador_ua_registrar_masivo_desde_excel(archivo, universidad_us
                 lista_jornadas = [j.strip().capitalize() for j in str(jornadas_str).split(',') if j.strip()] if jornadas_str else []
                 error_jornadas = validar_jornadas_continuas(lista_jornadas)
                 if error_jornadas:
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Jornadas no válidas: {error_jornadas})"); continue
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (jornadas no válidas: {error_jornadas})"); continue
                 try: UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
                 except ValueError as e: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})"); continue
                 if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Coordinador de unidad académica ya registrado)"); continue
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (el Coordinador de unidad académica ya ha sido registrado)"); continue
                 from academico.models import Carrera
                 carrera_obj = Carrera.objects.filter(codigo_de_carrera=codigo_carrera_str, campus__universidad=universidad_usuario).first()
                 if not carrera_obj:
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Código de Carrera no válido)"); continue
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (código de Carrera no válido)"); continue
                 with transaction.atomic():
                     usuario = UsuarioDeSistema.objects.create(tipo_de_identificacion=tipo_id_str, identificacion=identificacion_str, nombres=str(nombres).strip(), apellidos=str(apellidos).strip(), correo_institucional=str(correo).strip(), estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value)
                     usuario.set_password(identificacion_str); usuario.save()
