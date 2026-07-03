@@ -64,7 +64,6 @@ def servicio_administrativo_registrar_masivo_desde_excel(archivo, universidad_us
             EnumPerfilAdministrativo.RECTOR,
             EnumPerfilAdministrativo.VICERRECTOR_ACADEMICO,
         ]
-        perfiles_validos_diccionario = {str(e.value).strip().lower(): e.value for e in perfiles_permitidos}
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
                 tipo_id, identificacion, nombres, apellidos, correo, perfil_str = fila[:6]
@@ -72,16 +71,29 @@ def servicio_administrativo_registrar_masivo_desde_excel(archivo, universidad_us
                 if not all([tipo_id, identificacion, nombres, apellidos, correo, perfil_str]):
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido por falta de información"); continue
                 tipo_id_str, identificacion_str = str(tipo_id).strip().capitalize(), str(identificacion).strip()
-                perfil_ingresado_limpio = str(perfil_str).strip().lower()
-                if perfil_ingresado_limpio not in perfiles_validos_diccionario:
+                correo_str = str(correo).strip()
+
+                # Validar perfil via POO
+                perfil_exacto = UsuarioAdministrativoBase.obtener_perfil_exacto(perfil_str, perfiles_permitidos)
+                if not perfil_exacto:
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Tipo de perfil no válido)"); continue
-                perfil_exacto = perfiles_validos_diccionario[perfil_ingresado_limpio]
+
+                # Validar identificación via POO
                 try: UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
                 except ValueError as e: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})"); continue
+
+                # Validar correo via POO
+                if not UsuarioDeSistemaBase.validar_correo_institucional(correo_str):
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Correo institucional no válido)"); continue
+
+                # Verificar duplicados
                 if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (el Administrativo ya ha sido registrado)"); continue
+                if UsuarioDeSistema.objects.filter(correo_institucional__iexact=correo_str).exists():
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (el correo institucional ya ha sido registrado)"); continue
+
                 with transaction.atomic():
-                    usuario = UsuarioDeSistema.objects.create(tipo_de_identificacion=tipo_id_str, identificacion=identificacion_str, nombres=str(nombres).strip(), apellidos=str(apellidos).strip(), correo_institucional=str(correo).strip(), estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value)
+                    usuario = UsuarioDeSistema.objects.create(tipo_de_identificacion=tipo_id_str, identificacion=identificacion_str, nombres=str(nombres).strip(), apellidos=str(apellidos).strip(), correo_institucional=correo_str, estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value)
                     usuario.set_password(identificacion_str); usuario.save()
                     enum_perfil = EnumPerfilAdministrativo(perfil_exacto)
                     prefijo = UsuarioAdministrativoBase.definir_prefijo_identificador(enum_perfil)
