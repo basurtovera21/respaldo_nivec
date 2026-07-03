@@ -16,16 +16,16 @@
         {% endfor %}
     </select>
     {% if periodo_seleccionado and informe %}
-    <a href="{% url 'descargar_informe_general' %}?periodo={{ periodo_seleccionado.id }}" style="color: #0071e3; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar informe (Excel)</a>
+    <a href="{% url 'descargar_informe_general' %}?periodo={{ periodo_seleccionado.id }}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar informe (Excel)</a>
     {% endif %}
 </form>
 
 {% if not periodo_seleccionado %}
-<div class="tarjeta" style="text-align: center; color: #86868b; padding: 30px;">
+<div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 30px;">
     Seleccione un Periodo de nivelación para visualizar el informe
 </div>
 {% elif not informe %}
-<div class="tarjeta" style="text-align: center; color: #86868b; padding: 30px;">
+<div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 30px;">
     No existen datos para este periodo (debe estar en evaluación o cerrado)
 </div>
 {% else %}

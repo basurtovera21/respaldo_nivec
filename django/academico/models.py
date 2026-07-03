@@ -41,7 +41,7 @@ class Campus(models.Model):
     codigo_de_campus = models.CharField(max_length=50, unique=True, verbose_name="Código de campus")
     nombre = models.CharField(max_length=200, verbose_name="Nombre")
     direccion_fisica = models.CharField(max_length=300, verbose_name="Dirección física")
-    provincia = models.CharField(max_length=100, verbose_name="Provincia")
+    provincia = models.CharField(max_length=100, blank=True, default="", verbose_name="Provincia")
 
     class Meta:
         verbose_name = "Campus"

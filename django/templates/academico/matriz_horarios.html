@@ -7,7 +7,7 @@
     .grilla-horario { width: 100%; border-collapse: collapse; }
     .grilla-horario th, .grilla-horario td { border: 1px solid #e4e4e9; text-align: center; vertical-align: top; padding: 0; height: 48px; min-width: 120px; }
     .grilla-horario th { background: #f7f7f9; font-size: 12px; font-weight: bold; color: #5c6b73; padding: 10px 8px; }
-    .grilla-hora { font-size: 11px; color: #86868b; width: 60px; padding: 4px 8px !important; text-align: right !important; }
+    .grilla-hora { font-size: 11px; color: #9db4c0; width: 60px; padding: 4px 8px !important; text-align: right !important; }
     .bloque-materia {
         border-radius: 6px; padding: 6px 8px; margin: 2px 4px;
         font-size: 11px; font-weight: bold; color: #1d1d1f;
@@ -74,12 +74,12 @@
 
 {% if periodo_seleccionado and carrera_seleccionada %}
 <div style="margin-bottom: 16px;">
-    <a href="{% url 'descargar_horarios_excel' %}?periodo={{ periodo_seleccionado.id }}&carrera={{ carrera_seleccionada.id }}" style="color: #0071e3; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar horarios (Excel)</a>
+    <a href="{% url 'descargar_horarios_excel' %}?periodo={{ periodo_seleccionado.id }}&carrera={{ carrera_seleccionada.id }}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar horarios (Excel)</a>
 </div>
 {% endif %}
 
 {% if not periodo_seleccionado %}
-    <div class="tarjeta" style="text-align: center; color: #86868b; padding: 30px;">
+    <div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 30px;">
         Seleccione un Periodo de nivelación
     </div>
 {% elif paralelo_seleccionado and grilla %}
@@ -130,15 +130,15 @@
         {% endif %}
     </div>
 {% elif paralelo_seleccionado and not grilla %}
-    <div class="tarjeta" style="text-align: center; color: #86868b; padding: 30px;">
+    <div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 30px;">
         El paralelo seleccionado no tiene sesiones registradas
     </div>
 {% elif periodo_seleccionado and grupos %}
-    <div class="tarjeta" style="text-align: center; color: #86868b; padding: 30px;">
+    <div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 30px;">
         Seleccione un paralelo para visualizar su horario
     </div>
 {% elif periodo_seleccionado %}
-    <div class="tarjeta" style="text-align: center; color: #86868b; padding: 30px;">
+    <div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 30px;">
         No se encontraron paralelos con los filtros seleccionados
     </div>
 {% endif %}

@@ -9,7 +9,7 @@
         padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: bold;
         border: none; cursor: pointer; text-decoration: none; display: inline-block;
     }
-    .etiqueta-naranja { background-color: #fef9ec; color: #b45309; border: 1px solid rgba(180,83,9,0.1); }
+    .etiqueta-naranja { background: #9db4c0; color: #253237; border: none; }
 </style>
 
 <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
@@ -19,7 +19,7 @@
 
 {% if lleno %}
 <div class="tarjeta">
-    <p style="color: #86868b; font-size: 13px; margin: 0;">El Paralelo no presenta cupos disponibles</p>
+    <p style="color: #9db4c0; font-size: 13px; margin: 0;">El Paralelo no presenta cupos disponibles</p>
 </div>
 {% else %}
 <div class="tarjeta" style="padding: 0; overflow-x: auto;">
@@ -58,7 +58,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="9" style="text-align: center; color: #86868b; padding: 30px;">
+                <td colspan="9" style="text-align: center; color: #9db4c0; padding: 30px;">
                     No existen estudiantes sin asignar para esta Carrera y Jornada
                 </td>
             </tr>
