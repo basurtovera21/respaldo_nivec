@@ -136,14 +136,29 @@ def panel_ua(request):
 @login_required
 @never_cache
 def panel_administrativo(request):
-    from academico.models import Carrera, PeriodoDeNivelacion
+    from academico.models import Campus, Carrera, PeriodoDeNivelacion
+    from usuarios.models import PerfilAdministrativo as PAModel, PerfilDocente, PerfilEstudiante
     perfil = getattr(request.user, 'perfil_administrativo', None)
     universidad = perfil.universidad if perfil else None
+    tiene_campus = Campus.objects.filter(universidad=universidad).exists() if universidad else False
     tiene_carreras = Carrera.objects.filter(campus__universidad=universidad).exists() if universidad else False
     tiene_periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad).exists() if universidad else False
+    tiene_coordinadores_dan = PAModel.objects.filter(universidad=universidad, perfil_administrativo="Coordinador de dirección de admisión y nivelación").exists() if universidad else False
+    tiene_coordinadores_ua = PAModel.objects.filter(universidad=universidad, perfil_administrativo="Coordinador de unidad académica").exists() if universidad else False
+    tiene_docentes = PerfilDocente.objects.filter(universidad=universidad).exists() if universidad else False
+    tiene_estudiantes = PerfilEstudiante.objects.filter(carrera_registrada__campus__universidad=universidad).exists() if universidad else False
+    tiene_algun_usuario = tiene_coordinadores_dan or tiene_coordinadores_ua or tiene_docentes or tiene_estudiantes
+    tiene_algun_institucional = tiene_campus or tiene_carreras or tiene_periodos
     return render(request, "administrativo/panel_administrativo.html", {
+        "tiene_campus": tiene_campus,
         "tiene_carreras": tiene_carreras,
         "tiene_periodos": tiene_periodos,
+        "tiene_coordinadores_dan": tiene_coordinadores_dan,
+        "tiene_coordinadores_ua": tiene_coordinadores_ua,
+        "tiene_docentes": tiene_docentes,
+        "tiene_estudiantes": tiene_estudiantes,
+        "tiene_algun_usuario": tiene_algun_usuario,
+        "tiene_algun_institucional": tiene_algun_institucional,
     })
 
 @login_required
