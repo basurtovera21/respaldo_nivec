@@ -3,7 +3,6 @@ from django.contrib import messages
 from django.db.models import ProtectedError
 from django.http import HttpResponse
 import openpyxl
-
 from academico.models import Campus
 from academico.forms import FormularioCampus
 from academico.services import servicio_campus_registrar_masivo_desde_excel
@@ -13,7 +12,7 @@ from usuarios.utils import generar_identificador_siguiente, requiere_perfil, usu
 def listar_campus(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     campus = Campus.objects.filter(universidad=universidad_usuario).order_by("codigo_de_campus")
@@ -47,7 +46,7 @@ def descargar_plantilla_campus(request):
     ws.column_dimensions['C'].width = 40
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="formato_campus_nivec.xlsx"'
+    response['Content-Disposition'] = 'attachment; filename="campus_documento_nivec.xlsx"'
     wb.save(response)
     return response
 
@@ -56,7 +55,7 @@ def registrar_campus(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     if request.method == "POST":
@@ -108,7 +107,7 @@ def registrar_campus(request):
 def modificar_campus(request, campus_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     campus = get_object_or_404(Campus, id=campus_id, universidad=universidad_usuario)
@@ -135,7 +134,7 @@ def modificar_campus(request, campus_id):
 def eliminar_campus(request, campus_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     campus = get_object_or_404(Campus, id=campus_id, universidad=universidad_usuario)

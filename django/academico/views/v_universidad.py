@@ -11,7 +11,7 @@ def detalle_universidad(request):
 
     return render(request, "entidades/detalle_universidad.html", {
         "universidad": universidad,
-        "titulo_pagina": "Universidad - NIVEC",
+        "titulo_pagina": "Institución - NIVEC",
         "solo_lectura": usuario_es_solo_lectura(request.user),
     })
 
@@ -21,13 +21,12 @@ def registrar_universidad(request):
     if request.user.perfil_administrativo.universidad:
         return redirect("panel_principal")
     
-    # Solo se permite una universidad en el sistema por Director DAN
     if Universidad.objects.exists():
         universidad_existente = Universidad.objects.first()
         perfil = request.user.perfil_administrativo
         perfil.universidad = universidad_existente
         perfil.save()
-        messages.warning(request, "Ya existe una Universidad registrada en el sistema")
+        messages.warning(request, "La Institución ya ha sido registrada")
         return redirect("detalle_universidad")
 
     if request.method == "POST":
@@ -38,15 +37,15 @@ def registrar_universidad(request):
             perfil.universidad = nueva_universidad
             perfil.save()
             
-            messages.success(request, "La Universidad ha sido registrada correctamente")
+            messages.success(request, "La Institución ha sido registrada correctamente")
             return redirect("panel_principal")
     else:
         formulario_universidad = FormularioUniversidad()
         
     return render(request, "entidades/formulario_universidad.html", {
         "formulario": formulario_universidad,
-        "titulo_pagina": "Universidad - NIVEC",
-        "titulo": "Registrar Universidad",
+        "titulo_pagina": "Institución - NIVEC",
+        "titulo": "Registrar Institución",
         "boton_texto": "Registrar",
         "url_cancelar": "panel_principal",
         "mostrar_carga_masiva": False
@@ -56,22 +55,22 @@ def registrar_universidad(request):
 def modificar_universidad(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("registrar_universidad")
 
     if request.method == "POST":
         formulario = FormularioUniversidad(request.POST, request.FILES, instance=universidad_usuario)
         if formulario.is_valid():
             formulario.save()
-            messages.success(request, "La Universidad ha sido modificada correctamente")
+            messages.success(request, "La Institución ha sido modificada correctamente")
             return redirect("detalle_universidad")
     else:
         formulario = FormularioUniversidad(instance=universidad_usuario)
         
     return render(request, "entidades/formulario_universidad.html", {
         "formulario": formulario,
-        "titulo_pagina": "Universidad - NIVEC",
-        "titulo": "Modificar Universidad",
+        "titulo_pagina": "Institución - NIVEC",
+        "titulo": "Modificar Institución",
         "boton_texto": "Modificar",
         "url_cancelar": "detalle_universidad",
         "mostrar_carga_masiva": False
