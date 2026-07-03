@@ -8,42 +8,13 @@
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Tipo de vinculación</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Tiempo de dedicación</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Carga horaria máxima</th>
-    <th style="font-weight: bold; text-align: left; color: #5c6b73">Estado</th>
+    <th style="font-weight: bold; text-align: left; color: #5c6b73">Estado de usuario</th>
+    {% if not solo_lectura %}
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
+    {% endif %}
 {% endblock %}
 
 {% block cuerpo_tabla %}
-    <style>
-        .etiqueta-estado {
-            background-color: #f2f2f7; 
-            padding: 4px 8px; 
-            border-radius: 6px; 
-            font-size: 12px; 
-            font-weight: bold; 
-            color: #1d1d1f;
-        }
-        .etiqueta-accion {
-            padding: 4px 12px;
-            border-radius: 6px; 
-            font-size: 12px;
-            text-decoration: none;
-            display: inline-block;
-            font-weight: bold;
-            transition: all 0.2s ease;
-            margin-right: 8px;
-        }
-        .etiqueta-modificar {
-            background: #5c6b73; 
-            color: white;            
-            border: none;
-        }
-        .etiqueta-inhabilitar {
-            background: #253237; 
-            color: white; 
-            border: none;
-        }
-    </style>
-
     {% for docente in docentes %}
     <tr>
         <td style="font-family: monospace; text-align: left;">{{ docente.usuario_de_sistema.identificacion }}</td>
@@ -53,36 +24,30 @@
         <td style="text-align: left;">{{ docente.tipo_de_vinculacion }}</td>
         <td style="text-align: left;">{{ docente.tiempo_de_dedicacion }}</td>
         <td style="text-align: left;">{{ docente.carga_horaria_maxima }}h</td>
-        
+        <td style="text-align: left;"><span style="font-weight: bold; color: #253237; font-size: 13px;">{{ docente.usuario_de_sistema.estado_de_usuario }}</span></td>
+        {% if not solo_lectura %}
         <td style="text-align: left;">
-            <span class="etiqueta-estado">{{ docente.estado_de_vinculacion }}</span>
-        </td>
-        
-        <td style="text-align: left;">
-            {% if not solo_lectura %}
             <a href="{% url 'modificar_docente' docente.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
             
             {% if docente.estado_de_vinculacion == 'Activo' %}
                 <a href="{% url 'inhabilitar_docente' docente.id %}" 
                    onclick="return confirm('Confirmar acción');" 
-                   class="etiqueta-accion etiqueta-inhabilitar">Inhabilitar</a>
+                   class="etiqueta-accion etiqueta-eliminar">Inhabilitar</a>
             {% else %}
                 <a href="{% url 'habilitar_docente' docente.id %}" 
                    onclick="return confirm('Confirmar acción');" 
-                   class="etiqueta-accion etiqueta-inhabilitar">Habilitar</a>
+                   class="etiqueta-accion etiqueta-eliminar">Habilitar</a>
             {% endif %}
 
             <a href="{% url 'eliminar_docente' docente.id %}" 
                onclick="return confirm('Confirmar acción');" 
                class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
-            {% else %}
-            <span style="color: #9db4c0;">—</span>
-            {% endif %}
         </td>
+        {% endif %}
     </tr>
     {% empty %}
     <tr>
-        <td colspan="9" style="text-align: center; color: #9db4c0; padding: 30px;">
+        <td colspan="{% if solo_lectura %}8{% else %}9{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>

@@ -10,9 +10,9 @@
 
 {% block filtros %}
     <form method="get" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-        <label style="font-weight: bold; font-size: 13px; color: #5c6b73;">Periodo de nivelación:</label>
+        <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Periodo de nivelación</span>
         <select name="periodo" onchange="this.form.submit()"
-                style="padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 13px; background: white; color: #1d1d1f; outline: none;">
+                style="padding: 8px 12px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit;">
             <option value=""></option>
             {% for p in periodos %}
                 <option value="{{ p.id }}" {% if periodo_seleccionado.id == p.id %}selected{% endif %}>
@@ -20,9 +20,6 @@
                 </option>
             {% endfor %}
         </select>
-        {% if periodo_seleccionado %}
-            <a href="{% url 'listar_estudiantes' %}" class="boton boton-secundario">Reiniciar</a>
-        {% endif %}
     </form>
 {% endblock %}
 
@@ -36,8 +33,10 @@
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Registro de cupo</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Carrera registrada</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Campus registrado</th>
-    <th style="font-weight: bold; text-align: left; color: #5c6b73">Estado</th>
+    <th style="font-weight: bold; text-align: left; color: #5c6b73">Estado de usuario</th>
+    {% if not solo_lectura %}
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
+    {% endif %}
 {% endblock %}
 
 {% block cuerpo_tabla %}
@@ -52,11 +51,9 @@
         <td style="text-align: left;">{{ est.get_registro_de_cupo_display }}</td>
         <td style="text-align: left;">{{ est.carrera_registrada.nombre }}</td>
         <td style="text-align: left;">{{ est.campus_registrado.nombre }}</td>
-        <td style="text-align: left;">
-            <span style="background-color: #f2f2f7; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; color: #1d1d1f;">{{ est.get_estado_de_matricula_display }}</span>
-        </td>
+        <td style="text-align: left;"><span style="font-weight: bold; color: #253237; font-size: 13px;">{{ est.usuario_de_sistema.estado_de_usuario }}</span></td>
+        {% if not solo_lectura %}
         <td style="text-align: left; white-space: nowrap;">
-            {% if not solo_lectura %}
             <a href="{% url 'modificar_estudiante' est.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
 
             {% if est.estado_de_matricula == 'Matriculado' %}
@@ -67,14 +64,12 @@
             {% endif %}
 
             <a href="{% url 'eliminar_estudiante' est.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
-            {% else %}
-            <span style="color: #9db4c0;">—</span>
-            {% endif %}
         </td>
+        {% endif %}
     </tr>
     {% empty %}
     <tr>
-        <td colspan="11" style="text-align: center; color: #9db4c0; padding: 30px;">
+        <td colspan="{% if solo_lectura %}10{% else %}11{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>
