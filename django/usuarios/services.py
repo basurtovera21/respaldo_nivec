@@ -79,7 +79,7 @@ def servicio_administrativo_registrar_masivo_desde_excel(archivo, universidad_us
                 try: UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
                 except ValueError as e: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})"); continue
                 if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Usuario administrativo ya registrado)"); continue
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (el Administrativo ya ha sido registrado)"); continue
                 with transaction.atomic():
                     usuario = UsuarioDeSistema.objects.create(tipo_de_identificacion=tipo_id_str, identificacion=identificacion_str, nombres=str(nombres).strip(), apellidos=str(apellidos).strip(), correo_institucional=str(correo).strip(), estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value)
                     usuario.set_password(identificacion_str); usuario.save()
@@ -89,7 +89,7 @@ def servicio_administrativo_registrar_masivo_desde_excel(archivo, universidad_us
                     PerfilAdministrativo.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_administrativo=nuevo_identificador, perfil_administrativo=perfil_exacto)
                     resultado["exitosos"] += 1
             except Exception as error_de_fila:
-                resultado["advertencias"].append(f"Fila {numero_fila} omitida ({str(error_de_fila)})")
+                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(error_de_fila)})")
     except Exception:
         resultado["error"] = "Ha ocurrido un error al procesar el documento"
     return resultado
