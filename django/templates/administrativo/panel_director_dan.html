@@ -6,18 +6,21 @@
 
     <div class="tarjeta">
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Configuración institucional</h2>
-        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Parámetros base</p>
+        <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Parámetros base</p>
         <div class="acciones" style="margin-bottom: 0;">
             <a href="{% if user.perfil_administrativo.universidad %}{% url 'detalle_universidad' %}{% else %}{% url 'registrar_universidad' %}{% endif %}" class="boton boton-secundario">Universidad</a>
+            {% if tiene_universidad %}
             <a href="{% url 'listar_campus' %}" class="boton boton-secundario">Campus</a>
             <a href="{% url 'listar_carreras' %}" class="boton boton-secundario">Carreras</a>
             <a href="{% url 'listar_periodos' %}" class="boton boton-secundario">Periodos de nivelación</a>
+            {% endif %}
         </div>
     </div>
 
+    {% if tiene_universidad %}
     <div class="tarjeta">
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Usuarios de sistema</h2>
-        <p style="color: #515154; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Perfiles institucionales</p>
+        <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Perfiles institucionales</p>
         <div class="acciones" style="margin-bottom: 0;">
             <a href="{% url 'listar_administrativos' %}" class="boton boton-secundario">Administrativos</a>
             <a href="{% url 'listar_coordinadores_dan' %}" class="boton boton-secundario">Coordinadores de admisión y nivelación</a>
@@ -26,4 +29,9 @@
             <a href="{% url 'listar_estudiantes' %}" class="boton boton-secundario">Estudiantes</a>
         </div>
     </div>
+    {% else %}
+    <div class="tarjeta">
+        <p style="color: #5c6b73; font-size: 13px; font-weight: bold;">Debe registrar la Universidad antes de acceder a las demás secciones.</p>
+    </div>
+    {% endif %}
 {% endblock %}

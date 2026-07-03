@@ -4,28 +4,28 @@
 
 {% block contenido %}
 <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
-<p style="color: #515154; font-size: 13px; font-weight: bold; margin-bottom: 20px;">
+<p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 20px;">
     {{ unidad.nombre }} — {{ evaluacion.periodo_de_nivelacion.periodo }}
 </p>
 
 <div class="tarjeta" style="margin-bottom: 20px;">
     <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f; margin-bottom: 12px;">Información del estudiante</h3>
     <table style="width: 100%; max-width: 500px;">
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #515154;">Identificación</td><td style="padding: 6px 0;">{{ usuario.identificacion }}</td></tr>
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #515154;">Apellidos y nombres</td><td style="padding: 6px 0;">{{ usuario.apellidos }} {{ usuario.nombres }}</td></tr>
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #515154;">Correo institucional</td><td style="padding: 6px 0;">{{ usuario.correo_institucional }}</td></tr>
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #515154;">Número de matrícula</td><td style="padding: 6px 0;">{{ estudiante.numero_de_matricula }}</td></tr>
+        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Identificación</td><td style="padding: 6px 0;">{{ usuario.identificacion }}</td></tr>
+        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Apellidos y nombres</td><td style="padding: 6px 0;">{{ usuario.apellidos }} {{ usuario.nombres }}</td></tr>
+        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Correo institucional</td><td style="padding: 6px 0;">{{ usuario.correo_institucional }}</td></tr>
+        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Número de matrícula</td><td style="padding: 6px 0;">{{ estudiante.numero_de_matricula }}</td></tr>
     </table>
 </div>
 
 <div class="tarjeta" style="margin-bottom: 20px;">
     <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f; margin-bottom: 12px;">Resultado académico</h3>
     <table style="width: 100%; max-width: 500px;">
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #515154;">Parcial 1</td><td style="padding: 6px 0;">{{ evaluacion.calificacion_parcial_1 }}</td></tr>
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #515154;">Parcial 2</td><td style="padding: 6px 0;">{{ evaluacion.calificacion_parcial_2 }}</td></tr>
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #515154;">Nota final</td><td style="padding: 6px 0; font-weight: bold;">{{ nota_actual }}</td></tr>
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #515154;">Porcentaje de asistencia</td><td style="padding: 6px 0;">{{ asistencia_actual }}%</td></tr>
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #515154;">Estado de aprobación</td><td style="padding: 6px 0; font-weight: bold; color: {% if evaluacion.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif evaluacion.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#86868b{% endif %};">{{ evaluacion.estado_de_aprobacion }}</td></tr>
+        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Parcial 1</td><td style="padding: 6px 0;">{{ evaluacion.calificacion_parcial_1 }}</td></tr>
+        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Parcial 2</td><td style="padding: 6px 0;">{{ evaluacion.calificacion_parcial_2 }}</td></tr>
+        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Nota final</td><td style="padding: 6px 0; font-weight: bold;">{{ nota_actual }}</td></tr>
+        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Porcentaje de asistencia</td><td style="padding: 6px 0;">{{ asistencia_actual }}%</td></tr>
+        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Estado de aprobación</td><td style="padding: 6px 0; font-weight: bold; color: {% if evaluacion.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif evaluacion.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#86868b{% endif %};">{{ evaluacion.estado_de_aprobacion }}</td></tr>
     </table>
 </div>
 
@@ -34,10 +34,10 @@
     <table style="width: 100%; max-width: 600px;">
         <thead>
             <tr>
-                <th style="text-align: left; padding: 8px 0; color: #515154; font-weight: bold;">Criterio</th>
-                <th style="text-align: left; padding: 8px 0; color: #515154; font-weight: bold;">Requerido</th>
-                <th style="text-align: left; padding: 8px 0; color: #515154; font-weight: bold;">Obtenido</th>
-                <th style="text-align: left; padding: 8px 0; color: #515154; font-weight: bold;">Cumple</th>
+                <th style="text-align: left; padding: 8px 0; color: #5c6b73; font-weight: bold;">Criterio</th>
+                <th style="text-align: left; padding: 8px 0; color: #5c6b73; font-weight: bold;">Requerido</th>
+                <th style="text-align: left; padding: 8px 0; color: #5c6b73; font-weight: bold;">Obtenido</th>
+                <th style="text-align: left; padding: 8px 0; color: #5c6b73; font-weight: bold;">Cumple</th>
             </tr>
         </thead>
         <tbody>
