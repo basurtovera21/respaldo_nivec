@@ -58,11 +58,13 @@ class FormularioModificarUsuarioDeSistema(forms.ModelForm):
         model = UsuarioDeSistema
         fields = ("tipo_de_identificacion", "identificacion", "nombres", "apellidos", "correo_institucional", "fecha_de_nacimiento", "sexo", "etnia", "porcentaje_de_discapacidad", "celular", "direccion", "estado_de_usuario")
         labels = {"tipo_de_identificacion": "Tipo de identificación", "identificacion": "Número de identificación", "nombres": "Nombres", "apellidos": "Apellidos", "correo_institucional": "Correo institucional", "fecha_de_nacimiento": "Fecha de nacimiento", "sexo": "Sexo", "etnia": "Etnia", "porcentaje_de_discapacidad": "Porcentaje de discapacidad", "celular": "Número de celular", "direccion": "Dirección domiciliaria", "estado_de_usuario": "Estado de usuario"}
-        widgets = {"tipo_de_identificacion": forms.Select(attrs={'class': 'campo-select'}), "fecha_de_nacimiento": forms.DateInput(attrs={'type': 'date', 'class': 'campo-input'}), "sexo": forms.TextInput(attrs={'class': 'campo-input'})}
+        widgets = {"tipo_de_identificacion": forms.Select(attrs={'class': 'campo-select'}), "fecha_de_nacimiento": forms.DateInput(attrs={'type': 'date', 'class': 'campo-input'}, format='%Y-%m-%d'), "sexo": forms.TextInput(attrs={'class': 'campo-input'})}
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values(): field.error_messages.update({'required': ''}); field.required = False
+        if self.instance and self.instance.pk and self.instance.fecha_de_nacimiento:
+            self.fields['fecha_de_nacimiento'].widget.attrs['value'] = self.instance.fecha_de_nacimiento.strftime('%Y-%m-%d')
         
     def clean(self):
         cleaned_data = super().clean()

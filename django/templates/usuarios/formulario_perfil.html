@@ -15,7 +15,7 @@
         {{ field }}
         
         {% if field.help_text %}
-            <div class="ayuda">{{ field.help_text }}</div>
+            <div class="ayuda" style="font-weight: bold;">{{ field.help_text }}</div>
         {% endif %}
         
         {% for error in field.errors %}
