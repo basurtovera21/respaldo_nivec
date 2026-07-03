@@ -128,12 +128,14 @@ def panel_ua(request):
 @login_required
 @never_cache
 def panel_administrativo(request):
-    from academico.models import Carrera
+    from academico.models import Carrera, PeriodoDeNivelacion
     perfil = getattr(request.user, 'perfil_administrativo', None)
     universidad = perfil.universidad if perfil else None
     tiene_carreras = Carrera.objects.filter(campus__universidad=universidad).exists() if universidad else False
+    tiene_periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad).exists() if universidad else False
     return render(request, "administrativo/panel_administrativo.html", {
         "tiene_carreras": tiene_carreras,
+        "tiene_periodos": tiene_periodos,
     })
 
 @login_required

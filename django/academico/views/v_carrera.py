@@ -106,7 +106,6 @@ def registrar_carrera(request):
             if formulario.is_valid():
                 nueva_carrera = formulario.save(commit=False)
                 nueva_carrera.codigo_de_carrera = generar_identificador_siguiente(Carrera, 'CAR', 'codigo_de_carrera')
-                nueva_carrera.modalidad = "Presencial"
                 nueva_carrera.save()
                 messages.success(request, "La Carrera ha sido registrada correctamente")
                 return redirect("listar_carreras")

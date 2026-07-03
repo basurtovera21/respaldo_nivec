@@ -181,7 +181,6 @@ def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
                         campus=campus_obj,
                         codigo_de_carrera=generar_identificador_siguiente(Carrera, 'CAR', 'codigo_de_carrera'),
                         nombre=str(nombre).strip(),
-                        modalidad=Modalidad.PRESENCIAL.value,
                         vigencia_sniese=vigencia_date
                     )
                     resultado["exitosos"] += 1
@@ -204,7 +203,6 @@ def _construir_periodo(periodo_db):
         periodo=periodo_db.periodo,
         fecha_inicio=periodo_db.fecha_inicio,
         fecha_fin=periodo_db.fecha_fin,
-        modalidad=obtener_enum_flexible(Modalidad, periodo_db.modalidad),
         numero_periodo=periodo_db.numero_periodo,
         estado=obtener_enum_flexible(EstadoDePeriodo, periodo_db.estado)
     )
@@ -229,7 +227,7 @@ def servicio_pasar_a_evaluacion(periodo_db):
 
 def servicio_finalizar_periodo_de_nivelacion(periodo_db):
     if periodo_db.estado != EstadoDePeriodo.EVALUACION.value:
-        return (False, "El periodo debe estar en evaluación para ser cerrado")
+        return (False, "El Periodo de nivelación debe estar en evaluación para poder finalizarlo")
     
     # Verificar que no hay evaluaciones sin formalizar
     no_formalizadas = EvaluacionAcademica.objects.filter(
@@ -237,11 +235,11 @@ def servicio_finalizar_periodo_de_nivelacion(periodo_db):
     ).exclude(estado_revision="Formalizado").count()
     
     if no_formalizadas > 0:
-        return (False, f"Existen {no_formalizadas} calificaciones sin formalizar. Todas deben estar formalizadas antes de cerrar el periodo.")
+        return (False, f"Las calificaciones no han sido formalizadas actualmente")
     
     periodo_db.estado = EstadoDePeriodo.CERRADO.value
     periodo_db.save()
-    return (True, "El periodo ha sido cerrado correctamente")
+    return (True, "El Periodo de nivelación ha finalizado")
 
 
 #Malla curricular

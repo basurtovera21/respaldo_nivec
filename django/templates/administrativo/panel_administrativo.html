@@ -16,6 +16,9 @@
             {% if tiene_carreras %}
             <a href="{% url 'listar_carreras' %}" class="boton boton-secundario">Carreras</a>
             {% endif %}
+            {% if tiene_periodos %}
+            <a href="{% url 'listar_periodos' %}" class="boton boton-secundario">Periodos de nivelación</a>
+            {% endif %}
         </div>
     </div>
 {% endblock %}

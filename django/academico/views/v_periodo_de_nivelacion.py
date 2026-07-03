@@ -12,7 +12,7 @@ from usuarios.utils import generar_identificador_siguiente, requiere_perfil, usu
 def listar_periodos(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario).order_by("-anio", "-numero_periodo")
@@ -31,7 +31,7 @@ def listar_periodos(request):
 def registrar_periodo(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente.")
+        messages.warning(request, "La Institución no ha sido registrada actualmente.")
         return redirect("panel_principal")
 
     if request.method == "POST":
@@ -61,7 +61,7 @@ def registrar_periodo(request):
 def modificar_periodo(request, periodo_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     periodo = get_object_or_404(PeriodoDeNivelacion, id=periodo_id, universidad=universidad_usuario)
@@ -91,7 +91,7 @@ def modificar_periodo(request, periodo_id):
 def eliminar_periodo(request, periodo_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     periodo = get_object_or_404(PeriodoDeNivelacion, id=periodo_id, universidad=universidad_usuario)
@@ -138,7 +138,7 @@ def pasar_a_evaluacion(request, periodo_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     periodo_db = get_object_or_404(PeriodoDeNivelacion, pk=periodo_id, universidad=universidad_usuario)
     if services.servicio_pasar_a_evaluacion(periodo_db):
-        messages.success(request, f"El Periodo de nivelación {periodo_db.periodo} pasó a evaluación")
+        messages.success(request, f"El Periodo de nivelación {periodo_db.periodo} ha pasado a evaluación")
     else:
-        messages.error(request, "No se ha podido pasar el Periodo a evaluación (debe estar en curso)")
+        messages.error(request, "No se ha podido pasar el Periodo de nivelación a evaluación")
     return redirect("listar_periodos")
