@@ -106,7 +106,6 @@ def registrar_carrera(request):
             if formulario.is_valid():
                 nueva_carrera = formulario.save(commit=False)
                 nueva_carrera.codigo_de_carrera = generar_identificador_siguiente(Carrera, 'CAR', 'codigo_de_carrera')
-                nueva_carrera.modalidad = "Presencial"
                 nueva_carrera.save()
                 messages.success(request, "La Carrera ha sido registrada correctamente")
                 return redirect("listar_carreras")
@@ -137,10 +136,7 @@ def modificar_carrera(request, carrera_id):
         formulario = FormularioCarrera(request.POST, instance=carrera)
         formulario.fields['campus'].queryset = Campus.objects.filter(universidad=universidad_usuario)
         if formulario.is_valid():
-            carrera_modificada = formulario.save(commit=False)
-            if not carrera_modificada.modalidad:
-                carrera_modificada.modalidad = carrera.modalidad
-            carrera_modificada.save()
+            formulario.save()
             messages.success(request, "La Carrera ha sido modificada correctamente")
             return redirect("listar_carreras")
     else:

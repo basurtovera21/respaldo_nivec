@@ -181,7 +181,6 @@ def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
                         campus=campus_obj,
                         codigo_de_carrera=generar_identificador_siguiente(Carrera, 'CAR', 'codigo_de_carrera'),
                         nombre=str(nombre).strip(),
-                        modalidad=Modalidad.PRESENCIAL.value,
                         vigencia_sniese=vigencia_date
                     )
                     resultado["exitosos"] += 1
@@ -204,7 +203,6 @@ def _construir_periodo(periodo_db):
         periodo=periodo_db.periodo,
         fecha_inicio=periodo_db.fecha_inicio,
         fecha_fin=periodo_db.fecha_fin,
-        modalidad=obtener_enum_flexible(Modalidad, periodo_db.modalidad),
         numero_periodo=periodo_db.numero_periodo,
         estado=obtener_enum_flexible(EstadoDePeriodo, periodo_db.estado)
     )

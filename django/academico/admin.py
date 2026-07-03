@@ -56,9 +56,9 @@ class CampusAdmin(admin.ModelAdmin):
     
 @admin.register(Carrera)
 class CarreraAdmin(admin.ModelAdmin):
-    list_display = ("nombre", "campus", "modalidad", "vigencia_sniese")
+    list_display = ("nombre", "campus", "vigencia_sniese")
     search_fields = ("nombre", "codigo_de_carrera")
-    list_filter = ("modalidad", "campus")
+    list_filter = ("campus",)
     ordering = ("campus", "nombre")
     fieldsets = (
         (None, {
@@ -66,7 +66,6 @@ class CarreraAdmin(admin.ModelAdmin):
                 "campus", 
                 "codigo_de_carrera", 
                 "nombre", 
-                "modalidad", 
                 "vigencia_sniese"
             )
         }),

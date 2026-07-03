@@ -381,8 +381,8 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
             "estado": "Estado",
         }
         widgets = {
-            "fecha_inicio": forms.DateInput(attrs={"type": "date"}), 
-            "fecha_fin": forms.DateInput(attrs={"type": "date"}),
+            "fecha_inicio": forms.DateInput(attrs={"type": "date"}, format='%Y-%m-%d'), 
+            "fecha_fin": forms.DateInput(attrs={"type": "date"}, format='%Y-%m-%d'),
             "numero_periodo": forms.NumberInput(attrs={"min": 1, "max": 2})
         }
 
@@ -398,6 +398,13 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
             'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;',
             'readonly': True
         })
+
+        # Persist dates on edit
+        if self.instance and self.instance.pk:
+            if self.instance.fecha_inicio:
+                self.fields['fecha_inicio'].widget.attrs['value'] = self.instance.fecha_inicio.strftime('%Y-%m-%d')
+            if self.instance.fecha_fin:
+                self.fields['fecha_fin'].widget.attrs['value'] = self.instance.fecha_fin.strftime('%Y-%m-%d')
 
         opciones_originales = list(self.fields['estado'].choices)
         estado_actual = self.instance.estado if (self.instance and self.instance.pk) else None
@@ -460,17 +467,32 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
                 
         fecha_de_inicio = cleaned_data.get("fecha_inicio")
         fecha_de_finalizacion = cleaned_data.get("fecha_fin")
+        anio_seleccionado = cleaned_data.get("anio")
+        numero_seleccionado = cleaned_data.get("numero_periodo")
         
+        # Year validation via POO (only for new records)
+        if anio_seleccionado and "anio" not in errores:
+            if not (self.instance and self.instance.pk):
+                periodo_poo = PeriodoDeNivelacionBase(
+                    codigo_periodo="TEMP",
+                    anio=anio_seleccionado,
+                    periodo="TEMP",
+                    fecha_inicio=fecha_de_inicio or fecha_de_finalizacion,
+                    fecha_fin=fecha_de_finalizacion or fecha_de_inicio,
+                    numero_periodo=numero_seleccionado or 1,
+                )
+                error_anio = periodo_poo.validar_anio()
+                if error_anio:
+                    errores["anio"] = error_anio
+
         if fecha_de_inicio and fecha_de_finalizacion:
             periodo_poo = PeriodoDeNivelacionBase(
                 codigo_periodo="TEMP",
-                anio=cleaned_data.get("anio", 2000),
+                anio=anio_seleccionado or 2000,
                 periodo="TEMP",
                 fecha_inicio=fecha_de_inicio,
                 fecha_fin=fecha_de_finalizacion,
-                modalidad=Modalidad.VIRTUAL,
-                numero_periodo=cleaned_data.get("numero_periodo", 1),
-                estado=EstadoDePeriodo.PLANIFICACION
+                numero_periodo=numero_seleccionado or 1,
             )
 
             if not periodo_poo.validar_fechas():
@@ -489,9 +511,6 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
                 if periodos_chocan.exists():
                     errores["fecha_inicio"] = "La fecha especificada presenta conflicto con un Periodo registrado previamente"
                     errores["fecha_fin"] = "La fecha especificada presenta conflicto con un Periodo registrado previamente"
-
-        anio_seleccionado = cleaned_data.get("anio")
-        numero_seleccionado = cleaned_data.get("numero_periodo")
 
         if numero_seleccionado is not None and numero_seleccionado not in (1, 2):
             errores["numero_periodo"] = "Registro no válido (1 o 2)"

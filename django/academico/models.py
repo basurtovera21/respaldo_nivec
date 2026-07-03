@@ -55,7 +55,6 @@ class Carrera(models.Model):
     campus = models.ForeignKey(Campus, on_delete=models.PROTECT, related_name="carreras", verbose_name="Campus registrado")
     codigo_de_carrera = models.CharField(max_length=50, unique=True, verbose_name="Código de carrera")
     nombre = models.CharField(max_length=200, verbose_name="Nombre")
-    modalidad = models.CharField(max_length=50, choices=cambiar_enum_a_choices(Modalidad), verbose_name="Modalidad")
     vigencia_sniese = models.DateField(verbose_name="Vigencia SNIESE")
 
     class Meta:
