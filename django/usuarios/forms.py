@@ -126,7 +126,7 @@ class FormularioPerfilEstudiante(forms.ModelForm):
 
 class FormularioRegistrarDocente(forms.ModelForm):
     especialidades_texto = forms.CharField(label="Especialidades", required=False, widget=forms.TextInput(attrs={'class': 'campo-input'}), help_text="Registre la información separada por comas")
-    jornadas = forms.MultipleChoiceField(label="Jornada", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple, help_text="Registre jornadas continuas (de ser necesario)")
+    jornadas = forms.MultipleChoiceField(label="Jornada", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple(attrs={'class': 'campo-checkbox'}), help_text="Registre jornadas continuas (de ser necesario)")
     class Meta:
         model = PerfilDocente
         fields = ("identificador_institucional", "tipo_de_vinculacion", "tiempo_de_dedicacion", "carga_horaria_maxima")
@@ -138,13 +138,13 @@ class FormularioRegistrarDocente(forms.ModelForm):
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for field in self.fields.values(): field.error_messages.update({'required': ''})
-        self.fields['identificador_institucional'].required = False
+        for field in self.fields.values(): field.error_messages.update({'required': ''}); field.required = False
         if self.instance and self.instance.pk and self.instance.especialidades: self.fields['especialidades_texto'].initial = ", ".join(self.instance.especialidades)
         if self.instance and self.instance.pk and self.instance.jornadas: self.fields['jornadas'].initial = self.instance.jornadas
     def clean(self):
         cleaned_data = super().clean()
-        errores = {field: "Información requerida" for field in ["tipo_de_vinculacion", "tiempo_de_dedicacion"] if not cleaned_data.get(field)}
+        errores = {}
+        if not cleaned_data.get("tiempo_de_dedicacion"): errores['tiempo_de_dedicacion'] = "Información requerida"
         carga = cleaned_data.get("carga_horaria_maxima")
         if carga is None: errores['carga_horaria_maxima'] = "Información requerida"
         elif carga < 0: errores['carga_horaria_maxima'] = "Registro no válido"
@@ -157,7 +157,7 @@ class FormularioRegistrarDocente(forms.ModelForm):
 
 class FormularioDatosDocenteUA(forms.ModelForm):
     especialidades_texto = forms.CharField(label="Especialidades", required=False, widget=forms.TextInput(attrs={'class': 'campo-input'}), help_text="Registre la información separada por comas")
-    jornadas = forms.MultipleChoiceField(label="Jornada", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple, help_text="Registre jornadas continuas (de ser necesario)")
+    jornadas = forms.MultipleChoiceField(label="Jornada", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple(attrs={'class': 'campo-checkbox'}), help_text="Registre jornadas continuas (de ser necesario)")
     class Meta:
         model = PerfilDocente
         fields = ("tipo_de_vinculacion", "tiempo_de_dedicacion", "carga_horaria_maxima")
@@ -169,7 +169,8 @@ class FormularioDatosDocenteUA(forms.ModelForm):
         if self.instance and self.instance.pk and self.instance.jornadas: self.fields['jornadas'].initial = self.instance.jornadas
     def clean(self):
         cleaned_data = super().clean()
-        errores = {field: "Información requerida" for field in ["tipo_de_vinculacion", "tiempo_de_dedicacion"] if not cleaned_data.get(field)}
+        errores = {}
+        if not cleaned_data.get("tiempo_de_dedicacion"): errores['tiempo_de_dedicacion'] = "Información requerida"
         carga = cleaned_data.get("carga_horaria_maxima")
         if carga is None: errores['carga_horaria_maxima'] = "Información requerida"
         elif carga < 0: errores['carga_horaria_maxima'] = "Registro no válido"
