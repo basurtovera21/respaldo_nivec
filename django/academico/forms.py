@@ -369,7 +369,7 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
         model = PeriodoDeNivelacion
         fields = (
             "codigo_periodo", "anio", "numero_periodo", 
-            "fecha_inicio", "fecha_fin", "modalidad", "estado"
+            "fecha_inicio", "fecha_fin", "modalidad"
         )
         labels = {
             "codigo_periodo": "Código de periodo",
@@ -378,7 +378,6 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
             "fecha_inicio": "Fecha de inicio",
             "fecha_fin": "Fecha de finalización",
             "modalidad": "Modalidad",
-            "estado": "Estado",
         }
         widgets = {
             "fecha_inicio": forms.DateInput(attrs={"type": "date"}, format='%Y-%m-%d'), 
@@ -406,42 +405,14 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
             if self.instance.fecha_fin:
                 self.fields['fecha_fin'].widget.attrs['value'] = self.instance.fecha_fin.strftime('%Y-%m-%d')
 
-        opciones_originales = list(self.fields['estado'].choices)
-        estado_actual = self.instance.estado if (self.instance and self.instance.pk) else None
-
-        if not self.instance.pk:
-            opcion_planif = [c for c in opciones_originales if 'PLANIF' in str(c[0]).upper() or 'PLANIF' in str(c[1]).upper()]
-            if opcion_planif:
-                self.fields['estado'].choices = opcion_planif
-                self.initial['estado'] = opcion_planif[0][0]
-        else:
-            estado_str = str(estado_actual).upper()
-            
-            if 'PLANIF' in estado_str:
-                opcion_planif = [c for c in opciones_originales if 'PLANIF' in str(c[0]).upper() or 'PLANIF' in str(c[1]).upper()]
-                self.fields['estado'].choices = opcion_planif
-                
-            elif 'CURSO' in estado_str:
-                opciones_permitidas = [
-                    c for c in opciones_originales 
-                    if 'CURSO' in str(c[0]).upper() or 'EVALU' in str(c[0]).upper() or 'CURSO' in str(c[1]).upper() or 'EVALU' in str(c[1]).upper()
-                ]
-                self.fields['estado'].choices = opciones_permitidas
-                
-            elif 'EVALU' in estado_str:
-                opcion_evalu = [c for c in opciones_originales if 'EVALU' in str(c[0]).upper() or 'EVALU' in str(c[1]).upper()]
-                self.fields['estado'].choices = opcion_evalu
-                
-            elif 'CERRADO' in estado_str or 'CIERRA' in estado_str:
-                opcion_cerrado = [c for c in opciones_originales if 'CERRADO' in str(c[0]).upper() or 'CERRADO' in str(c[1]).upper()]
-                self.fields['estado'].choices = opcion_cerrado
-                
+            # If period is closed, disable all fields
+            estado_actual = str(self.instance.estado).upper()
+            if 'CERRADO' in estado_actual or 'CIERRA' in estado_actual:
                 for name, field in self.fields.items():
                     if isinstance(field.widget, (forms.Select, forms.RadioSelect)):
                         field.widget.attrs['disabled'] = True
                     else:
                         field.widget.attrs['readonly'] = True
-                        
                     field.widget.attrs['style'] = 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'
 
     def clean(self):
@@ -453,13 +424,12 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
                 "fecha_inicio": self.instance.fecha_inicio,
                 "fecha_fin": self.instance.fecha_fin,
                 "modalidad": self.instance.modalidad,
-                "estado": self.instance.estado,
             }
             return self.cleaned_data
 
         cleaned_data = super().clean()
         errores = {}
-        campos_requeridos = ["anio", "numero_periodo", "fecha_inicio", "fecha_fin", "modalidad", "estado"]
+        campos_requeridos = ["anio", "numero_periodo", "fecha_inicio", "fecha_fin", "modalidad"]
         
         for campo in campos_requeridos:
             if not cleaned_data.get(campo):
@@ -531,10 +501,37 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
             
         return cleaned_data
 
-    
-    
-# Reemplazar FormularioParalelo en django/academico/forms.py
+    def __init__(self, *args, **kwargs):
+        self.universidad = kwargs.pop('universidad', None)
+        super().__init__(*args, **kwargs)
+        
+        for field in self.fields.values():
+            field.required = False
+            
+        self.fields['codigo_periodo'].widget.attrs.update({
+            'placeholder': 'El código será determinado de forma automática',
+            'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;',
+            'readonly': True
+        })
 
+        # Persist dates on edit
+        if self.instance and self.instance.pk:
+            if self.instance.fecha_inicio:
+                self.fields['fecha_inicio'].widget.attrs['value'] = self.instance.fecha_inicio.strftime('%Y-%m-%d')
+            if self.instance.fecha_fin:
+                self.fields['fecha_fin'].widget.attrs['value'] = self.instance.fecha_fin.strftime('%Y-%m-%d')
+
+            # If period is closed, disable all fields
+            estado_actual = str(self.instance.estado).upper()
+            if 'CERRADO' in estado_actual or 'CIERRA' in estado_actual:
+                for name, field in self.fields.items():
+                    if isinstance(field.widget, (forms.Select, forms.RadioSelect)):
+                        field.widget.attrs['disabled'] = True
+                    else:
+                        field.widget.attrs['readonly'] = True
+                    field.widget.attrs['style'] = 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'
+
+    
 class FormularioParalelo(forms.ModelForm):
     class Meta:
         model = Paralelo
