@@ -65,12 +65,11 @@ def descargar_plantilla_carrera(request):
     cabeceras = [
         "Código de Campus (CAM...)", 
         "Nombre de la Carrera", 
-        "Modalidad (Virtual, Presencial, Semipresencial)",
         "Vigencia SNIESE (AAAA-MM-DD)"
     ]
     ws.append(cabeceras)
 
-    for col in range(1, 6):
+    for col in range(1, 4):
         ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 40
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
