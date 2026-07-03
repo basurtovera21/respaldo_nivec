@@ -93,7 +93,7 @@ def servicio_campus_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     resultado["exitosos"] += 1
                     nombres_registrados.add(nombre_normalizado)
             except Exception as e:
-                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido({str(e)})")
+                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})")
                 
     except Exception:
         resultado["error"] = "Ha ocurrido un error al procesar el documento"
