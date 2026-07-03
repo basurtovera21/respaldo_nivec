@@ -8,40 +8,35 @@
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Fecha</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Modalidad</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Estado</th>
+    {% if not solo_lectura %}
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
+    {% endif %}
 {% endblock %}
 
 {% block cuerpo_tabla %}
     {% for p in periodos %}
     <tr>
-        <td style="font-family: monospace; text-align: left; color: #1d1d1f;">{{ p.codigo_periodo }}</td>
-        <td style="text-align: left; color: #1d1d1f;">{{ p.periodo }}</td>
-        <td style="text-align: left; color: #1d1d1f;">{{ p.anio }}</td>
-        <td style="text-align: left; color: #1d1d1f;">{{ p.numero_periodo }}</td>
-        <td style="text-align: left; font-size: 12px; color: #1d1d1f;">{{ p.fecha_inicio|date:"d/m/Y" }} a {{ p.fecha_fin|date:"d/m/Y" }}</td>
-        <td style="text-align: left; color: #1d1d1f;">{{ p.get_modalidad_display }}</td>
-        
+        <td style="font-family: monospace; text-align: left;">{{ p.codigo_periodo }}</td>
+        <td style="text-align: left;">{{ p.periodo }}</td>
+        <td style="text-align: left;">{{ p.anio }}</td>
+        <td style="text-align: left;">{{ p.numero_periodo }}</td>
+        <td style="text-align: left; font-size: 12px;">{{ p.fecha_inicio|date:"d/m/Y" }} a {{ p.fecha_fin|date:"d/m/Y" }}</td>
+        <td style="text-align: left;">{{ p.get_modalidad_display }}</td>
         <td style="text-align: left;">
-            <span style="background-color: #f2f2f7; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; color: #1d1d1f;">
-                {{ p.get_estado_display }}
-            </span>
+            <span style="font-weight: bold; color: #253237; font-size: 13px;">{{ p.get_estado_display }}</span>
         </td>
-        
+        {% if not solo_lectura %}
         <td style="text-align: left;">
-            {% if not solo_lectura %}
             <a href="{% url 'modificar_periodo' p.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
-            
             <a href="{% url 'eliminar_periodo' p.id %}" 
                onclick="return confirm('Confirmar acción');"
                class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
-            {% else %}
-            <span style="color: #9db4c0;">—</span>
-            {% endif %}
         </td>
+        {% endif %}
     </tr>
     {% empty %}
     <tr>
-        <td colspan="8" style="text-align: center; color: #9db4c0; padding: 30px;">
+        <td colspan="{% if solo_lectura %}7{% else %}8{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>

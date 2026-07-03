@@ -1,13 +1,11 @@
 import unicodedata
 from datetime import date
-from poo.clases.enums.modalidad import Modalidad
 
 
 class Carrera:
-    def __init__(self, codigo_de_carrera: str, nombre: str, modalidad: Modalidad = None, vigencia_sniese: date = None):
+    def __init__(self, codigo_de_carrera: str, nombre: str, vigencia_sniese: date = None):
         self._codigo_de_carrera = codigo_de_carrera
         self._nombre = nombre
-        self._modalidad = modalidad
         self._vigencia_sniese = vigencia_sniese
 
     @property
@@ -21,10 +19,6 @@ class Carrera:
     @nombre.setter
     def nombre(self, valor):
         self._nombre = valor
-
-    @property
-    def modalidad(self):
-        return self._modalidad
 
     @property
     def vigencia_sniese(self):
