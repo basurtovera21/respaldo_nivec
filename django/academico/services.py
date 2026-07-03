@@ -123,7 +123,7 @@ def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
         campus_existente = Campus.objects.filter(universidad=universidad_usuario)
 
         carreras_registradas = {
-            (campus_id, CarreraBase.normalizar_nombre(nombre_existente))
+            (campus_id, normalizar_texto(nombre_existente))
             for campus_id, nombre_existente in Carrera.objects.filter(
                 campus__universidad=universidad_usuario
             ).values_list("campus_id", "nombre")
@@ -131,19 +131,15 @@ def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
 
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
-                codigo_campus, nombre, modalidad, vigencia = fila[:4]
+                codigo_campus = fila[0] if len(fila) > 0 else None
+                nombre = fila[1] if len(fila) > 1 else None
+                vigencia = fila[2] if len(fila) > 2 else None
                 
-                if not codigo_campus and not nombre and not modalidad and not vigencia:
+                if not codigo_campus and not nombre and not vigencia:
                     continue
                 
-                if not codigo_campus or not nombre or not modalidad or not vigencia:
+                if not codigo_campus or not nombre or not vigencia:
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido por falta de información")
-                    continue
-
-                try:
-                    enum_modalidad = obtener_enum_flexible(Modalidad, modalidad)
-                except ValueError:
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Modalidad no válida)")
                     continue
 
                 if isinstance(vigencia, (datetime, date)):
@@ -158,15 +154,14 @@ def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (formato de fecha no válido)")
                     continue
 
-                campus_obj = campus_existente.filter(codigo_de_campus=codigo_campus).first()
+                campus_obj = campus_existente.filter(codigo_de_campus=str(codigo_campus).strip()).first()
                 if not campus_obj:
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (código de Campus no válido)")
                     continue
                 
                 carrera_poo = CarreraBase(
                     codigo_de_carrera="PENDIENTE",
-                    nombre=nombre,
-                    modalidad=enum_modalidad,
+                    nombre=str(nombre).strip(),
                     vigencia_sniese=vigencia_date
                 )
 
@@ -174,7 +169,7 @@ def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Carrera no vigente)")
                     continue
 
-                clave_carrera = (campus_obj.id, CarreraBase.normalizar_nombre(nombre))
+                clave_carrera = (campus_obj.id, normalizar_texto(nombre))
                 if clave_carrera in carreras_registradas:
                     resultado["advertencias"].append(
                         f"El registro de la fila {numero_fila} fue omitido (la Carrera ya existe)"
@@ -185,8 +180,8 @@ def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     Carrera.objects.create(
                         campus=campus_obj,
                         codigo_de_carrera=generar_identificador_siguiente(Carrera, 'CAR', 'codigo_de_carrera'),
-                        nombre=nombre,
-                        modalidad=enum_modalidad.value, 
+                        nombre=str(nombre).strip(),
+                        modalidad=Modalidad.PRESENCIAL.value,
                         vigencia_sniese=vigencia_date
                     )
                     resultado["exitosos"] += 1
