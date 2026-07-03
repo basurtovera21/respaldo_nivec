@@ -13,7 +13,7 @@ from usuarios.utils import generar_identificador_siguiente, requiere_perfil, usu
 def listar_carreras(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     if not Campus.objects.filter(universidad=universidad_usuario).exists():
@@ -73,7 +73,7 @@ def descargar_plantilla_carrera(request):
         ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 40
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="formato_carreras_nivec.xlsx"'
+    response['Content-Disposition'] = 'attachment; filename="carreras_documento_nivec.xlsx"'
     wb.save(response)
     return response
 
@@ -81,7 +81,7 @@ def descargar_plantilla_carrera(request):
 def registrar_carrera(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     campus_existente = Campus.objects.filter(universidad=universidad_usuario)
@@ -128,7 +128,7 @@ def registrar_carrera(request):
 def modificar_carrera(request, carrera_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     carrera = get_object_or_404(Carrera, id=carrera_id, campus__universidad=universidad_usuario)
@@ -141,7 +141,7 @@ def modificar_carrera(request, carrera_id):
             if not carrera_modificada.modalidad:
                 carrera_modificada.modalidad = carrera.modalidad
             carrera_modificada.save()
-            messages.success(request, "La Carrera ha sido modificada correctamente")
+            messages.success(request, "La Institución ha sido modificada correctamente")
             return redirect("listar_carreras")
     else:
         formulario = FormularioCarrera(instance=carrera)
@@ -160,7 +160,7 @@ def modificar_carrera(request, carrera_id):
 def eliminar_carrera(request, carrera_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     carrera = get_object_or_404(Carrera, id=carrera_id, campus__universidad=universidad_usuario)
