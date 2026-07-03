@@ -2,28 +2,18 @@
 {% block titulo %}Panel UA — NIVEC{% endblock %}
 
 {% block contenido %}
-<h2 style="margin-bottom: 20px;">Coordinación de unidad académica</h2>
+<h2 style="margin-bottom: 20px;">Dirección Institucional</h2>
 
-{% if not carrera %}
-<div class="tarjeta">
-    <p style="color: #b45309; font-size: 13px; font-weight: bold;">No tiene una carrera asignada. Comuníquese con la dirección de admisión y nivelación.</p>
+<div style="margin-bottom: 20px;">
+    <a href="{% url 'detalle_universidad' %}" class="boton boton-secundario">Información institucional</a>
 </div>
-{% else %}
 
+{% if carrera %}
 <div class="tarjeta" style="margin-bottom: 16px;">
     <p style="color: #5c6b73; font-size: 13px; margin: 0;">
         <span style="font-weight: bold;">Carrera asignada:</span> {{ carrera.nombre }}
         {% if periodo_actual %} — <span style="font-weight: bold;">Periodo:</span> {{ periodo_actual.periodo }} ({{ periodo_actual.estado }}){% endif %}
     </p>
-</div>
-
-<div class="tarjeta">
-    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Gestión académica</h2>
-    <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Paralelos y calificaciones de su carrera</p>
-    <div class="acciones" style="margin-bottom: 0;">
-        <a href="{% url 'listar_paralelos' %}?carrera={{ carrera.id }}" class="boton boton-secundario">Paralelos</a>
-        <a href="{% url 'matriz_horarios' %}?carrera={{ carrera.id }}" class="boton boton-secundario">Horarios</a>
-    </div>
 </div>
 
 {% if pendientes_formalizar > 0 %}
@@ -33,6 +23,15 @@
     </span>
 </div>
 {% endif %}
+
+<div class="tarjeta">
+    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Gestión académica</h2>
+    <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Paralelos y calificaciones de su carrera</p>
+    <div class="acciones" style="margin-bottom: 0;">
+        <a href="{% url 'listar_paralelos' %}?carrera={{ carrera.id }}" class="boton boton-secundario">Paralelos</a>
+        <a href="{% url 'matriz_horarios' %}?carrera={{ carrera.id }}" class="boton boton-secundario">Horarios</a>
+    </div>
+</div>
 
 {% if paralelos %}
 <div class="tarjeta" style="margin-top: 16px; padding: 0; overflow-x: auto;">
@@ -50,8 +49,8 @@
                 <td style="text-align: left; padding: 12px 18px;">{{ p.nombre }}</td>
                 <td style="text-align: left; padding: 12px 18px;">{{ p.unidad_curricular.nombre }}</td>
                 <td style="text-align: left; padding: 12px 18px; white-space: nowrap;">
-                    <a href="{% url 'listar_evaluaciones_paralelo' p.id %}" style="color: #0071e3; font-size: 13px; font-weight: bold; text-decoration: none; margin-right: 12px;">Calificaciones</a>
-                    <a href="{% url 'listar_horarios_paralelo' p.id %}" style="color: #0071e3; font-size: 13px; font-weight: bold; text-decoration: none;">Horarios</a>
+                    <a href="{% url 'listar_evaluaciones_paralelo' p.id %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none; margin-right: 12px;">Calificaciones</a>
+                    <a href="{% url 'listar_horarios_paralelo' p.id %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Horarios</a>
                 </td>
             </tr>
             {% endfor %}
@@ -60,5 +59,9 @@
 </div>
 {% endif %}
 
+{% else %}
+<div class="tarjeta">
+    <p style="color: #9db4c0; font-size: 13px; font-weight: bold;">No tiene una carrera asignada. Comuníquese con la dirección de admisión y nivelación.</p>
+</div>
 {% endif %}
 {% endblock %}
