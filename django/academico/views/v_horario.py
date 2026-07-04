@@ -64,6 +64,7 @@ def listar_horarios_paralelo(request, paralelo_id):
 
     unidades = []
     todas_completas = True
+    alguna_excede_maximo = False
     for row in unidades_rows:
         agendadas = servicio_horas_agendadas_paralelo(row)
         requeridas = _horas_sincronicas_semanales(row.unidad_curricular, row.periodo_de_nivelacion)
@@ -80,13 +81,25 @@ def listar_horarios_paralelo(request, paralelo_id):
             "completo": completo,
         })
 
+    # Validate if required hours exceed what's possible in the franja
+    from poo.clases.franja_horaria import validar_horas_semanales_unidad, obtener_dias_habiles
+    jornada_enum = Jornada(representativo.jornada)
+    for u in unidades:
+        validacion = validar_horas_semanales_unidad(u["requeridas"], jornada_enum)
+        if not validacion["ok"]:
+            alguna_excede_maximo = True
+            u["excede_maximo"] = True
+            u["maximo_disponible"] = validacion["maximo"]
+        else:
+            u["excede_maximo"] = False
+
     horarios = Horario.objects.filter(paralelo__in=unidades_rows).select_related(
         "paralelo__unidad_curricular"
     ).order_by("paralelo__unidad_curricular__nombre", "dia_semana", "hora_inicio")
 
     jornada_enum = Jornada(representativo.jornada)
 
-    # Construir datos de la grilla visual (Día × Hora)
+    # Construir datos de la grilla visual (Día × Hora) - solo lunes a viernes
     franja = obtener_franja(jornada_enum)
     slots_hora = []
     if franja:
@@ -95,16 +108,19 @@ def listar_horarios_paralelo(request, paralelo_id):
             slots_hora.append(h)
             h += 1
 
-    # Asignar colores en escalas de gris por unidad
+    # Colores de la paleta de la aplicación por unidad
     _COLORES_UNIDAD = [
-        "#e8e8ed", "#d2d2d7", "#c7c7cc", "#b0b0b5", "#9a9a9f",
-        "#aeaeb2", "#dcdce0", "#c4c4c8", "#bababe", "#8e8e93",
+        "#DADBDB", "#9db4c0", "#c7c7cc", "#5c6b73", "#e8e8ed",
+        "#b0b0b5", "#d2d2d7", "#aeaeb2", "#c4c4c8", "#bababe",
     ]
     nombres_unidades = sorted(set(h.paralelo.unidad_curricular.nombre for h in horarios))
     mapa_colores = {nombre: _COLORES_UNIDAD[i % len(_COLORES_UNIDAD)] for i, nombre in enumerate(nombres_unidades)}
 
-    dias_semana = [d.value for d in DiaDeSemana]  # Lunes a Domingo (7 días)
-    grilla = []  # lista de {hora, celdas: [{bloque o None} por día]}
+    # Solo días hábiles (lunes a viernes) para la grilla
+    dias_habiles = obtener_dias_habiles()
+    dias_semana = [d.value for d in dias_habiles]
+    
+    grilla = []
     for slot in slots_hora:
         fila = {"hora": f"{slot:02d}:00", "celdas": []}
         for dia in dias_semana:
@@ -117,7 +133,7 @@ def listar_horarios_paralelo(request, paralelo_id):
                         "hora_fin": h.hora_fin.strftime("%H:%M"),
                         "slot_inicio": f"{slot:02d}:00",
                         "slot_fin": f"{slot+1:02d}:00",
-                        "color": mapa_colores.get(h.paralelo.unidad_curricular.nombre, "#e8e8ed"),
+                        "color": mapa_colores.get(h.paralelo.unidad_curricular.nombre, "#DADBDB"),
                     }
                     break
             fila["celdas"].append(bloque)
@@ -128,9 +144,10 @@ def listar_horarios_paralelo(request, paralelo_id):
         "unidades": unidades,
         "horarios": horarios,
         "todas_completas": todas_completas,
+        "alguna_excede_maximo": alguna_excede_maximo,
         "es_planificacion": periodo_en_planificacion(representativo.periodo_de_nivelacion),
         "franja": texto_franja(jornada_enum),
-        "dias": [dia.value for dia in DiaDeSemana],
+        "dias": [dia.value for dia in dias_habiles],
         "dias_semana": dias_semana,
         "grilla": grilla,
         "mapa_colores": mapa_colores,

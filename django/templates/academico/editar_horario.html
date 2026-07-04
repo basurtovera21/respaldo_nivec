@@ -3,10 +3,14 @@
 {% block titulo %}{{ titulo_pagina|default:"NIVEC" }}{% endblock %}
 
 {% block contenido %}
-<h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
-<p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
-    {{ paralelo.nombre }} — {{ paralelo.get_jornada_display }} (franja {{ franja }})
-</p>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <div>
+        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">{{ titulo }}</h2>
+        <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin: 0;">
+            {{ paralelo.nombre }} — {{ paralelo.get_jornada_display }} (franja {{ franja }})
+        </p>
+    </div>
+</div>
 
 <div class="tarjeta" style="max-width: 520px;">
     <p style="color: #9db4c0; font-size: 12px; margin-bottom: 12px;">
@@ -15,24 +19,24 @@
     <form method="post" action="{% url 'editar_horario' horario.id %}">
         {% csrf_token %}
         <div class="campo">
-            <label style="font-weight: bold;">Día</label>
+            <label style="font-weight: bold; color: #253237;">Día</label>
             <select name="dia_semana">
                 {% for d in dias %}<option value="{{ d }}" {% if d == horario.dia_semana %}selected{% endif %}>{{ d }}</option>{% endfor %}
             </select>
         </div>
         <div class="campo">
-            <label style="font-weight: bold;">Hora de inicio</label>
+            <label style="font-weight: bold; color: #253237;">Hora de inicio</label>
             <input type="time" name="hora_inicio" value="{{ horario.hora_inicio|time:'H:i' }}">
         </div>
         <div class="campo">
-            <label style="font-weight: bold;">Hora de finalización</label>
+            <label style="font-weight: bold; color: #253237;">Hora de finalización</label>
             <input type="time" name="hora_fin" value="{{ horario.hora_fin|time:'H:i' }}">
         </div>
         <div class="campo">
-            <label style="font-weight: bold;">Espacio de impartición</label>
+            <label style="font-weight: bold; color: #253237;">Espacio de impartición</label>
             <input type="text" name="espacio_de_imparticion" value="{{ horario.espacio_de_imparticion }}" placeholder="Aula física o virtual (opcional)">
         </div>
-        <div style="margin-top: 16px;">
+        <div style="margin-top: 20px; display: flex; gap: 15px;">
             <button type="submit" class="boton boton-primario">Guardar</button>
             <a href="{% url 'listar_horarios_paralelo' paralelo.id %}" class="boton boton-secundario">Cancelar</a>
         </div>

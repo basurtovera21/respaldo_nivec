@@ -33,8 +33,6 @@
 
 <div style="margin-bottom: 16px;">
     <a href="{% url 'descargar_info_paralelo' representativo.id %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar información registrada</a>
-    &nbsp;&nbsp;
-    <a href="{% url 'descargar_calificaciones_paralelo' representativo.id %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar calificaciones</a>
 </div>
 
 <div class="tarjeta" style="padding: 0; overflow-x: auto;">
@@ -66,8 +64,10 @@
                     {% if not solo_lectura and tiene_horario %}
                     <a href="{% url 'asignar_docente_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Docente responsable</a>
                     {% endif %}
+                    {% if es_evaluacion_o_cerrado %}
                     <a href="{% url 'listar_estudiantes_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Estudiantes registrados</a>
                     <a href="{% url 'listar_evaluaciones_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Calificaciones</a>
+                    {% endif %}
                 </td>
                 {% endif %}
             </tr>

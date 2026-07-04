@@ -7,48 +7,51 @@
 {% endblock %}
 
 {% block filtros %}
-<form method="get" style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-    <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Periodo de nivelación</span>
-    <select name="periodo" onchange="this.form.submit()"
-            style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit; min-width: 200px;">
-        <option value=""></option>
-        {% for p in periodos %}
-            <option value="{{ p.id }}" {% if periodo_seleccionado.id == p.id %}selected{% endif %}>
-                {{ p.periodo }} ({{ p.anio }})
-            </option>
-        {% endfor %}
-    </select>
+<form method="get" style="margin-bottom: 16px;">
+    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
+        <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Periodo</span>
+        <select name="periodo" onchange="this.form.submit()"
+                style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit; min-width: 200px;">
+            <option value=""></option>
+            {% for p in periodos %}
+                <option value="{{ p.id }}" {% if periodo_seleccionado.id == p.id %}selected{% endif %}>
+                    {{ p.periodo }} ({{ p.anio }})
+                </option>
+            {% endfor %}
+        </select>
 
-    <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Campus</span>
-    <select name="campus" onchange="this.form.submit()"
-            style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit; min-width: 200px;">
-        <option value=""></option>
-        {% for c in campus_disponibles %}
-            <option value="{{ c.id }}" {% if campus_filtro == c.id|stringformat:"d" %}selected{% endif %}>
-                {{ c.nombre }}
-            </option>
-        {% endfor %}
-    </select>
+        <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Campus</span>
+        <select name="campus" onchange="this.form.submit()"
+                style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit; min-width: 200px;">
+            <option value=""></option>
+            {% for c in campus_disponibles %}
+                <option value="{{ c.id }}" {% if campus_filtro == c.id|stringformat:"d" %}selected{% endif %}>
+                    {{ c.nombre }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Carrera</span>
+        <select name="carrera" onchange="this.form.submit()"
+                style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit; min-width: 200px;">
+            <option value=""></option>
+            {% for c in carreras %}
+                <option value="{{ c.id }}" {% if carrera_seleccionada.id == c.id %}selected{% endif %}>
+                    {{ c.nombre }}
+                </option>
+            {% endfor %}
+        </select>
 
-    <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Carrera</span>
-    <select name="carrera" onchange="this.form.submit()"
-            style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit; min-width: 200px;">
-        <option value=""></option>
-        {% for c in carreras %}
-            <option value="{{ c.id }}" {% if carrera_seleccionada.id == c.id %}selected{% endif %}>
-                {{ c.nombre }}
-            </option>
-        {% endfor %}
-    </select>
-
-    <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Jornada</span>
-    <select name="jornada" onchange="this.form.submit()"
-            style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit; min-width: 200px;">
-        <option value=""></option>
-        {% for j in jornadas %}
-            <option value="{{ j }}" {% if jornada_filtro == j %}selected{% endif %}>{{ j }}</option>
-        {% endfor %}
-    </select>
+        <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Jornada</span>
+        <select name="jornada" onchange="this.form.submit()"
+                style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit; min-width: 200px;">
+            <option value=""></option>
+            {% for j in jornadas %}
+                <option value="{{ j }}" {% if jornada_filtro == j %}selected{% endif %}>{{ j }}</option>
+            {% endfor %}
+        </select>
+    </div>
 </form>
 {% endblock %}
 
