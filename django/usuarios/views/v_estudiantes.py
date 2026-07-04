@@ -152,6 +152,7 @@ def registrar_estudiante(request):
             if formulario_usuario.is_valid() and formulario_estudiante.is_valid():
                 with transaction.atomic():
                     usuario = formulario_usuario.save(commit=False)
+                    usuario.estado_de_usuario = "Activo"
                     usuario.set_password(usuario.identificacion)
                     usuario.save()
                     
@@ -161,7 +162,6 @@ def registrar_estudiante(request):
                     estudiante.numero_de_matricula = generar_identificador_siguiente(PerfilEstudiante, "MAT", 'numero_de_matricula')
                     estudiante.estado_de_matricula = EnumEstadoDeMatricula.MATRICULADO.value
                     estudiante.campus_registrado = estudiante.carrera_registrada.campus
-                    estudiante.periodo_de_nivelacion = periodo
                     estudiante.save()
                 
                 messages.success(request, "El Estudiante ha sido registrado correctamente")
