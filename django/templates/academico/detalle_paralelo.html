@@ -6,16 +6,22 @@
 <style>
     .tarjeta table th, .tarjeta table td { padding: 12px 24px; white-space: nowrap; }
     .etiqueta-accion {
-        padding: 4px 12px; border-radius: 6px; font-size: 12px; text-decoration: none;
-        display: inline-block; font-weight: bold; margin-right: 8px;
+        padding: 6px 14px; border-radius: 6px; font-size: 12px; text-decoration: none;
+        display: inline-block; font-weight: bold; margin-right: 6px; transition: all 0.2s ease;
+        border: none; cursor: pointer;
     }
-    .etiqueta-modificar { background: #5c6b73; color: white; border: none; }
-    .etiqueta-naranja { background: #9db4c0; color: #253237; border: none; }
+    .etiqueta-accion:last-child { margin-right: 0; }
+    .etiqueta-modificar { background: #5c6b73; color: white; }
+    .etiqueta-modificar:hover { opacity: 0.85; }
+    .etiqueta-naranja { background: #9db4c0; color: white; }
+    .etiqueta-naranja:hover { opacity: 0.85; }
+    .etiqueta-eliminar { background: #253237; color: white; }
+    .etiqueta-eliminar:hover { opacity: 0.85; }
 </style>
 
 <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
     <div>
-        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
+        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">{{ titulo }}</h2>
         <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin: 0;">
             {{ representativo.codigo_de_paralelo }} ({{ representativo.periodo_de_nivelacion.periodo }})
         </p>
@@ -38,7 +44,9 @@
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Código</th>
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Unidad curricular</th>
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Docente responsable</th>
+                {% if not solo_lectura or tiene_horario %}
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
+                {% endif %}
             </tr>
         </thead>
         <tbody>
@@ -53,18 +61,21 @@
                         <span style="color: #9db4c0;">Sin designación</span>
                     {% endif %}
                 </td>
+                {% if not solo_lectura or tiene_horario %}
                 <td style="text-align: left; white-space: nowrap;">
-                    {% if not solo_lectura %}
+                    {% if not solo_lectura and tiene_horario %}
                     <a href="{% url 'asignar_docente_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Docente responsable</a>
                     {% endif %}
                     <a href="{% url 'listar_estudiantes_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Estudiantes registrados</a>
                     <a href="{% url 'listar_evaluaciones_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Calificaciones</a>
                 </td>
+                {% endif %}
             </tr>
             {% empty %}
             <tr>
                 <td colspan="4" style="text-align: center; color: #9db4c0; padding: 30px;">
                     No existen registros actualmente
+                </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -72,6 +83,6 @@
 </div>
 
 <div style="margin-top: 15px;">
-    <a href="{% url 'panel_principal' %}" class="boton boton-secundario">Volver</a>
+    <a href="{% url 'listar_paralelos' %}" class="boton boton-secundario">Volver</a>
 </div>
 {% endblock %}

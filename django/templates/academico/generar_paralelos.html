@@ -4,7 +4,7 @@
 
 {% block contenido %}
 <div class="tarjeta">
-    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
+    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">{{ titulo }}</h2>
     <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
         Distribución por capacidad maxima definida
     </p>
@@ -13,7 +13,7 @@
         {% csrf_token %}
 
         <div class="campo">
-            <label for="periodo" style="font-weight: bold;">Periodo de nivelación</label>
+            <label for="periodo" style="font-weight: bold; color: #253237;">Periodo de nivelación</label>
             <select name="periodo" id="periodo">
                 <option value=""></option>
                 {% for p in periodos %}
@@ -23,7 +23,7 @@
         </div>
 
         <div class="campo">
-            <label for="capacidad" style="font-weight: bold;">Capacidad máxima especificada</label>
+            <label for="capacidad" style="font-weight: bold; color: #253237;">Capacidad máxima especificada</label>
             <input type="number" name="capacidad" id="capacidad" min="1" value="35">
             <div class="ayuda">Número de Estudiantes (por defecto 35)</div>
         </div>
