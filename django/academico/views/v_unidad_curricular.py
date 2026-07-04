@@ -134,7 +134,7 @@ def descargar_plantilla_unidad(request):
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-    response["Content-Disposition"] = 'attachment; filename="formato_unidades_nivec.xlsx"'
+    response["Content-Disposition"] = 'attachment; filename="unidades_curriculares_nivec.xlsx"'
     wb.save(response)
     return response
 

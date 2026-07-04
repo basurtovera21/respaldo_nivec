@@ -85,7 +85,7 @@ def descargar_plantilla_malla(request):
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-    response["Content-Disposition"] = 'attachment; filename="formato_mallas_nivec.xlsx"'
+    response["Content-Disposition"] = 'attachment; filename="malla_curricular_nivec.xlsx"'
     wb.save(response)
     return response
 
