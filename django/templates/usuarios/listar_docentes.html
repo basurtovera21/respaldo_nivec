@@ -34,7 +34,7 @@
         <td style="text-align: left;">{{ docente.tiempo_de_dedicacion }}</td>
         <td style="text-align: left;">{{ docente.carga_horaria_maxima }} horas</td>
         <td style="text-align: left;">{{ docente.jornadas|join:", " }}</td>
-        <td style="text-align: left;"><span style="font-weight: bold; color: #253237; font-size: 13px;">{{ docente.usuario_de_sistema.estado_de_usuario }}</span></td>
+        <td style="text-align: left;"><span style="font-weight: bold; color: #253237; font-size: 13px;">{{ docente.estado_de_vinculacion }}</span></td>
         {% if not solo_lectura %}
         <td style="text-align: left;">
             <a href="{% url 'modificar_docente' docente.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>

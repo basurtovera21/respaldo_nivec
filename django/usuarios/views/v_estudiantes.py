@@ -171,6 +171,7 @@ def registrar_estudiante(request):
         formulario_usuario = FormularioUsuarioDeSistema()
         formulario_estudiante = FormularioPerfilEstudiante(universidad=universidad_usuario)
 
+    formulario_usuario.fields.pop('estado_de_usuario', None)
     return render(request, "usuarios/formulario_estudiante.html", {
         "form_usuario": formulario_usuario,
         "form_estudiante": formulario_estudiante,
@@ -221,6 +222,7 @@ def modificar_estudiante(request, estudiante_id):
         form_u = FormularioUsuarioDeSistema(instance=usuario)
         form_e = FormularioPerfilEstudiante(instance=est, universidad=universidad_usuario)
         
+    form_u.fields.pop('estado_de_usuario', None)
     return render(request, "usuarios/formulario_estudiante.html", {
         "form_usuario": form_u, 
         "form_estudiante": form_e, 
