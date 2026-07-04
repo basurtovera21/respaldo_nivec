@@ -1491,7 +1491,8 @@ def servicio_evaluar_docentes_para_paralelo(paralelo_db):
     horas_unidad = _horas_sincronicas_semanales(unidad, periodo)
 
     docentes = PerfilDocente.objects.filter(
-        universidad=periodo.universidad
+        universidad=periodo.universidad,
+        estado_de_vinculacion=EnumEstadoDeVinculacion.ACTIVO.value,
     ).select_related("usuario_de_sistema").order_by(
         "usuario_de_sistema__apellidos", "usuario_de_sistema__nombres"
     )
