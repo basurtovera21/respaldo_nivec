@@ -39,8 +39,26 @@ def listar_mallas(request):
         carrera__campus__universidad=universidad_usuario
     ).select_related("carrera")
 
+    from usuarios.utils import obtener_rol_usuario
+    rol = obtener_rol_usuario(request.user)
+    es_coordinador_ua = (rol == ROL_COORDINADOR_UA)
+    solo_lectura = rol in (ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_UA)
+
+    if es_coordinador_ua:
+        perfil_admin = getattr(request.user, 'perfil_administrativo', None)
+        if perfil_admin and perfil_admin.carrera_asignada:
+            mallas = mallas.filter(carrera=perfil_admin.carrera_asignada)
+
+    carreras_disponibles = Carrera.objects.filter(campus__universidad=universidad_usuario).order_by("nombre")
+    carrera_filtro = request.GET.get("carrera", "")
+    if carrera_filtro:
+        mallas = mallas.filter(carrera_id=carrera_filtro)
+
     return render(request, "academico/listar_mallas.html", {
-        "solo_lectura": usuario_es_solo_lectura(request.user),
+        "solo_lectura": solo_lectura,
+        "es_coordinador_ua": es_coordinador_ua,
+        "carreras_disponibles": carreras_disponibles,
+        "carrera_filtro": carrera_filtro,
         "mallas": mallas,
         "titulo_pagina": "Malla curricular - NIVEC",
         "titulo": "Mallas curriculares",
@@ -148,6 +166,7 @@ def modificar_malla(request, malla_id):
         formulario.fields["carrera"].queryset = Carrera.objects.filter(
             campus__universidad=universidad_usuario
         )
+        formulario.fields['carrera'].disabled = True
         if formulario.is_valid():
             formulario.save()
             messages.success(request, "La Malla curricular ha sido modificada correctamente")
@@ -157,6 +176,7 @@ def modificar_malla(request, malla_id):
         formulario.fields["carrera"].queryset = Carrera.objects.filter(
             campus__universidad=universidad_usuario
         )
+        formulario.fields['carrera'].disabled = True
 
     return render(request, "academico/formulario_malla.html", {
         "formulario": formulario,
