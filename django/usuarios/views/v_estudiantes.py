@@ -91,10 +91,10 @@ def descargar_plantilla_estudiante(request):
     cabeceras = [
         "Tipo de identificación (Cédula, Pasaporte, Cédula extranjera)", 
         "Número de identificación", "Nombres", "Apellidos", "Correo institucional",
-        "Jornada registrada (Matutina, Vespertina, Nocturna)", 
-        "Registro de cupo (Registro regular, Segunda matrícula, Proceso de exoneración)", 
+        "Código de Periodo (PNV...)",
         "Código de Carrera (CAR..)",
-        "Código de Periodo (PNV...)"
+        "Jornada registrada (Matutina, Vespertina, Nocturna)", 
+        "Registro de cupo (Registro regular, Segunda matrícula, Proceso de exoneración)"
     ]
     ws.append(cabeceras)
     

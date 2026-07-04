@@ -305,7 +305,7 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
 
         registros = []
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-            tipo_id, ident, nom, ape, corr, jor, cupo, cod_carr, cod_periodo = (list(fila) + [None])[:9]
+            tipo_id, ident, nom, ape, corr, cod_periodo, cod_carr, jor, cupo = (list(fila) + [None])[:9]
             if not any([tipo_id, ident, nom, ape, corr, jor, cupo, cod_carr]):
                 continue
             if not all([tipo_id, ident, nom, ape, corr, jor, cupo, cod_carr]):
