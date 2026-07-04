@@ -242,6 +242,13 @@ def detalle_paralelo(request, paralelo_id):
         paralelo__in=unidades
     ).exists()
 
+    # Check period state for conditional buttons
+    from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
+    periodo = representativo.periodo_de_nivelacion
+    es_evaluacion_o_cerrado = periodo.estado in (
+        EstadoDePeriodo.EVALUACION.value, EstadoDePeriodo.CERRADO.value
+    )
+
     # Role-based access control
     rol = obtener_rol_usuario(request.user)
     if rol == ROL_COORDINADOR_UA:
@@ -260,6 +267,7 @@ def detalle_paralelo(request, paralelo_id):
         "carrera": carrera,
         "unidades": unidades,
         "tiene_horario": tiene_horario,
+        "es_evaluacion_o_cerrado": es_evaluacion_o_cerrado,
         "solo_lectura": usuario_es_solo_lectura(request.user),
         "titulo_pagina": "Paralelo - NIVEC",
         "titulo": f"{representativo.nombre} - {carrera.nombre} ({representativo.get_jornada_display()})",
