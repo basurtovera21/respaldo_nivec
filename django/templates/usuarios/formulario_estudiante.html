@@ -43,11 +43,14 @@
 
 
     {% for field in form_estudiante %}
+        {% if periodo_contexto and field.name == "periodo_de_nivelacion" %}
+        {% else %}
         <div class="campo">
             <label for="{{ field.id_for_label }}" style="font-weight: bold;">{{ field.label }}</label>
             {{ field }}
             {% if field.help_text %}<div class="ayuda">{{ field.help_text }}</div>{% endif %}
             {% for error in field.errors %}<div class="error-campo">{{ error }}</div>{% endfor %}
         </div>
+        {% endif %}
     {% endfor %}
 {% endblock %}

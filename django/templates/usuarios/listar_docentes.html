@@ -2,7 +2,23 @@
 
 {% block filtros %}
 <form method="get" style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-    <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Apellidos y Nombres..."
+    <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Campus</span>
+    <select name="campus" onchange="this.form.submit()"
+            style="padding: 8px 12px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit;">
+        <option value=""></option>
+        {% for c in campus_disponibles %}
+        <option value="{{ c.id }}" {% if campus_filtro == c.id|stringformat:"d" %}selected{% endif %}>{{ c.nombre }}</option>
+        {% endfor %}
+    </select>
+    <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Carrera</span>
+    <select name="carrera" onchange="this.form.submit()"
+            style="padding: 8px 12px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit;">
+        <option value=""></option>
+        {% for car in carreras_disponibles %}
+        <option value="{{ car.id }}" {% if carrera_filtro == car.id|stringformat:"d" %}selected{% endif %}>{{ car.nombre }}</option>
+        {% endfor %}
+    </select>
+    <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Nombre o Apellidos..."
            oninput="this.form.submit()"
            style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; min-width: 300px; font-weight: 500; font-family: inherit;">
 </form>

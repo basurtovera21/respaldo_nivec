@@ -2,7 +2,23 @@
 
 {% block filtros %}
 <form method="get" style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-    <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Apellidos y Nombres..."
+    <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Campus</span>
+    <select name="campus" onchange="this.form.submit()"
+            style="padding: 8px 12px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit;">
+        <option value=""></option>
+        {% for c in campus_disponibles %}
+        <option value="{{ c.id }}" {% if campus_filtro == c.id|stringformat:"d" %}selected{% endif %}>{{ c.nombre }}</option>
+        {% endfor %}
+    </select>
+    <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Carrera</span>
+    <select name="carrera" onchange="this.form.submit()"
+            style="padding: 8px 12px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit;">
+        <option value=""></option>
+        {% for car in carreras_disponibles %}
+        <option value="{{ car.id }}" {% if carrera_filtro == car.id|stringformat:"d" %}selected{% endif %}>{{ car.nombre }}</option>
+        {% endfor %}
+    </select>
+    <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Nombre o Apellidos..."
            oninput="this.form.submit()"
            style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; min-width: 300px; font-weight: 500; font-family: inherit;">
 </form>
@@ -14,6 +30,7 @@
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Correo institucional</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Número de identificador UA</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Carrera asignada</th>
+    <th style="font-weight: bold; text-align: left; color: #5c6b73">Campus</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Tipo de vinculación</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Tiempo de dedicación</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Carga horaria máxima</th>
@@ -32,6 +49,7 @@
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.correo_institucional }}</td>
         <td style="font-family: monospace; text-align: left;">{{ coordinador.identificador_coordinador_ua|default:coordinador.identificador_administrativo|default:"" }}</td>
         <td style="text-align: left;">{{ coordinador.carrera_asignada.nombre|default:"" }}</td>
+        <td style="text-align: left;">{{ coordinador.carrera_asignada.campus.nombre|default:"-" }}</td>
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.tipo_de_vinculacion|default:"" }}</td>
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.tiempo_de_dedicacion|default:"" }}</td>
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.carga_horaria_maxima|default:"0" }} horas</td>
@@ -47,7 +65,7 @@
     {% empty %}
     {% if not busqueda %}
     <tr>
-        <td colspan="{% if solo_lectura %}10{% else %}11{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
+        <td colspan="{% if solo_lectura %}11{% else %}12{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>
