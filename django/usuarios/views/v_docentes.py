@@ -6,7 +6,7 @@ from django.http import HttpResponse
 import openpyxl
 
 from usuarios.models import UsuarioDeSistema, PerfilDocente, PerfilAdministrativo
-from usuarios.forms import FormularioUsuarioDeSistema, FormularioRegistrarDocente
+from usuarios.forms import FormularioUsuarioDeSistema, FormularioModificarUsuarioDeSistema, FormularioRegistrarDocente
 from usuarios.utils import (
     generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura,
     ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
@@ -133,17 +133,15 @@ def modificar_docente(request, docente_id):
     usuario = docente.usuario_de_sistema
 
     if request.method == "POST":
-        formulario_usuario = FormularioUsuarioDeSistema(request.POST, instance=usuario)
+        formulario_usuario = FormularioModificarUsuarioDeSistema(request.POST, instance=usuario)
         formulario_docente = FormularioRegistrarDocente(request.POST, instance=docente)
-
-        if 'contrasena' in formulario_usuario.fields:
-            formulario_usuario.fields['contrasena'].required = False
 
         if formulario_usuario.is_valid() and formulario_docente.is_valid():
             with transaction.atomic():
                 usuario_guardado = formulario_usuario.save(commit=False)
-                if formulario_usuario.cleaned_data.get('contrasena'):
-                    usuario_guardado.set_password(formulario_usuario.cleaned_data.get('contrasena'))
+                nueva_contrasena = formulario_usuario.cleaned_data.get('contrasena')
+                if nueva_contrasena:
+                    usuario_guardado.set_password(nueva_contrasena)
                 usuario_guardado.save()
                 
                 docente_guardado = formulario_docente.save(commit=False)
@@ -153,7 +151,7 @@ def modificar_docente(request, docente_id):
             messages.success(request, "El Docente ha sido modificado correctamente")
             return redirect("listar_docentes")
     else:
-        formulario_usuario = FormularioUsuarioDeSistema(instance=usuario)
+        formulario_usuario = FormularioModificarUsuarioDeSistema(instance=usuario)
         formulario_docente = FormularioRegistrarDocente(instance=docente)
 
     formulario_usuario.fields.pop('estado_de_usuario', None)
