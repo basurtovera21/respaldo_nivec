@@ -391,6 +391,12 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     )
                     continue
 
+                if horas_sincronicas_f < 6:
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido (las horas sincrónicas deben ser al menos 6)"
+                    )
+                    continue
+
                 malla_obj = mallas_existentes.filter(
                     codigo_de_malla=str(codigo_malla).strip()
                 ).first()

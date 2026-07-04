@@ -64,6 +64,9 @@ class UnidadCurricular(IUnidadEvaluable):
         if not self.nombre or not self.nombre.strip():
             errores["nombre"] = "Información requerida"
 
+        if self.horas_sincronicas is not None and self.horas_sincronicas < 6:
+            errores["horas_sincronicas"] = "Las horas sincrónicas deben ser al menos 6"
+
         errores.update(self.validar_horas())
         errores.update(self.validar_criterios())
 

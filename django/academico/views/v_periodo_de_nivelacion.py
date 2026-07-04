@@ -44,6 +44,7 @@ def registrar_periodo(request):
             nuevo_periodo = formulario.save(commit=False)
             nuevo_periodo.universidad = universidad_usuario
             nuevo_periodo.codigo_periodo = generar_identificador_siguiente(PeriodoDeNivelacion, 'PNV', 'codigo_periodo')
+            nuevo_periodo.anio = nuevo_periodo.fecha_inicio.year
             nuevo_periodo.periodo = f"{nuevo_periodo.anio}-{nuevo_periodo.numero_periodo}"
             # Calculate fecha_fin from fecha_inicio + semanas
             from datetime import timedelta
@@ -77,6 +78,7 @@ def modificar_periodo(request, periodo_id):
         formulario = FormularioPeriodoDeNivelacion(request.POST, instance=periodo, universidad=universidad_usuario)
         if formulario.is_valid():
             periodo_modificado = formulario.save(commit=False)
+            periodo_modificado.anio = periodo_modificado.fecha_inicio.year
             periodo_modificado.periodo = f"{periodo_modificado.anio}-{periodo_modificado.numero_periodo}"
             from datetime import timedelta
             periodo_modificado.fecha_fin = periodo_modificado.fecha_inicio + timedelta(days=periodo_modificado.numero_de_semanas * 7)
