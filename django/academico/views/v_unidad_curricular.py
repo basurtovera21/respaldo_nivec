@@ -121,7 +121,6 @@ def descargar_plantilla_unidad(request):
         "Nombre de la Unidad curricular",
         "Horas totales (número entero)",
         "Horas sincrónicas (número entero)",
-        "Horas sincrónicas semanales (número entero)",
         "Horas asincrónicas (número decimal)",
         "Criterio de aprobación (0.0 - 10.0)",
         "Porcentaje mínimo de asistencia (0.0 - 100.0)",

@@ -365,15 +365,15 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
                 (codigo_malla, nombre, horas_totales,
-                 horas_sincronicas, horas_sincronicas_semanales, horas_asincronicas,
-                 criterio, porcentaje_asistencia) = fila[:8]
+                 horas_sincronicas, horas_asincronicas,
+                 criterio, porcentaje_asistencia) = fila[:7]
 
                 if not any([codigo_malla, nombre, horas_totales,
                             horas_sincronicas, horas_asincronicas]):
                     continue
 
                 if not all([codigo_malla, nombre, horas_totales,
-                            horas_sincronicas, horas_sincronicas_semanales, horas_asincronicas]):
+                            horas_sincronicas, horas_asincronicas]):
                     resultado["advertencias"].append(
                         f"El registro de la fila {numero_fila} fue omitido por falta de información"
                     )
@@ -382,21 +382,12 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                 try:
                     horas_totales_f = float(horas_totales)
                     horas_sincronicas_f = float(horas_sincronicas)
-                    horas_sincronicas_semanales_f = float(horas_sincronicas_semanales)
                     horas_asincronicas_f = float(horas_asincronicas)
                     criterio_f = float(criterio) if criterio is not None else 7.0
                     porcentaje_f = float(porcentaje_asistencia) if porcentaje_asistencia is not None else 70.0
                 except (ValueError, TypeError):
                     resultado["advertencias"].append(
                         f"El registro de la fila {numero_fila} fue omitido (registros numéricos no válidos)"
-                    )
-                    continue
-
-                if (horas_sincronicas_semanales_f <= 0
-                        or horas_sincronicas_semanales_f != int(horas_sincronicas_semanales_f)
-                        or horas_sincronicas_semanales_f > horas_sincronicas_f):
-                    resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (horas sincrónicas semanales no válidas)"
                     )
                     continue
 
@@ -449,7 +440,7 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                         nombre=unidad_poo.nombre,
                         horas_totales=unidad_poo.horas_totales,
                         horas_sincronicas=unidad_poo.horas_sincronicas,
-                        horas_sincronicas_semanales=horas_sincronicas_semanales_f,
+                        horas_sincronicas_semanales=0,
                         horas_asincronicas=unidad_poo.horas_asincronicas,
                         criterio_de_aprobacion=unidad_poo.criterio_de_aprobacion,
                         porcentaje_minimo_asistencia=unidad_poo.porcentaje_minimo_asistencia,
@@ -1443,11 +1434,11 @@ def _semanas_de_periodo(periodo_db):
 
 
 def _horas_sincronicas_semanales(unidad, periodo_db):
-    # Fuente de verdad: las horas sincrónicas SEMANALES definidas en la unidad.
-    # Retrocompatibilidad: si no se definieron, se derivan de las totales y las semanas.
-    if getattr(unidad, "horas_sincronicas_semanales", 0):
-        return round(unidad.horas_sincronicas_semanales, 2)
-    return round(unidad.horas_sincronicas / _semanas_de_periodo(periodo_db), 2)
+    import math
+    semanas = periodo_db.numero_de_semanas if hasattr(periodo_db, 'numero_de_semanas') and periodo_db.numero_de_semanas else _semanas_de_periodo(periodo_db)
+    if semanas <= 0:
+        return round(unidad.horas_sincronicas, 2)
+    return math.ceil(unidad.horas_sincronicas / semanas)
 
 
 def _construir_docente_poo_para_periodo(docente_db, periodo_db, paralelo_excluir_id=None):

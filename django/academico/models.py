@@ -108,6 +108,7 @@ class PeriodoDeNivelacion(models.Model):
     periodo = models.CharField(max_length=50, verbose_name="Periodo")
     fecha_inicio = models.DateField(verbose_name="Fecha de inicio")
     fecha_fin = models.DateField(verbose_name="Fecha de finalización")
+    numero_de_semanas = models.IntegerField(default=8, verbose_name="Número de semanas")
     modalidad = models.CharField(max_length=50, choices=cambiar_enum_a_choices(Modalidad), verbose_name="Modalidad")
     numero_periodo = models.IntegerField(verbose_name="Número de periodo de nivelación")
     estado = models.CharField(max_length=50, choices=cambiar_enum_a_choices(EstadoDePeriodo), default=EstadoDePeriodo.PLANIFICACION.value, verbose_name="Estado")
