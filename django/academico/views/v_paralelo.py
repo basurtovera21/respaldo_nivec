@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.db.models import ProtectedError, Count
 
-from academico.models import Paralelo, PeriodoDeNivelacion, MatriculaParalelo, Carrera
+from academico.models import Paralelo, PeriodoDeNivelacion, MatriculaParalelo, Carrera, Campus, Horario
 from academico.services import servicio_generar_paralelos, servicio_mover_estudiante, servicio_recalcular_cohorte_de_carrera, servicio_retirar_estudiante_de_paralelo, servicio_agregar_estudiante_a_paralelo, periodo_permite_gestion_matriculas
 from usuarios.models import PerfilEstudiante
 from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
@@ -69,23 +69,27 @@ def listar_paralelos(request):
 
     periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario)
     carreras = Carrera.objects.filter(campus__universidad=universidad_usuario).order_by("nombre")
+    campus_disponibles = Campus.objects.filter(universidad=universidad_usuario).order_by("nombre")
 
     paralelos = Paralelo.objects.filter(
         periodo_de_nivelacion__universidad=universidad_usuario
     ).select_related(
         "periodo_de_nivelacion",
-        "unidad_curricular__malla_curricular__carrera",
+        "unidad_curricular__malla_curricular__carrera__campus",
     ).annotate(_n_estudiantes=Count("estudiantes_matriculados"))
 
     periodo_id = request.GET.get("periodo")
     carrera_id = request.GET.get("carrera")
     jornada_filtro = request.GET.get("jornada")
+    campus_filtro = request.GET.get("campus", "")
     periodo_seleccionado = None
     carrera_seleccionada = None
 
     if periodo_id:
         paralelos = paralelos.filter(periodo_de_nivelacion__id=periodo_id)
         periodo_seleccionado = periodos.filter(id=periodo_id).first()
+    if campus_filtro:
+        paralelos = paralelos.filter(unidad_curricular__malla_curricular__carrera__campus__id=campus_filtro)
     if carrera_id:
         paralelos = paralelos.filter(unidad_curricular__malla_curricular__carrera__id=carrera_id)
         carrera_seleccionada = carreras.filter(id=carrera_id).first()
@@ -112,10 +116,10 @@ def listar_paralelos(request):
                 "representativo_id": p.id,
                 "codigo": p.codigo_de_paralelo,
                 "nombre": p.nombre,
+                "campus": carrera.campus.nombre,
                 "carrera": carrera.nombre,
                 "periodo": p.periodo_de_nivelacion.periodo,
                 "jornada": p.get_jornada_display(),
-                "modalidad": p.get_modalidad_display(),
                 "capacidad": p.capacidad_maxima,
                 "unidades": 0,
                 "estudiantes": p._n_estudiantes,
@@ -129,6 +133,8 @@ def listar_paralelos(request):
         "paralelos": paralelos_agrupados,
         "periodos": periodos,
         "carreras": carreras,
+        "campus_disponibles": campus_disponibles,
+        "campus_filtro": campus_filtro,
         "jornadas": [j.value for j in Jornada],
         "periodo_seleccionado": periodo_seleccionado,
         "carrera_seleccionada": carrera_seleccionada,
@@ -231,6 +237,11 @@ def detalle_paralelo(request, paralelo_id):
         "docente_responsable__usuario_de_sistema",
     ).order_by("unidad_curricular__nombre")
 
+    # Check if horario exists for the paralelo group
+    tiene_horario = Horario.objects.filter(
+        paralelo__in=unidades
+    ).exists()
+
     # Role-based access control
     rol = obtener_rol_usuario(request.user)
     if rol == ROL_COORDINADOR_UA:
@@ -248,6 +259,7 @@ def detalle_paralelo(request, paralelo_id):
         "representativo": representativo,
         "carrera": carrera,
         "unidades": unidades,
+        "tiene_horario": tiene_horario,
         "solo_lectura": usuario_es_solo_lectura(request.user),
         "titulo_pagina": "Paralelo - NIVEC",
         "titulo": f"{representativo.nombre} - {carrera.nombre} ({representativo.get_jornada_display()})",
