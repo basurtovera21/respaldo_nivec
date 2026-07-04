@@ -6,9 +6,9 @@ from academico.models import PeriodoDeNivelacion
 from academico.forms import FormularioPeriodoDeNivelacion
 from academico import services
 
-from usuarios.utils import generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN
+from usuarios.utils import generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN, ROL_COORDINADOR_UA
 
-@requiere_perfil(ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN, ROL_COORDINADOR_UA)
 def listar_periodos(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -19,7 +19,7 @@ def listar_periodos(request):
 
     from usuarios.utils import obtener_rol_usuario
     rol = obtener_rol_usuario(request.user)
-    solo_lectura = rol in (ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN)
+    solo_lectura = rol in (ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN, ROL_COORDINADOR_UA)
 
     return render(request, "academico/listar_periodos.html", {
         "periodos": periodos,
