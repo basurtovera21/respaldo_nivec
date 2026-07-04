@@ -6,7 +6,7 @@ from django.http import HttpResponse
 import openpyxl
 
 from usuarios.models import UsuarioDeSistema, PerfilDocente, PerfilAdministrativo
-from usuarios.forms import FormularioUsuarioDeSistema, FormularioRegistrarDocente
+from usuarios.forms import FormularioUsuarioDeSistema, FormularioModificarUsuarioDeSistema, FormularioRegistrarDocente
 from usuarios.utils import (
     generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura,
     ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
@@ -132,7 +132,7 @@ def modificar_docente(request, docente_id):
     usuario = docente.usuario_de_sistema
 
     if request.method == "POST":
-        formulario_usuario = FormularioUsuarioDeSistema(request.POST, instance=usuario)
+        formulario_usuario = FormularioModificarUsuarioDeSistema(request.POST, instance=usuario)
         formulario_docente = FormularioRegistrarDocente(request.POST, instance=docente)
 
         if 'contrasena' in formulario_usuario.fields:
@@ -152,7 +152,7 @@ def modificar_docente(request, docente_id):
             messages.success(request, "El Docente ha sido modificado correctamente")
             return redirect("listar_docentes")
     else:
-        formulario_usuario = FormularioUsuarioDeSistema(instance=usuario)
+        formulario_usuario = FormularioModificarUsuarioDeSistema(instance=usuario)
         formulario_docente = FormularioRegistrarDocente(instance=docente)
 
     return render(request, "usuarios/formulario_docente.html", {
