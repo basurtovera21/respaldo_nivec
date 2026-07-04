@@ -36,11 +36,26 @@ def listar_docentes(request):
             Q(usuario_de_sistema__apellidos__icontains=busqueda)
         )
 
+    from academico.models import Campus, Carrera
+    campus_disponibles = Campus.objects.filter(universidad=universidad_usuario).order_by("nombre")
+    carreras_disponibles = Carrera.objects.filter(campus__universidad=universidad_usuario).order_by("nombre")
+
+    campus_filtro = request.GET.get("campus", "")
+    carrera_filtro = request.GET.get("carrera", "")
+    if campus_filtro:
+        docentes = docentes.filter(paralelos__unidad_curricular__malla_curricular__carrera__campus_id=campus_filtro).distinct()
+    if carrera_filtro:
+        docentes = docentes.filter(paralelos__unidad_curricular__malla_curricular__carrera_id=carrera_filtro).distinct()
+
     docentes = docentes.order_by("identificador_institucional")
 
     return render(request, "usuarios/listar_docentes.html", {
         "docentes": docentes,
         "busqueda": busqueda,
+        "campus_disponibles": campus_disponibles,
+        "carreras_disponibles": carreras_disponibles,
+        "campus_filtro": campus_filtro,
+        "carrera_filtro": carrera_filtro,
         "titulo_pagina": "Docente - NIVEC",
         "titulo": "Docentes",
         "url_registrar": "registrar_docente",
