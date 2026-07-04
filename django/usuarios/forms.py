@@ -100,14 +100,13 @@ class FormularioPerfilEstudiante(forms.ModelForm):
     class Meta:
         model = PerfilEstudiante
         fields = ("identificador_institucional", "numero_de_matricula", "jornada", 
-                  "registro_de_cupo", "carrera_registrada", "estado_de_matricula")
+                  "registro_de_cupo", "carrera_registrada")
         widgets = {
             "identificador_institucional": forms.TextInput(attrs={'readonly': True, 'placeholder': 'El identificador será definido de forma automática', 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'}), 
             "numero_de_matricula": forms.TextInput(attrs={'readonly': True, 'placeholder': 'El número de matrícula será definido de forma automática', 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'}), 
             "jornada": forms.Select(attrs={'class': 'campo-select'}), 
             "registro_de_cupo": forms.Select(attrs={'class': 'campo-select'}), 
-            "carrera_registrada": forms.Select(attrs={'class': 'campo-select'}),
-            "estado_de_matricula": forms.Select(attrs={'class': 'campo-select'})
+            "carrera_registrada": forms.Select(attrs={'class': 'campo-select'})
         }
 
     def __init__(self, *args, **kwargs):
@@ -125,7 +124,7 @@ class FormularioPerfilEstudiante(forms.ModelForm):
 
 
 class FormularioRegistrarDocente(forms.ModelForm):
-    jornadas = forms.MultipleChoiceField(label="Jornada", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple(attrs={'class': 'campo-checkbox'}), help_text="Registre jornadas continuas (de ser necesario)")
+    jornadas = forms.MultipleChoiceField(label="Jornada", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple(attrs={'class': 'campo-checkbox'}), help_text="<strong>Registre jornadas continuas (de ser necesario)</strong>")
     class Meta:
         model = PerfilDocente
         fields = ("identificador_institucional", "tipo_de_vinculacion", "tiempo_de_dedicacion", "carga_horaria_maxima")
@@ -152,7 +151,7 @@ class FormularioRegistrarDocente(forms.ModelForm):
         return cleaned_data
 
 class FormularioDatosDocenteUA(forms.ModelForm):
-    jornadas = forms.MultipleChoiceField(label="Jornada", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple(attrs={'class': 'campo-checkbox'}), help_text="Registre jornadas continuas (de ser necesario)")
+    jornadas = forms.MultipleChoiceField(label="Jornada", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple(attrs={'class': 'campo-checkbox'}), help_text="<strong>Registre jornadas continuas (de ser necesario)</strong>")
     class Meta:
         model = PerfilDocente
         fields = ("tipo_de_vinculacion", "tiempo_de_dedicacion", "carga_horaria_maxima")

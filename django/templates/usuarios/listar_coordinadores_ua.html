@@ -45,10 +45,12 @@
         {% endif %}
     </tr>
     {% empty %}
+    {% if not busqueda %}
     <tr>
         <td colspan="{% if solo_lectura %}10{% else %}11{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>
+    {% endif %}
     {% endfor %}
 {% endblock %}
