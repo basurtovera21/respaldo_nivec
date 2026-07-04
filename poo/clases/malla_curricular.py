@@ -116,3 +116,29 @@ class MallaCurricular(IClonable):
             calculo_total_horas_nivelacion += unidad.obtener_horas_totales()
 
         return calculo_total_horas_nivelacion
+
+    def calcular_total_horas_sincronicas(self):
+        """Suma de horas sincrónicas de todas las unidades curriculares."""
+        total = 0.0
+        for unidad in self._unidades_curriculares:
+            total += unidad.horas_sincronicas
+        return total
+
+    def validar_compatibilidad_horaria(self, semanas: int):
+        """
+        Valida si la malla puede generar un horario viable en cualquier jornada,
+        dado un número de semanas de periodo.
+
+        Utiliza el límite de 20h sincrónicas semanales definido en franja_horaria.
+
+        Args:
+            semanas: Número de semanas del periodo de referencia
+
+        Returns:
+            {"ok": True, "horas_semanales": float, "limite": int} si es compatible
+            {"ok": False, "motivo": str, "horas_semanales": float, "limite": int} si no es compatible
+        """
+        from poo.clases.franja_horaria import validar_malla_cabe_en_horario
+
+        total_sincronicas = self.calcular_total_horas_sincronicas()
+        return validar_malla_cabe_en_horario(total_sincronicas, semanas)

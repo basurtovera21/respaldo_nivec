@@ -101,10 +101,25 @@ def listar_unidades_de_malla(request, malla_id):
         malla_curricular=malla
     ).select_related("malla_curricular").order_by("codigo_de_unidad")
 
+    # Calcular indicador de horas sincrónicas semanales vs límite
+    from poo.clases.franja_horaria import validar_malla_cabe_en_horario, SEMANAS_REFERENCIA_MINIMA, LIMITE_HORAS_SINCRONICAS_SEMANALES_MALLA
+    from django.db.models import Sum
+    import math
+
+    total_sincronicas = unidades.aggregate(total=Sum("horas_sincronicas"))["total"] or 0.0
+    horas_semanales = math.ceil(total_sincronicas / SEMANAS_REFERENCIA_MINIMA) if total_sincronicas > 0 else 0
+    limite_semanal = LIMITE_HORAS_SINCRONICAS_SEMANALES_MALLA
+    excede_limite = horas_semanales > limite_semanal
+
     return render(request, "academico/listar_unidades.html", {
         "solo_lectura": usuario_es_solo_lectura(request.user),
         "unidades": unidades,
         "malla": malla,
+        "total_sincronicas": total_sincronicas,
+        "horas_semanales": horas_semanales,
+        "limite_semanal": limite_semanal,
+        "semanas_referencia": SEMANAS_REFERENCIA_MINIMA,
+        "excede_limite": excede_limite,
         "titulo_pagina": "Unidad curricular - NIVEC",
         "titulo": f"Unidades curriculares ({malla.nombre})",
         "url_registrar": "registrar_unidad",
