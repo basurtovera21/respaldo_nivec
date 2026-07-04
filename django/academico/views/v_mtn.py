@@ -57,7 +57,7 @@ def procesar_mtn(request):
 
     if not periodos.exists():
         messages.warning(request, "No existen Periodos de nivelación en planificación")
-        return redirect("panel_dan")
+        return redirect("panel_principal")
 
     if request.method == "POST":
         periodo_id = request.POST.get("periodo") or None
@@ -103,7 +103,7 @@ def procesar_mtn(request):
         "titulo_pagina": "Matriz de tercer nivel - NIVEC",
         "titulo": "Procesar Matriz de Tercer Nivel (MTN)",
         "url_plantilla": "descargar_plantilla_mtn",
-        "url_cancelar": "panel_dan",
+        "url_cancelar": "panel_principal",
     })
 
 @requiere_perfil(*ROLES_VISUALIZAN)
