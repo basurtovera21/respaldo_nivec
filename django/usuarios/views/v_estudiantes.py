@@ -7,7 +7,7 @@ from django.http import HttpResponse
 import openpyxl
 
 from usuarios.models import UsuarioDeSistema, PerfilEstudiante
-from usuarios.forms import FormularioUsuarioDeSistema, FormularioPerfilEstudiante
+from usuarios.forms import FormularioUsuarioDeSistema, FormularioModificarUsuarioDeSistema, FormularioPerfilEstudiante
 from usuarios.utils import (
     generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura,
     ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
@@ -199,11 +199,8 @@ def modificar_estudiante(request, estudiante_id):
     usuario = est.usuario_de_sistema
     
     if request.method == "POST":
-        form_u = FormularioUsuarioDeSistema(request.POST, instance=usuario)
+        form_u = FormularioModificarUsuarioDeSistema(request.POST, instance=usuario)
         form_e = FormularioPerfilEstudiante(request.POST, instance=est, universidad=universidad_usuario)
-        
-        if 'contrasena' in form_u.fields:
-            form_u.fields['contrasena'].required = False 
 
         if form_u.is_valid() and form_e.is_valid():
             with transaction.atomic():
@@ -219,7 +216,7 @@ def modificar_estudiante(request, estudiante_id):
             messages.success(request, "El Estudiante ha sido modificado correctamente")
             return redirect("listar_estudiantes")
     else:
-        form_u = FormularioUsuarioDeSistema(instance=usuario)
+        form_u = FormularioModificarUsuarioDeSistema(instance=usuario)
         form_e = FormularioPerfilEstudiante(instance=est, universidad=universidad_usuario)
         
     form_u.fields.pop('estado_de_usuario', None)
