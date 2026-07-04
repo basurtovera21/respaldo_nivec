@@ -124,5 +124,5 @@ def listar_consolidados(request):
         "titulo": "Resumen de ingreso MTN",
         "url_registrar": "procesar_mtn",
         "texto_registrar": "Procesar Matriz de tercer nivel",
-        "url_volver": "panel_dan",
+        "url_volver": "panel_principal",
     })

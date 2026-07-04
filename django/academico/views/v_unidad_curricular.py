@@ -60,7 +60,7 @@ def listar_unidades(request):
         "titulo": "Unidades curriculares",
         "url_registrar": "registrar_unidad",
         "texto_registrar": "Registrar",
-        "url_volver": "panel_dan"
+        "url_volver": "panel_principal"
     })
 
 @requiere_perfil(*ROLES_VISUALIZAN)
@@ -86,7 +86,7 @@ def listar_unidades_de_malla(request, malla_id):
         "titulo": f"Unidades curriculares ({malla.nombre})",
         "url_registrar": "registrar_unidad",
         "texto_registrar": "Registrar",
-        "url_volver": "listar_mallas"
+        "url_volver": "panel_principal"
     })
 
 @requiere_perfil(*ROLES_MODIFICAN)
