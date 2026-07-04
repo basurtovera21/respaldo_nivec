@@ -2,7 +2,7 @@
 
 {% block filtros %}
 <form method="get" style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-    <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Nombre o Apellidos..."
+    <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Apellidos y Nombres..."
            oninput="this.form.submit()"
            style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; min-width: 300px; font-weight: 500; font-family: inherit;">
 </form>
@@ -32,7 +32,7 @@
         <td style="font-family: monospace; text-align: left;">{{ docente.identificador_institucional }}</td>
         <td style="text-align: left;">{{ docente.tipo_de_vinculacion }}</td>
         <td style="text-align: left;">{{ docente.tiempo_de_dedicacion }}</td>
-        <td style="text-align: left;">{{ docente.carga_horaria_maxima }}h</td>
+        <td style="text-align: left;">{{ docente.carga_horaria_maxima }} horas</td>
         <td style="text-align: left;">{{ docente.jornadas|join:", " }}</td>
         <td style="text-align: left;"><span style="font-weight: bold; color: #253237; font-size: 13px;">{{ docente.usuario_de_sistema.estado_de_usuario }}</span></td>
         {% if not solo_lectura %}

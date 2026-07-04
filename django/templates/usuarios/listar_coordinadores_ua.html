@@ -30,10 +30,10 @@
         <td style="font-family: monospace; text-align: left;">{{ coordinador.usuario_de_sistema.identificacion }}</td>
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.apellidos }} {{ coordinador.usuario_de_sistema.nombres }}</td>
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.correo_institucional }}</td>
-        <td style="font-family: monospace; text-align: left;">{{ coordinador.identificador_coordinador_ua|default:coordinador.identificador_administrativo|default:"—" }}</td>
-        <td style="text-align: left;">{{ coordinador.carrera_asignada.nombre|default:"-" }}</td>
-        <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.tipo_de_vinculacion|default:"-" }}</td>
-        <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.tiempo_de_dedicacion|default:"-" }}</td>
+        <td style="font-family: monospace; text-align: left;">{{ coordinador.identificador_coordinador_ua|default:coordinador.identificador_administrativo|default:"" }}</td>
+        <td style="text-align: left;">{{ coordinador.carrera_asignada.nombre|default:"" }}</td>
+        <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.tipo_de_vinculacion|default:"" }}</td>
+        <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.tiempo_de_dedicacion|default:"" }}</td>
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.carga_horaria_maxima|default:"0" }} horas</td>
         <td style="text-align: left;">{{ coordinador.usuario_de_sistema.perfil_docente.jornadas|join:", " }}</td>
         <td style="text-align: left;"><span style="font-weight: bold; color: #253237; font-size: 13px;">{{ coordinador.usuario_de_sistema.estado_de_usuario }}</span></td>

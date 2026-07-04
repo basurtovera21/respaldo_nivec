@@ -124,7 +124,7 @@ def servicio_coordinador_dan_registrar_masivo_desde_excel(archivo, universidad_u
                 try: UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
                 except ValueError as e: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})"); continue
                 if not UsuarioDeSistemaBase.validar_correo_institucional(correo_str):
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Correo institucional no válido)"); continue
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (correo institucional no válido)"); continue
                 if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (el Coordinador de dirección de admisión y nivelación ya ha sido registrado)"); continue
                 if UsuarioDeSistema.objects.filter(correo_institucional__iexact=correo_str).exists():
@@ -167,12 +167,12 @@ def servicio_coordinador_ua_registrar_masivo_desde_excel(archivo, universidad_us
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (tiempo de dedicación no válido)"); continue
                 dedic_exacta = dedic_validas[tiempo_dedic_limpio]
                 try: carga_max_float = float(carga_max)
-                except ValueError: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Carga horaria no válida)"); continue
+                except ValueError: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (carga horaria no válida)"); continue
                 from usuarios.forms import validar_jornadas_continuas
                 lista_jornadas = [j.strip().capitalize() for j in str(jornadas_str).split(',') if j.strip()] if jornadas_str else []
                 error_jornadas = validar_jornadas_continuas(lista_jornadas)
                 if error_jornadas:
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (jornadas no válidas: {error_jornadas})"); continue
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (jornada(s) no válida(s))"); continue
                 try: UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
                 except ValueError as e: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})"); continue
                 if not UsuarioDeSistemaBase.validar_correo_institucional(correo_str):
@@ -223,16 +223,16 @@ def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
                 tiempo_dedic_limpio = str(tiempo_dedic).strip().lower()
 
                 if tipo_vinc_limpio not in vinc_validas:
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Tipo de vinculación no válido)")
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (tipo de vinculación no válido)")
                     continue
                 if tiempo_dedic_limpio not in dedic_validas:
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Tiempo de dedicación no válido)")
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (tiempo de dedicación no válido)")
                     continue
                     
                 try:
                     carga_max_float = float(carga_max)
                 except ValueError:
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Carga horaria no válida)")
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (carga horaria no válida)")
                     continue
 
                 try: 
@@ -249,7 +249,7 @@ def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
                 lista_jornadas = [j.strip().capitalize() for j in str(jornadas_str).split(',') if j.strip()] if jornadas_str else []
                 error_jornadas = validar_jornadas_continuas(lista_jornadas)
                 if error_jornadas:
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Jornadas no válidas: {error_jornadas})")
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (jornada(s) no válida(s))")
                     continue
 
                 with transaction.atomic():
@@ -277,7 +277,7 @@ def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
                     resultado["exitosos"] += 1
             
             except Exception as e:
-                resultado["advertencias"].append(f"Registro de la fila {numero_fila} omitido ({str(e)})")
+                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})")
                 continue
                 
     except Exception:

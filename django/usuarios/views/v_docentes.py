@@ -23,7 +23,7 @@ ROLES_USUARIOS_VEN = (ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_RECTOR, ROL_VIC
 def listar_docentes(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     docentes = PerfilDocente.objects.filter(universidad=universidad_usuario).select_related("usuario_de_sistema")
@@ -60,7 +60,7 @@ def descargar_plantilla_docente(request):
         ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 40
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="formato_docentes_nivec.xlsx"'
+    response['Content-Disposition'] = 'attachment; filename="docentes_documento_nivec.xlsx"'
     wb.save(response)
     return response
 
@@ -68,7 +68,7 @@ def descargar_plantilla_docente(request):
 def registrar_docente(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     if request.method == "POST":
@@ -124,7 +124,7 @@ def registrar_docente(request):
 def modificar_docente(request, docente_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     docente = get_object_or_404(PerfilDocente, id=docente_id, universidad=universidad_usuario)
@@ -170,7 +170,7 @@ def modificar_docente(request, docente_id):
 def eliminar_docente(request, docente_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     docente = get_object_or_404(PerfilDocente, id=docente_id, universidad=universidad_usuario)
@@ -186,7 +186,7 @@ def eliminar_docente(request, docente_id):
 def inhabilitar_docente(request, docente_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     docente_db = get_object_or_404(PerfilDocente, id=docente_id, universidad=universidad_usuario)
@@ -211,7 +211,7 @@ def inhabilitar_docente(request, docente_id):
 def habilitar_docente(request, docente_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     docente_db = get_object_or_404(PerfilDocente, id=docente_id, universidad=universidad_usuario)
