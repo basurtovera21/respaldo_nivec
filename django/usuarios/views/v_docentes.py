@@ -163,7 +163,7 @@ def modificar_docente(request, docente_id):
         "subtitulo": f"{usuario.nombres} {usuario.apellidos}",
         "boton_texto": "Modificar",
         "url_cancelar": "listar_docentes",
-        "url_volver": "listar_docentes",
+        "url_volver": "panel_principal",
         "mostrar_carga_masiva": False
     })
 

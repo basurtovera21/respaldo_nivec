@@ -10,6 +10,7 @@ from usuarios.models import UsuarioDeSistema, PerfilEstudiante
 from usuarios.forms import FormularioUsuarioDeSistema, FormularioModificarUsuarioDeSistema, FormularioPerfilEstudiante
 from usuarios.utils import (
     generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura,
+    obtener_rol_usuario,
     ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_UA,
 )
 
@@ -65,6 +66,10 @@ def listar_estudiantes(request):
 
     estudiantes = estudiantes.select_related("usuario_de_sistema", "carrera_registrada", "campus_registrado").order_by("identificador_institucional")
 
+    rol = obtener_rol_usuario(request.user)
+    es_coordinador_ua = (rol == ROL_COORDINADOR_UA)
+    url_registrar_ctx = None if es_coordinador_ua else "registrar_estudiante"
+
     return render(request, "usuarios/listar_estudiantes.html", {
         "estudiantes": estudiantes,
         "busqueda": busqueda,
@@ -74,9 +79,10 @@ def listar_estudiantes(request):
         "carreras_disponibles": carreras_disponibles,
         "campus_filtro": campus_filtro,
         "carrera_filtro": carrera_filtro,
+        "es_coordinador_ua": es_coordinador_ua,
         "titulo_pagina": "Estudiante - NIVEC",
         "titulo": "Estudiantes",
-        "url_registrar": "registrar_estudiante",
+        "url_registrar": url_registrar_ctx,
         "texto_registrar": "Registrar",
         "url_volver": "panel_principal",
         "solo_lectura": usuario_es_solo_lectura(request.user),
@@ -220,6 +226,8 @@ def modificar_estudiante(request, estudiante_id):
         form_e = FormularioPerfilEstudiante(instance=est, universidad=universidad_usuario)
         
     form_u.fields.pop('estado_de_usuario', None)
+    if obtener_rol_usuario(request.user) == ROL_COORDINADOR_UA:
+        form_e.fields['carrera_registrada'].disabled = True
     return render(request, "usuarios/formulario_estudiante.html", {
         "form_usuario": form_u, 
         "form_estudiante": form_e, 
@@ -227,7 +235,7 @@ def modificar_estudiante(request, estudiante_id):
         "subtitulo": f"{usuario.nombres} {usuario.apellidos}",
         "boton_texto": "Modificar",
         "url_cancelar": "listar_estudiantes",
-        "url_volver": "listar_estudiantes",
+        "url_volver": "panel_principal",
         "titulo_pagina": "Estudiante - NIVEC",
         "mostrar_carga_masiva": False
     })
