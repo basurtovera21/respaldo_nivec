@@ -100,37 +100,19 @@ def panel_ua(request):
     carrera = perfil.carrera_asignada
     universidad = perfil.universidad
 
+    from academico.models import PeriodoDeNivelacion, Carrera as CarreraModel
+    from usuarios.models import PerfilEstudiante
 
-    from academico.models import Paralelo, PeriodoDeNivelacion
-    
-    periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad).order_by('-anio', '-numero_periodo')
-    
-    paralelos = []
-    periodo_actual = None
-    if carrera:
-        periodo_actual = periodos.first()
-        if periodo_actual:
-            paralelos = Paralelo.objects.filter(
-                periodo_de_nivelacion=periodo_actual,
-                unidad_curricular__malla_curricular__carrera=carrera,
-            ).select_related("unidad_curricular").order_by("nombre", "unidad_curricular__nombre")
-    
-    # Count evaluaciones pending formalization for this carrera
-    from academico.models import EvaluacionAcademica
-    pendientes_formalizar = 0
-    if carrera and periodo_actual:
-        pendientes_formalizar = EvaluacionAcademica.objects.filter(
-            periodo_de_nivelacion=periodo_actual,
-            estudiante__carrera_registrada=carrera,
-            estado_revision="En revisión",
-        ).count()
+    tiene_periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad).exists() if universidad else False
+    tiene_carreras = CarreraModel.objects.filter(campus__universidad=universidad).exists() if universidad else False
+    tiene_estudiantes = PerfilEstudiante.objects.filter(carrera_registrada=carrera).exists() if carrera else False
 
     return render(request, "administrativo/panel_ua.html", {
         "perfil": perfil,
         "carrera": carrera,
-        "periodo_actual": periodo_actual,
-        "paralelos": paralelos,
-        "pendientes_formalizar": pendientes_formalizar,
+        "tiene_periodos": tiene_periodos,
+        "tiene_carreras": tiene_carreras,
+        "tiene_estudiantes": tiene_estudiantes,
     })
 
 @login_required
