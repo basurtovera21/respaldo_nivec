@@ -258,7 +258,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
             "nombre",
             "horas_totales",
             "horas_sincronicas",
-            "horas_sincronicas_semanales",
             "horas_asincronicas",
             "criterio_de_aprobacion",
             "porcentaje_minimo_asistencia",
@@ -269,7 +268,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
             "nombre": "Nombre",
             "horas_totales": "Horas totales",
             "horas_sincronicas": "Horas sincrónicas",
-            "horas_sincronicas_semanales": "Horas sincrónicas semanales",
             "horas_asincronicas": "Horas asincrónicas",
             "criterio_de_aprobacion": "Criterio de aprobación",
             "porcentaje_minimo_asistencia": "Porcentaje mínimo de asistencia",
@@ -298,7 +296,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
             "nombre",
             "horas_totales",
             "horas_sincronicas",
-            "horas_sincronicas_semanales",
             "horas_asincronicas",
             "criterio_de_aprobacion",
             "porcentaje_minimo_asistencia",
@@ -307,24 +304,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
         for campo in campos_requeridos:
             if cleaned_data.get(campo) is None or cleaned_data.get(campo) == "":
                 errores[campo] = "Información requerida"
-
-        semanales = cleaned_data.get("horas_sincronicas_semanales")
-        sincronicas = cleaned_data.get("horas_sincronicas")
-        if semanales not in (None, "") and "horas_sincronicas_semanales" not in errores:
-            if semanales <= 0:
-                errores["horas_sincronicas_semanales"] = "El registro debe ser mayor a cero"
-            elif float(semanales) != int(semanales):
-                errores["horas_sincronicas_semanales"] = "El registro ser un número entero"
-            elif sincronicas not in (None, "") and semanales > sincronicas:
-                errores["horas_sincronicas_semanales"] = "EL registro no puede superar las horas sincrónicas totales"
-            elif sincronicas not in (None, "") and semanales > 0:
-                # Validar coherencia: semanales no debe exceder las horas totales
-                # divididas en un periodo razonable (mínimo 4 semanas, máximo 24).
-                max_semanales_razonable = sincronicas / 4
-                if semanales > max_semanales_razonable:
-                    errores["horas_sincronicas_semanales"] = (
-                        f"Las horas sincrónicas semanales no son coherentes con las horas sincrónicas totales"
-                    )
 
         if errores:
             raise forms.ValidationError(errores)
@@ -369,19 +348,19 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
         model = PeriodoDeNivelacion
         fields = (
             "codigo_periodo", "anio", "numero_periodo", 
-            "fecha_inicio", "fecha_fin", "modalidad"
+            "fecha_inicio", "numero_de_semanas", "modalidad"
         )
         labels = {
             "codigo_periodo": "Código de periodo",
             "anio": "Año",
             "numero_periodo": "Número de periodo",
             "fecha_inicio": "Fecha de inicio",
-            "fecha_fin": "Fecha de finalización",
+            "numero_de_semanas": "Número de semanas",
             "modalidad": "Modalidad",
         }
         widgets = {
             "fecha_inicio": forms.DateInput(attrs={"type": "date"}, format='%Y-%m-%d'), 
-            "fecha_fin": forms.DateInput(attrs={"type": "date"}, format='%Y-%m-%d'),
+            "numero_de_semanas": forms.NumberInput(attrs={"min": 6, "max": 12}),
             "numero_periodo": forms.NumberInput(attrs={"min": 1, "max": 2})
         }
 
@@ -402,8 +381,6 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
         if self.instance and self.instance.pk:
             if self.instance.fecha_inicio:
                 self.fields['fecha_inicio'].widget.attrs['value'] = self.instance.fecha_inicio.strftime('%Y-%m-%d')
-            if self.instance.fecha_fin:
-                self.fields['fecha_fin'].widget.attrs['value'] = self.instance.fecha_fin.strftime('%Y-%m-%d')
 
             # If period is closed, disable all fields
             estado_actual = str(self.instance.estado).upper()
@@ -422,23 +399,27 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
                 "anio": self.instance.anio,
                 "numero_periodo": self.instance.numero_periodo,
                 "fecha_inicio": self.instance.fecha_inicio,
-                "fecha_fin": self.instance.fecha_fin,
+                "numero_de_semanas": self.instance.numero_de_semanas,
                 "modalidad": self.instance.modalidad,
             }
             return self.cleaned_data
 
         cleaned_data = super().clean()
         errores = {}
-        campos_requeridos = ["anio", "numero_periodo", "fecha_inicio", "fecha_fin", "modalidad"]
+        campos_requeridos = ["anio", "numero_periodo", "fecha_inicio", "numero_de_semanas", "modalidad"]
         
         for campo in campos_requeridos:
             if not cleaned_data.get(campo):
                 errores[campo] = "Información requerida"
                 
         fecha_de_inicio = cleaned_data.get("fecha_inicio")
-        fecha_de_finalizacion = cleaned_data.get("fecha_fin")
+        numero_semanas = cleaned_data.get("numero_de_semanas")
         anio_seleccionado = cleaned_data.get("anio")
         numero_seleccionado = cleaned_data.get("numero_periodo")
+
+        # Validate numero_de_semanas range
+        if numero_semanas is not None and numero_semanas not in range(6, 13):
+            errores["numero_de_semanas"] = "Debe ser entre 6 y 12 semanas"
         
         # Year validation via POO (only for new records)
         if anio_seleccionado and "anio" not in errores:
@@ -447,28 +428,20 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
                     codigo_periodo="TEMP",
                     anio=anio_seleccionado,
                     periodo="TEMP",
-                    fecha_inicio=fecha_de_inicio or fecha_de_finalizacion,
-                    fecha_fin=fecha_de_finalizacion or fecha_de_inicio,
+                    fecha_inicio=fecha_de_inicio or fecha_de_inicio,
+                    fecha_fin=fecha_de_inicio or fecha_de_inicio,
                     numero_periodo=numero_seleccionado or 1,
                 )
                 error_anio = periodo_poo.validar_anio()
                 if error_anio:
                     errores["anio"] = error_anio
 
-        if fecha_de_inicio and fecha_de_finalizacion:
-            periodo_poo = PeriodoDeNivelacionBase(
-                codigo_periodo="TEMP",
-                anio=anio_seleccionado or 2000,
-                periodo="TEMP",
-                fecha_inicio=fecha_de_inicio,
-                fecha_fin=fecha_de_finalizacion,
-                numero_periodo=numero_seleccionado or 1,
-            )
+        # Calculate fecha_fin for overlap validation
+        if fecha_de_inicio and numero_semanas:
+            from datetime import timedelta
+            fecha_de_finalizacion = fecha_de_inicio + timedelta(days=numero_semanas * 7)
 
-            if not periodo_poo.validar_fechas():
-                errores["fecha_fin"] = "La fecha de finalización debe ser posterior a la fecha de inicio"
-            
-            elif self.universidad:
+            if self.universidad:
                 periodos_chocan = PeriodoDeNivelacion.objects.filter(
                     universidad=self.universidad,
                     fecha_inicio__lte=fecha_de_finalizacion,
@@ -480,7 +453,6 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
                     
                 if periodos_chocan.exists():
                     errores["fecha_inicio"] = "La fecha especificada presenta conflicto con un Periodo registrado previamente"
-                    errores["fecha_fin"] = "La fecha especificada presenta conflicto con un Periodo registrado previamente"
 
         if numero_seleccionado is not None and numero_seleccionado not in (1, 2):
             errores["numero_periodo"] = "Registro no válido (1 o 2)"
@@ -500,36 +472,6 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
             raise forms.ValidationError(errores)
             
         return cleaned_data
-
-    def __init__(self, *args, **kwargs):
-        self.universidad = kwargs.pop('universidad', None)
-        super().__init__(*args, **kwargs)
-        
-        for field in self.fields.values():
-            field.required = False
-            
-        self.fields['codigo_periodo'].widget.attrs.update({
-            'placeholder': 'El código será determinado de forma automática',
-            'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;',
-            'readonly': True
-        })
-
-        # Persist dates on edit
-        if self.instance and self.instance.pk:
-            if self.instance.fecha_inicio:
-                self.fields['fecha_inicio'].widget.attrs['value'] = self.instance.fecha_inicio.strftime('%Y-%m-%d')
-            if self.instance.fecha_fin:
-                self.fields['fecha_fin'].widget.attrs['value'] = self.instance.fecha_fin.strftime('%Y-%m-%d')
-
-            # If period is closed, disable all fields
-            estado_actual = str(self.instance.estado).upper()
-            if 'CERRADO' in estado_actual or 'CIERRA' in estado_actual:
-                for name, field in self.fields.items():
-                    if isinstance(field.widget, (forms.Select, forms.RadioSelect)):
-                        field.widget.attrs['disabled'] = True
-                    else:
-                        field.widget.attrs['readonly'] = True
-                    field.widget.attrs['style'] = 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'
 
     
 class FormularioParalelo(forms.ModelForm):
