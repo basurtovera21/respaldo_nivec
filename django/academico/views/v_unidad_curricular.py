@@ -31,7 +31,7 @@ ESTADOS_MALLA_EDITABLE = [EstadoDeMalla.DISENO.value, EstadoDeMalla.ACTIVA.value
 def listar_unidades(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     from usuarios.utils import obtener_rol_usuario
@@ -83,7 +83,7 @@ def listar_unidades(request):
 def listar_unidades_de_malla(request, malla_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     malla = get_object_or_404(
@@ -114,8 +114,8 @@ def descargar_plantilla_unidad(request):
     cabeceras = [
         "Código de malla (MC...)",
         "Nombre de la Unidad curricular",
-        "Horas totales (número decimal)",
-        "Horas sincrónicas (número decimal)",
+        "Horas totales (número entero)",
+        "Horas sincrónicas (número entero)",
         "Horas sincrónicas semanales (número entero)",
         "Horas asincrónicas (número decimal)",
         "Criterio de aprobación (0.0 - 10.0)",
@@ -137,7 +137,7 @@ def descargar_plantilla_unidad(request):
 def registrar_unidad(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     mallas_existentes = MallaCurricular.objects.filter(
@@ -147,7 +147,7 @@ def registrar_unidad(request):
     if not mallas_existentes.exists():
         messages.warning(
             request,
-            "No existen registros de Mallas curriculares (diseño o activa) actualmente"
+            "No existen registros de Mallas curriculares válidos actualmente"
         )
         return redirect("listar_mallas")
 
@@ -215,7 +215,7 @@ def registrar_unidad(request):
 def modificar_unidad(request, unidad_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     unidad = get_object_or_404(
@@ -262,7 +262,7 @@ def modificar_unidad(request, unidad_id):
 def eliminar_unidad(request, unidad_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     unidad = get_object_or_404(
@@ -278,6 +278,6 @@ def eliminar_unidad(request, unidad_id):
     except ProtectedError:
         messages.error(
             request,
-            "La Unidad curricular no se ha podido eliminar (registros presentes)"
+            "La Unidad curricular no se ha podido eliminar (registros asociados)"
         )
     return redirect("listar_unidades")

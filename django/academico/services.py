@@ -279,7 +279,7 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
                 ).first()
                 if not carrera_obj:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (Código de Carrera no válido)"
+                        f"El registro de la fila {numero_fila} fue omitido (código de Carrera no válido)"
                     )
                     continue
 
@@ -300,7 +300,7 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
                 clave_malla = (carrera_obj.id, malla_poo.nombre.strip().lower())
                 if clave_malla in mallas_registradas:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (La Malla curricular ya existe)"
+                        f"El registro de la fila {numero_fila} fue omitido (la Malla curricular ya ha sido registrada)"
                     )
                     continue
 
@@ -379,7 +379,7 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     porcentaje_f = float(porcentaje_asistencia) if porcentaje_asistencia is not None else 70.0
                 except (ValueError, TypeError):
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (registro(s) no válido(s))"
+                        f"El registro de la fila {numero_fila} fue omitido (registros numéricos no válidos)"
                     )
                     continue
 
@@ -387,7 +387,7 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                         or horas_sincronicas_semanales_f != int(horas_sincronicas_semanales_f)
                         or horas_sincronicas_semanales_f > horas_sincronicas_f):
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (Horas sincrónicas semanales no válidas: entero, > 0 y <= sincrónicas totales)"
+                        f"El registro de la fila {numero_fila} fue omitido (horas sincrónicas semanales no válidas)"
                     )
                     continue
 
@@ -396,20 +396,20 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                 ).first()
                 if not malla_obj:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (Código de Malla no válido)"
+                        f"El registro de la fila {numero_fila} fue omitido (código de Malla no válido)"
                     )
                     continue
 
                 if malla_obj.estado not in estados_editables:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (Estado no válido)"
+                        f"El registro de la fila {numero_fila} fue omitido (estado no válido)"
                     )
                     continue
 
                 clave_unidad = (malla_obj.id, str(nombre).strip().lower())
                 if clave_unidad in unidades_registradas:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (la Unidad curricular ya existe en la Malla especificada)"
+                        f"El registro de la fila {numero_fila} fue omitido (la Unidad curricular ya ha sido registrada en la Malla especificada)"
                     )
                     continue
 

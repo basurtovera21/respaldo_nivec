@@ -31,7 +31,7 @@
         <option value="{{ m.id }}" {% if malla_filtro == m.id|stringformat:"d" %}selected{% endif %}>{{ m.nombre }}</option>
         {% endfor %}
     </select>
-    <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Nombre de Unidad..."
+    <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Nombre de Unidad curricular..."
            oninput="this.form.submit()"
            style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; min-width: 300px; font-weight: 500; font-family: inherit;">
 </form>
@@ -43,8 +43,8 @@
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Malla curricular</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Nombre</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Horas totales</th>
-    <th style="font-weight: bold; text-align: left; color: #5c6b73">Criterio de aprobación</th>
-    <th style="font-weight: bold; text-align: left; color: #5c6b73">Asistencia mínima</th>
+    <th style="font-weight: bold; text-align: left; color: #5c6b73">Criterio mínimo de aprobación</th>
+    <th style="font-weight: bold; text-align: left; color: #5c6b73">Asistencia mínima de aprobación</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
 {% endblock %}
 

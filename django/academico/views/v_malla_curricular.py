@@ -32,7 +32,7 @@ ROLES_MODIFICAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
 def listar_mallas(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     mallas = MallaCurricular.objects.filter(
@@ -94,7 +94,7 @@ def descargar_plantilla_malla(request):
 def registrar_malla(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     carreras_existentes = Carrera.objects.filter(campus__universidad=universidad_usuario)
@@ -154,7 +154,7 @@ def registrar_malla(request):
 def modificar_malla(request, malla_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     malla = get_object_or_404(
@@ -191,7 +191,7 @@ def modificar_malla(request, malla_id):
 def eliminar_malla(request, malla_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     malla = get_object_or_404(
@@ -205,7 +205,7 @@ def eliminar_malla(request, malla_id):
         total_unidades = malla.unidades_curriculares.count()
         messages.error(
             request,
-            f"La Malla curricular no se ha podido eliminar ({total_unidades} Unidad(es) curricular(es) presente(s))"
+            f"La Malla curricular no se ha podido eliminar (registros asociados)"
         )
     return redirect("listar_mallas")
 
@@ -213,7 +213,7 @@ def eliminar_malla(request, malla_id):
 def clonar_malla(request, malla_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     malla = get_object_or_404(
@@ -244,7 +244,7 @@ def clonar_malla(request, malla_id):
 def cambiar_estado_malla(request, malla_id, accion):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     malla = get_object_or_404(
