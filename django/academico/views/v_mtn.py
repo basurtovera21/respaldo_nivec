@@ -101,7 +101,7 @@ def procesar_mtn(request):
     return render(request, "academico/procesar_mtn.html", {
         "periodos": periodos,
         "titulo_pagina": "Matriz de tercer nivel - NIVEC",
-        "titulo": "Procesar Matriz de Tercer Nivel (MTN)",
+        "titulo": "Procesar Matriz de Tercer Nivel",
         "url_plantilla": "descargar_plantilla_mtn",
         "url_cancelar": "panel_principal",
     })
@@ -129,8 +129,8 @@ def listar_consolidados(request):
         "periodo_filtro": periodo_filtro,
         "solo_lectura": usuario_es_solo_lectura(request.user),
         "titulo_pagina": "Matriz de Tercer Nivel - NIVEC",
-        "titulo": "Resumen de ingreso MTN",
+        "titulo": "Resumen de ingreso",
         "url_registrar": "procesar_mtn",
-        "texto_registrar": "Procesar Matriz de tercer nivel",
+        "texto_registrar": "Procesar Matriz de Tercer Nivel",
         "url_volver": "panel_principal",
     })
