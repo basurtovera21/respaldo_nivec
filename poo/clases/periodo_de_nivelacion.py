@@ -93,3 +93,7 @@ class PeriodoDeNivelacion:
             "Duración (en semanas)": self.calcular_duracion_semanas(),
             "Estado": self._estado.value,
         }
+
+    @staticmethod
+    def validar_unico_en_curso(periodos_en_curso_count: int) -> bool:
+        return periodos_en_curso_count == 0

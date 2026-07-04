@@ -43,6 +43,9 @@
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Malla curricular</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Nombre</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Horas totales</th>
+    <th style="font-weight: bold; text-align: left; color: #5c6b73">Horas sincrónicas</th>
+    <th style="font-weight: bold; text-align: left; color: #5c6b73">Horas sincrónicas semanales</th>
+    <th style="font-weight: bold; text-align: left; color: #5c6b73">Horas asincrónicas</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Criterio mínimo de aprobación</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Asistencia mínima de aprobación</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
@@ -55,6 +58,9 @@
         <td style="text-align: left; color: #1d1d1f;">{{ u.malla_curricular.nombre }}</td>
         <td style="text-align: left; color: #1d1d1f;">{{ u.nombre }}</td>
         <td style="text-align: left; color: #1d1d1f;">{{ u.horas_totales }}</td>
+        <td style="text-align: left;">{{ u.horas_sincronicas }}</td>
+        <td style="text-align: left;">{{ u.horas_sincronicas_semanales }}</td>
+        <td style="text-align: left;">{{ u.horas_asincronicas }}</td>
         <td style="text-align: left; color: #1d1d1f;">{{ u.criterio_de_aprobacion }}</td>
         <td style="text-align: left; color: #1d1d1f;">{{ u.porcentaje_minimo_asistencia }}%</td>
         <td style="text-align: left; white-space: nowrap;">
@@ -71,7 +77,7 @@
     {% empty %}
     {% if not carrera_filtro and not malla_filtro and not busqueda %}
     <tr>
-        <td colspan="7" style="text-align: center; color: #9db4c0; padding: 30px;">
+        <td colspan="10" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>

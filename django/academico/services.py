@@ -209,6 +209,15 @@ def _construir_periodo(periodo_db):
 
 def servicio_iniciar_periodo_de_nivelacion(periodo_db):
     from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
+
+    # Validate only 1 periodo can be "En curso" at a time
+    periodos_en_curso = PeriodoDeNivelacion.objects.filter(
+        universidad=periodo_db.universidad,
+        estado=EstadoDePeriodo.EN_CURSO.value
+    ).exclude(pk=periodo_db.pk)
+    if periodos_en_curso.exists():
+        return False
+
     periodo_poo = _construir_periodo(periodo_db)
     facade = CentroDeOperacionAcademica()
     if facade.iniciar_periodo(periodo_poo):
