@@ -118,7 +118,7 @@ def listar_consolidados(request):
 
     consolidados = ConsolidadoAcademico.objects.filter(
         periodo_academico__universidad=universidad_usuario
-    ).select_related("periodo_academico")
+    ).select_related("periodo_academico").order_by("periodo_academico__codigo_periodo")
 
     if periodo_filtro:
         consolidados = consolidados.filter(periodo_academico_id=periodo_filtro)

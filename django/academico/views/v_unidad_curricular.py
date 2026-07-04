@@ -61,9 +61,14 @@ def listar_unidades(request):
 
     unidades = unidades.order_by("codigo_de_unidad")
 
-    carrera_seleccionada = None
-    if carrera_id:
-        carrera_seleccionada = carreras.filter(id=carrera_id).first()
+    if carrera_filtro:
+        unidades = unidades.filter(malla_curricular__carrera_id=carrera_filtro)
+    if malla_filtro:
+        unidades = unidades.filter(malla_curricular_id=malla_filtro)
+    if busqueda:
+        unidades = unidades.filter(nombre__icontains=busqueda)
+
+    solo_lectura = usuario_es_solo_lectura(request.user)
 
     return render(request, "academico/listar_unidades.html", {
         "solo_lectura": solo_lectura,
