@@ -1,4 +1,5 @@
 from django import forms
+from django.utils.safestring import mark_safe
 from academico.models import Campus, Carrera, PeriodoDeNivelacion
 from .models import UsuarioDeSistema, PerfilDocente, PerfilEstudiante, PerfilAdministrativo
 from poo.clases.usuarios.usuario_de_sistema import UsuarioDeSistema as UsuarioDeSistemaBase
@@ -24,22 +25,20 @@ def validar_jornadas_continuas(jornadas):
 
 class FormularioUsuarioDeSistema(forms.ModelForm):
     contrasena = forms.CharField(label="Contraseña predefinida", required=False, widget=forms.TextInput(attrs={'readonly': True, 'placeholder': 'Número de identificación registrado', 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'}))
-    estado_de_usuario = forms.ChoiceField(choices=[(EstadoDeUsuario.ACTIVO.value, 'Activo'), (EstadoDeUsuario.INACTIVO.value, 'Inactivo'), (EstadoDeUsuario.BLOQUEADO.value, 'Bloqueado')], label="Estado de usuario", widget=forms.Select(attrs={'class': 'campo-select', 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;', 'readonly': True}))
     
     class Meta:
         model = UsuarioDeSistema
-        fields = ("tipo_de_identificacion", "identificacion", "nombres", "apellidos", "correo_institucional", "estado_de_usuario")
-        labels = {"tipo_de_identificacion": "Tipo de identificación", "identificacion": "Número de identificación", "nombres": "Nombres", "apellidos": "Apellidos", "correo_institucional": "Correo institucional", "estado_de_usuario": "Estado de usuario"}
+        fields = ("tipo_de_identificacion", "identificacion", "nombres", "apellidos", "correo_institucional")
+        labels = {"tipo_de_identificacion": "Tipo de identificación", "identificacion": "Número de identificación", "nombres": "Nombres", "apellidos": "Apellidos", "correo_institucional": "Correo institucional"}
         widgets = {"tipo_de_identificacion": forms.Select(attrs={'class': 'campo-select'})}
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values(): field.error_messages.update({'required': ''}); field.required = False
-        self.initial['estado_de_usuario'] = EstadoDeUsuario.ACTIVO.value
         
     def clean(self):
         cleaned_data = super().clean()
-        errores = {field: "Información requerida" for field in ["tipo_de_identificacion", "identificacion", "nombres", "apellidos", "correo_institucional", "estado_de_usuario"] if not cleaned_data.get(field)}
+        errores = {field: "Información requerida" for field in ["tipo_de_identificacion", "identificacion", "nombres", "apellidos", "correo_institucional"] if not cleaned_data.get(field)}
         
         if cleaned_data.get("identificacion") and "identificacion" not in errores:
             if not UsuarioDeSistemaBase.validar_identificacion(cleaned_data["identificacion"]):
@@ -100,13 +99,14 @@ class FormularioPerfilEstudiante(forms.ModelForm):
     class Meta:
         model = PerfilEstudiante
         fields = ("identificador_institucional", "numero_de_matricula", "jornada", 
-                  "registro_de_cupo", "carrera_registrada")
+                  "registro_de_cupo", "carrera_registrada", "periodo_de_nivelacion")
         widgets = {
             "identificador_institucional": forms.TextInput(attrs={'readonly': True, 'placeholder': 'El identificador será definido de forma automática', 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'}), 
             "numero_de_matricula": forms.TextInput(attrs={'readonly': True, 'placeholder': 'El número de matrícula será definido de forma automática', 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'}), 
             "jornada": forms.Select(attrs={'class': 'campo-select'}), 
             "registro_de_cupo": forms.Select(attrs={'class': 'campo-select'}), 
-            "carrera_registrada": forms.Select(attrs={'class': 'campo-select'})
+            "carrera_registrada": forms.Select(attrs={'class': 'campo-select'}),
+            "periodo_de_nivelacion": forms.Select(attrs={'class': 'campo-select'})
         }
 
     def __init__(self, *args, **kwargs):
@@ -117,6 +117,9 @@ class FormularioPerfilEstudiante(forms.ModelForm):
         if universidad:
             self.fields['carrera_registrada'].queryset = Carrera.objects.filter(campus__universidad=universidad)
 
+        if universidad:
+            self.fields['periodo_de_nivelacion'].queryset = PeriodoDeNivelacion.objects.filter(universidad=universidad).order_by('-anio', '-numero_periodo')
+
         for field in self.fields.values():
             field.error_messages.update({'required': ''})
         self.fields['identificador_institucional'].required = False
@@ -124,7 +127,7 @@ class FormularioPerfilEstudiante(forms.ModelForm):
 
 
 class FormularioRegistrarDocente(forms.ModelForm):
-    jornadas = forms.MultipleChoiceField(label="Jornada", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple(attrs={'class': 'campo-checkbox'}), help_text="<strong>Registre jornadas continuas (de ser necesario)</strong>")
+    jornadas = forms.MultipleChoiceField(label="Jornada", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple(attrs={'class': 'campo-checkbox'}), help_text=mark_safe("<strong>Registre jornadas continuas (de ser necesario)</strong>"))
     class Meta:
         model = PerfilDocente
         fields = ("identificador_institucional", "tipo_de_vinculacion", "tiempo_de_dedicacion", "carga_horaria_maxima")
@@ -151,7 +154,7 @@ class FormularioRegistrarDocente(forms.ModelForm):
         return cleaned_data
 
 class FormularioDatosDocenteUA(forms.ModelForm):
-    jornadas = forms.MultipleChoiceField(label="Jornada", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple(attrs={'class': 'campo-checkbox'}), help_text="<strong>Registre jornadas continuas (de ser necesario)</strong>")
+    jornadas = forms.MultipleChoiceField(label="Jornada", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple(attrs={'class': 'campo-checkbox'}), help_text=mark_safe("<strong>Registre jornadas continuas (de ser necesario)</strong>"))
     class Meta:
         model = PerfilDocente
         fields = ("tipo_de_vinculacion", "tiempo_de_dedicacion", "carga_horaria_maxima")

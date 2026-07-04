@@ -136,6 +136,7 @@ def registrar_administrativo(request):
             if formulario_usuario.is_valid() and formulario_perfil.is_valid():
                 with transaction.atomic():
                     usuario = formulario_usuario.save(commit=False)
+                    usuario.estado_de_usuario = "Activo"
                     usuario.set_password(usuario.identificacion)
                     usuario.save()
 
