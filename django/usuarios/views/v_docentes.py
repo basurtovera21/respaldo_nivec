@@ -110,6 +110,7 @@ def registrar_docente(request):
         formulario_usuario = FormularioUsuarioDeSistema()
         formulario_docente = FormularioRegistrarDocente()
 
+    formulario_usuario.fields.pop('estado_de_usuario', None)
     return render(request, "usuarios/formulario_docente.html", {
         "form_usuario": formulario_usuario,
         "form_docente": formulario_docente,
@@ -155,6 +156,7 @@ def modificar_docente(request, docente_id):
         formulario_usuario = FormularioUsuarioDeSistema(instance=usuario)
         formulario_docente = FormularioRegistrarDocente(instance=docente)
 
+    formulario_usuario.fields.pop('estado_de_usuario', None)
     return render(request, "usuarios/formulario_docente.html", {
         "form_usuario": formulario_usuario,
         "form_docente": formulario_docente, 
