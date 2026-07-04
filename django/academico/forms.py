@@ -308,6 +308,13 @@ class FormularioUnidadCurricular(forms.ModelForm):
         if errores:
             raise forms.ValidationError(errores)
 
+        horas_sincronicas = cleaned_data.get("horas_sincronicas")
+        if horas_sincronicas is not None and horas_sincronicas < 6:
+            errores["horas_sincronicas"] = "Las horas sincrónicas deben ser al menos 6 (mínimo 1 hora por semana en un periodo de 6 semanas)"
+
+        if errores:
+            raise forms.ValidationError(errores)
+
         unidad_poo = UnidadCurricularBase(
             codigo_de_unidad="PENDIENTE",
             nombre=cleaned_data.get("nombre", ""),
@@ -347,12 +354,11 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
     class Meta:
         model = PeriodoDeNivelacion
         fields = (
-            "codigo_periodo", "anio", "numero_periodo", 
+            "codigo_periodo", "numero_periodo", 
             "fecha_inicio", "numero_de_semanas", "modalidad"
         )
         labels = {
             "codigo_periodo": "Código de periodo",
-            "anio": "Año",
             "numero_periodo": "Número de periodo",
             "fecha_inicio": "Fecha de inicio",
             "numero_de_semanas": "Número de semanas",
@@ -396,7 +402,6 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
         if self.instance and self.instance.pk and str(self.instance.estado).upper() in ['CERRADO', 'CIERRA']:
             self.cleaned_data = {
                 "codigo_periodo": self.instance.codigo_periodo,
-                "anio": self.instance.anio,
                 "numero_periodo": self.instance.numero_periodo,
                 "fecha_inicio": self.instance.fecha_inicio,
                 "numero_de_semanas": self.instance.numero_de_semanas,
@@ -406,7 +411,7 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
 
         cleaned_data = super().clean()
         errores = {}
-        campos_requeridos = ["anio", "numero_periodo", "fecha_inicio", "numero_de_semanas", "modalidad"]
+        campos_requeridos = ["numero_periodo", "fecha_inicio", "numero_de_semanas", "modalidad"]
         
         for campo in campos_requeridos:
             if not cleaned_data.get(campo):
@@ -414,27 +419,12 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
                 
         fecha_de_inicio = cleaned_data.get("fecha_inicio")
         numero_semanas = cleaned_data.get("numero_de_semanas")
-        anio_seleccionado = cleaned_data.get("anio")
         numero_seleccionado = cleaned_data.get("numero_periodo")
+        anio_calculado = fecha_de_inicio.year if fecha_de_inicio else None
 
         # Validate numero_de_semanas range
         if numero_semanas is not None and numero_semanas not in range(6, 13):
             errores["numero_de_semanas"] = "Debe ser entre 6 y 12 semanas"
-        
-        # Year validation via POO (only for new records)
-        if anio_seleccionado and "anio" not in errores:
-            if not (self.instance and self.instance.pk):
-                periodo_poo = PeriodoDeNivelacionBase(
-                    codigo_periodo="TEMP",
-                    anio=anio_seleccionado,
-                    periodo="TEMP",
-                    fecha_inicio=fecha_de_inicio or fecha_de_inicio,
-                    fecha_fin=fecha_de_inicio or fecha_de_inicio,
-                    numero_periodo=numero_seleccionado or 1,
-                )
-                error_anio = periodo_poo.validar_anio()
-                if error_anio:
-                    errores["anio"] = error_anio
 
         # Calculate fecha_fin for overlap validation
         if fecha_de_inicio and numero_semanas:
@@ -457,10 +447,10 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
         if numero_seleccionado is not None and numero_seleccionado not in (1, 2):
             errores["numero_periodo"] = "Registro no válido (1 o 2)"
 
-        if anio_seleccionado and numero_seleccionado and self.universidad:
+        if anio_calculado and numero_seleccionado and self.universidad:
             periodos_duplicados = PeriodoDeNivelacion.objects.filter(
                 universidad=self.universidad,
-                anio=anio_seleccionado,
+                anio=anio_calculado,
                 numero_periodo=numero_seleccionado,
             )
             if self.instance and self.instance.pk:
