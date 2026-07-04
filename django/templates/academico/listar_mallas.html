@@ -3,9 +3,18 @@
 {% block filtros %}
 <form method="get" style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
     {% if not es_coordinador_ua %}
+    <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Campus</span>
+    <select name="campus" onchange="this.form.submit()"
+            style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit; min-width: 200px;">
+        <option value=""></option>
+        {% for c in campus_disponibles %}
+        <option value="{{ c.id }}" {% if campus_filtro == c.id|stringformat:"d" %}selected{% endif %}>{{ c.nombre }}</option>
+        {% endfor %}
+    </select>
+
     <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Carrera</span>
     <select name="carrera" onchange="this.form.submit()"
-            style="padding: 8px 12px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit;">
+            style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit; min-width: 200px;">
         <option value=""></option>
         {% for car in carreras_disponibles %}
         <option value="{{ car.id }}" {% if carrera_filtro == car.id|stringformat:"d" %}selected{% endif %}>{{ car.nombre }}</option>
@@ -76,7 +85,7 @@
         {% endif %}
     </tr>
     {% empty %}
-    {% if not carrera_filtro %}
+    {% if not carrera_filtro and not campus_filtro %}
     <tr>
         <td colspan="8" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente

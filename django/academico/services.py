@@ -832,7 +832,7 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
         return int(coincidencia.group(1)) if coincidencia else 0
 
     contador_codigo = max(
-        [_num_sufijo(c) for c in Paralelo.objects.values_list("codigo_de_paralelo", flat=True).distinct()],
+        [_num_sufijo(c) for c in Paralelo.objects.values_list("codigo_de_paralelo", flat=True).distinct()] or [0],
         default=0,
     )
 
@@ -936,14 +936,27 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
 
                 estudiantes_restantes = estudiantes[indice_pendiente:]
                 if estudiantes_restantes:
-                    # El nombre reinicia por carrera: cada carrera empieza en "A".
+                    # Calculate the next letter index based on the highest existing name
+                    # to avoid repeating codes when paralelos are deleted.
                     nombres_existentes = list(
                         Paralelo.objects.filter(
                             periodo_de_nivelacion=periodo_db,
                             unidad_curricular__malla_curricular__carrera=carrera,
                         ).values_list("nombre", flat=True).distinct()
                     )
-                    indice_base = len(set(nombres_existentes))
+                    # Find the highest index from existing names
+                    indice_base = 0
+                    for nombre_existente in nombres_existentes:
+                        # Parse "Paralelo X" where X is a letter like A, B, ..., Z, A1, B1...
+                        nombre_limpio = nombre_existente.replace("Paralelo ", "").strip()
+                        if len(nombre_limpio) == 1 and nombre_limpio.isalpha():
+                            idx = ord(nombre_limpio.upper()) - ord('A') + 1
+                        elif len(nombre_limpio) >= 2 and nombre_limpio[0].isalpha() and nombre_limpio[1:].isdigit():
+                            idx = 26 + (int(nombre_limpio[1:]) - 1) * 26 + (ord(nombre_limpio[0].upper()) - ord('A')) + 1
+                        else:
+                            idx = 0
+                        indice_base = max(indice_base, idx)
+
                     numero_de_grupos = math.ceil(len(estudiantes_restantes) / capacidad)
                     grupos_poo = [
                         ParaleloBase(

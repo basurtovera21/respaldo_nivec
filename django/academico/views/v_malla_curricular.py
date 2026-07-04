@@ -37,7 +37,7 @@ def listar_mallas(request):
 
     mallas = MallaCurricular.objects.filter(
         carrera__campus__universidad=universidad_usuario
-    ).select_related("carrera").order_by("codigo_de_malla")
+    ).select_related("carrera__campus").order_by("codigo_de_malla")
 
     from usuarios.utils import obtener_rol_usuario
     rol = obtener_rol_usuario(request.user)
@@ -49,6 +49,12 @@ def listar_mallas(request):
         if perfil_admin and perfil_admin.carrera_asignada:
             mallas = mallas.filter(carrera=perfil_admin.carrera_asignada)
 
+    from academico.models import Campus
+    campus_disponibles = Campus.objects.filter(universidad=universidad_usuario).order_by("nombre")
+    campus_filtro = request.GET.get("campus", "")
+    if campus_filtro:
+        mallas = mallas.filter(carrera__campus_id=campus_filtro)
+
     carreras_disponibles = Carrera.objects.filter(campus__universidad=universidad_usuario).order_by("nombre")
     carrera_filtro = request.GET.get("carrera", "")
     if carrera_filtro:
@@ -57,6 +63,8 @@ def listar_mallas(request):
     return render(request, "academico/listar_mallas.html", {
         "solo_lectura": solo_lectura,
         "es_coordinador_ua": es_coordinador_ua,
+        "campus_disponibles": campus_disponibles,
+        "campus_filtro": campus_filtro,
         "carreras_disponibles": carreras_disponibles,
         "carrera_filtro": carrera_filtro,
         "mallas": mallas,
