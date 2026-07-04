@@ -93,7 +93,8 @@ def descargar_plantilla_estudiante(request):
         "Número de identificación", "Nombres", "Apellidos", "Correo institucional",
         "Jornada registrada (Matutina, Vespertina, Nocturna)", 
         "Registro de cupo (Registro regular, Segunda matrícula, Proceso de exoneración)", 
-        "Código de Carrera (CAR..)"
+        "Código de Carrera (CAR..)",
+        "Código de Periodo (PNV...)"
     ]
     ws.append(cabeceras)
     

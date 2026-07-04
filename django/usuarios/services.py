@@ -288,6 +288,7 @@ def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
 def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuario, periodo_de_nivelacion=None):
     from poo.clases.criterios_filtro.criterio_cedula_formato import CriterioCedulaFormato
     from poo.clases.servicios.depurador_de_sincronizacion import DepuradorDeSincronizacion
+    from academico.models import PeriodoDeNivelacion as PeriodoDB
 
     resultado = {
         "exitosos": 0,
@@ -304,7 +305,7 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
 
         registros = []
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-            tipo_id, ident, nom, ape, corr, jor, cupo, cod_carr = fila[:8]
+            tipo_id, ident, nom, ape, corr, jor, cupo, cod_carr, cod_periodo = (list(fila) + [None])[:9]
             if not any([tipo_id, ident, nom, ape, corr, jor, cupo, cod_carr]):
                 continue
             if not all([tipo_id, ident, nom, ape, corr, jor, cupo, cod_carr]):
@@ -320,6 +321,7 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
                 "jornada": str(jor).strip(),
                 "cupo": str(cupo).strip(),
                 "codigo_carrera": str(cod_carr).strip(),
+                "codigo_periodo": str(cod_periodo).strip() if cod_periodo else "",
             })
 
         depurador = DepuradorDeSincronizacion([CriterioCedulaFormato()])
@@ -339,6 +341,20 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
                     )
                     continue
 
+                # Determinar periodo: primero desde Excel, luego parámetro
+                periodo_asignado = None
+                if registro["codigo_periodo"]:
+                    periodo_asignado = PeriodoDB.objects.filter(
+                        codigo_periodo__iexact=registro["codigo_periodo"],
+                        universidad=universidad_usuario
+                    ).first()
+                if not periodo_asignado:
+                    periodo_asignado = periodo_de_nivelacion
+                if not periodo_asignado:
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {registro['fila']} fue omitido (periodo de nivelación no válido)"
+                    )
+                    continue
 
                 carrera = Carrera.objects.filter(
                     codigo_de_carrera__iexact=registro["codigo_carrera"], campus__universidad=universidad_usuario
@@ -371,7 +387,7 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
                         carrera_registrada=carrera,
                         campus_registrado=carrera.campus,
                         estado_de_matricula=EnumEstadoDeMatricula.MATRICULADO.value,
-                        periodo_de_nivelacion=periodo_de_nivelacion
+                        periodo_de_nivelacion=periodo_asignado
                     )
                     resultado["exitosos"] += 1
                     resultado["identificaciones_validas"].append(ident_str)
