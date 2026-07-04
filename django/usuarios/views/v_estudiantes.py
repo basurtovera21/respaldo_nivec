@@ -262,6 +262,11 @@ def formalizar_matricula(request, estudiante_id):
     with transaction.atomic():
         est_db.estado_de_matricula = est_poo._estado_de_matricula.value
         est_db.save()
+        # Restore access
+        usuario = est_db.usuario_de_sistema
+        usuario.estado_de_usuario = "Activo"
+        usuario.is_active = True
+        usuario.save()
         
     messages.success(request, "La matrícula del Estudiante ha sido formalizada correctamente")
     return redirect("listar_estudiantes")
@@ -284,6 +289,16 @@ def anular_matricula(request, estudiante_id):
     with transaction.atomic():
         est_db.estado_de_matricula = est_poo._estado_de_matricula.value
         est_db.save()
+        # Block access
+        usuario = est_db.usuario_de_sistema
+        usuario.estado_de_usuario = "Bloqueado"
+        usuario.is_active = False
+        usuario.save()
+        # Set evaluaciones to Anulado
+        from academico.models import EvaluacionAcademica
+        EvaluacionAcademica.objects.filter(
+            estudiante=est_db, estado_de_aprobacion="Pendiente"
+        ).update(estado_de_aprobacion="Anulado", observacion="Anulación de matrícula")
         
     messages.success(request, "La matrícula del Estudiante ha sido anulada correctamente")
     return redirect("listar_estudiantes")
@@ -305,6 +320,16 @@ def solicitar_retiro(request, estudiante_id):
         with transaction.atomic():
             est_db.estado_de_matricula = est_poo._estado_de_matricula.value
             est_db.save()
+            # Block access
+            usuario = est_db.usuario_de_sistema
+            usuario.estado_de_usuario = "Bloqueado"
+            usuario.is_active = False
+            usuario.save()
+            # Set evaluaciones to Retirado
+            from academico.models import EvaluacionAcademica
+            EvaluacionAcademica.objects.filter(
+                estudiante=est_db, estado_de_aprobacion="Pendiente"
+            ).update(estado_de_aprobacion="Retirado", observacion="Retiro académico")
         messages.success(request, "El retiro del Estudiante ha sido procesado correctamente")
     else:
         messages.warning(request, "No se ha podido procesar el retiro")
