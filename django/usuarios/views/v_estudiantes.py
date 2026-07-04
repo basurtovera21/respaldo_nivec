@@ -51,6 +51,18 @@ def listar_estudiantes(request):
             Q(usuario_de_sistema__apellidos__icontains=busqueda)
         )
 
+    from academico.models import Campus, Carrera
+    campus_disponibles = Campus.objects.filter(universidad=universidad_usuario).order_by("nombre")
+    carreras_disponibles = Carrera.objects.filter(campus__universidad=universidad_usuario).order_by("nombre")
+
+    campus_filtro = request.GET.get("campus", "")
+    if campus_filtro:
+        estudiantes = estudiantes.filter(campus_registrado_id=campus_filtro)
+
+    carrera_filtro = request.GET.get("carrera", "")
+    if carrera_filtro:
+        estudiantes = estudiantes.filter(carrera_registrada_id=carrera_filtro)
+
     estudiantes = estudiantes.select_related("usuario_de_sistema", "carrera_registrada", "campus_registrado").order_by("identificador_institucional")
 
     return render(request, "usuarios/listar_estudiantes.html", {
@@ -58,6 +70,10 @@ def listar_estudiantes(request):
         "busqueda": busqueda,
         "periodos": periodos,
         "periodo_seleccionado": periodo_seleccionado,
+        "campus_disponibles": campus_disponibles,
+        "carreras_disponibles": carreras_disponibles,
+        "campus_filtro": campus_filtro,
+        "carrera_filtro": carrera_filtro,
         "titulo_pagina": "Estudiante - NIVEC",
         "titulo": "Estudiantes",
         "url_registrar": "registrar_estudiante",
