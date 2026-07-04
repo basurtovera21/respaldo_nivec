@@ -63,7 +63,7 @@ def listar_administrativos(request):
             default=Value(1),
             output_field=IntegerField(),
         )
-    ).order_by("es_director", "-identificador_administrativo")
+    ).order_by("es_director", "identificador_administrativo")
 
     return render(request, "usuarios/listar_administrativos.html", {
         "administrativos": administrativos,

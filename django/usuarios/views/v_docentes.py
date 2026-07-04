@@ -36,7 +36,7 @@ def listar_docentes(request):
             Q(usuario_de_sistema__apellidos__icontains=busqueda)
         )
 
-    docentes = docentes.order_by("-identificador_institucional")
+    docentes = docentes.order_by("identificador_institucional")
 
     return render(request, "usuarios/listar_docentes.html", {
         "docentes": docentes,

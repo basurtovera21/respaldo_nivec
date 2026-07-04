@@ -51,7 +51,7 @@ def listar_estudiantes(request):
             Q(usuario_de_sistema__apellidos__icontains=busqueda)
         )
 
-    estudiantes = estudiantes.select_related("usuario_de_sistema", "carrera_registrada", "campus_registrado").order_by("-identificador_institucional")
+    estudiantes = estudiantes.select_related("usuario_de_sistema", "carrera_registrada", "campus_registrado").order_by("identificador_institucional")
 
     return render(request, "usuarios/listar_estudiantes.html", {
         "estudiantes": estudiantes,

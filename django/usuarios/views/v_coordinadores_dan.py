@@ -40,7 +40,7 @@ def listar_coordinadores_dan(request):
             Q(usuario_de_sistema__apellidos__icontains=busqueda)
         )
 
-    coordinadores = coordinadores.order_by("-identificador_coordinador_dan")
+    coordinadores = coordinadores.order_by("identificador_coordinador_dan")
 
     return render(request, "usuarios/listar_coordinadores_dan.html", {
         "coordinadores": coordinadores,
