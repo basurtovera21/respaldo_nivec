@@ -201,9 +201,12 @@ def inhabilitar_docente(request, docente_id):
         docente_db.estado_de_vinculacion = EnumEstadoDeVinculacion.INACTIVO.value
         docente_db.save()
         usuario = docente_db.usuario_de_sistema
-        usuario.estado_de_usuario = EnumEstadoDeUsuario.INACTIVO.value
-        usuario.is_active = False
-        usuario.save()
+        # Only block login if the user is NOT also a Coordinador UA
+        es_coordinador_ua = hasattr(usuario, 'perfil_administrativo') and usuario.perfil_administrativo.perfil_administrativo == "Coordinador de unidad académica"
+        if not es_coordinador_ua:
+            usuario.estado_de_usuario = EnumEstadoDeUsuario.INACTIVO.value
+            usuario.is_active = False
+            usuario.save()
 
     messages.success(request, "El Docente ha sido inhabilitado correctamente")
     return redirect("listar_docentes")
@@ -225,9 +228,11 @@ def habilitar_docente(request, docente_id):
         docente_db.estado_de_vinculacion = EnumEstadoDeVinculacion.ACTIVO.value
         docente_db.save()
         usuario = docente_db.usuario_de_sistema
-        usuario.estado_de_usuario = EnumEstadoDeUsuario.ACTIVO.value
-        usuario.is_active = True
-        usuario.save()
+        # Restore login regardless (safe to do)
+        if usuario.estado_de_usuario != EnumEstadoDeUsuario.ACTIVO.value:
+            usuario.estado_de_usuario = EnumEstadoDeUsuario.ACTIVO.value
+            usuario.is_active = True
+            usuario.save()
 
     messages.success(request, "El Docente ha sido habilitado correctamente")
     return redirect("listar_docentes")

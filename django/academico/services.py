@@ -1483,6 +1483,7 @@ def _texto_motivo_no_asignable(resultado):
 
 def servicio_evaluar_docentes_para_paralelo(paralelo_db):
     from usuarios.models import PerfilDocente
+    from poo.clases.enums.estado_de_vinculacion import EstadoDeVinculacion as EnumEstadoDeVinculacion
 
     periodo = paralelo_db.periodo_de_nivelacion
     unidad = paralelo_db.unidad_curricular
@@ -1494,6 +1495,7 @@ def servicio_evaluar_docentes_para_paralelo(paralelo_db):
     ).select_related("usuario_de_sistema").order_by(
         "usuario_de_sistema__apellidos", "usuario_de_sistema__nombres"
     )
+    docentes = docentes.exclude(estado_de_vinculacion=EnumEstadoDeVinculacion.INACTIVO.value)
 
     evaluaciones = []
     for docente_db in docentes:
