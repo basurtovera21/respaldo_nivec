@@ -255,7 +255,7 @@ def modificar_administrativo(request, admin_id):
         "subtitulo": f"{usuario.nombres} {usuario.apellidos}",
         "boton_texto": "Modificar",
         "url_cancelar": url_cancelar,
-        "url_volver": url_cancelar,
+        "url_volver": "panel_principal",
         "titulo_pagina": titulo_pagina,
         "mostrar_carga_masiva": False
     }

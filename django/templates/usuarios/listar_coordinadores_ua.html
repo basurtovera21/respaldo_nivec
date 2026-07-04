@@ -63,7 +63,7 @@
         {% endif %}
     </tr>
     {% empty %}
-    {% if not busqueda %}
+    {% if not busqueda and not campus_filtro and not carrera_filtro %}
     <tr>
         <td colspan="{% if solo_lectura %}11{% else %}12{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente

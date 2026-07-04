@@ -20,6 +20,7 @@
                 </option>
             {% endfor %}
         </select>
+        {% if not es_coordinador_ua %}
         <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Campus</span>
         <select name="campus" onchange="this.form.submit()"
                 style="padding: 8px 12px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit;">
@@ -87,7 +88,7 @@
         {% endif %}
     </tr>
     {% empty %}
-    {% if not busqueda and not periodo_seleccionado %}
+    {% if not busqueda and not periodo_seleccionado and not campus_filtro and not carrera_filtro %}
     <tr>
         <td colspan="{% if solo_lectura %}10{% else %}11{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente

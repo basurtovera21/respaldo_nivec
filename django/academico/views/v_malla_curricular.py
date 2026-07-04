@@ -46,7 +46,7 @@ def listar_mallas(request):
         "titulo": "Mallas curriculares",
         "url_registrar": "registrar_malla",
         "texto_registrar": "Registrar",
-        "url_volver": "panel_dan"
+        "url_volver": "panel_principal"
     })
 
 @requiere_perfil(*ROLES_MODIFICAN)
