@@ -126,7 +126,7 @@ def panel_ua(request):
 @login_required
 @never_cache
 def panel_administrativo(request):
-    from academico.models import Campus, Carrera, PeriodoDeNivelacion, MallaCurricular, UnidadCurricular
+    from academico.models import Campus, Carrera, PeriodoDeNivelacion, MallaCurricular, UnidadCurricular, ConsolidadoAcademico
     from usuarios.models import PerfilAdministrativo as PAModel, PerfilDocente, PerfilEstudiante
     from poo.clases.enums.perfil_administrativo import PerfilAdministrativo as EnumPA
     perfil = getattr(request.user, 'perfil_administrativo', None)
@@ -144,6 +144,7 @@ def panel_administrativo(request):
     tiene_estudiantes = PerfilEstudiante.objects.filter(carrera_registrada__campus__universidad=universidad).exists() if universidad else False
     tiene_algun_usuario = tiene_administrativos or tiene_coordinadores_dan or tiene_coordinadores_ua or tiene_docentes or tiene_estudiantes
     tiene_algun_institucional = tiene_campus or tiene_carreras or tiene_periodos
+    tiene_consolidados = ConsolidadoAcademico.objects.filter(periodo_academico__universidad=universidad).exists() if universidad else False
     return render(request, "administrativo/panel_administrativo.html", {
         "tiene_universidad": tiene_universidad,
         "tiene_campus": tiene_campus,
@@ -158,6 +159,7 @@ def panel_administrativo(request):
         "tiene_estudiantes": tiene_estudiantes,
         "tiene_algun_usuario": tiene_algun_usuario,
         "tiene_algun_institucional": tiene_algun_institucional,
+        "tiene_consolidados": tiene_consolidados,
     })
 
 @login_required

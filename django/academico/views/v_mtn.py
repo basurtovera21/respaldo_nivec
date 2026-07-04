@@ -113,12 +113,20 @@ def listar_consolidados(request):
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
+    periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario).order_by('-anio', '-numero_periodo')
+    periodo_filtro = request.GET.get("periodo", "")
+
     consolidados = ConsolidadoAcademico.objects.filter(
         periodo_academico__universidad=universidad_usuario
     ).select_related("periodo_academico")
 
+    if periodo_filtro:
+        consolidados = consolidados.filter(periodo_academico_id=periodo_filtro)
+
     return render(request, "academico/listar_consolidados.html", {
         "consolidados": consolidados,
+        "periodos": periodos,
+        "periodo_filtro": periodo_filtro,
         "solo_lectura": usuario_es_solo_lectura(request.user),
         "titulo_pagina": "Resumen de ingreso - NIVEC",
         "titulo": "Resumen de ingreso MTN",
