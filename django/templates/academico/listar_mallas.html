@@ -76,10 +76,12 @@
         </td>
     </tr>
     {% empty %}
+    {% if not carrera_filtro %}
     <tr>
         <td colspan="8" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>
+    {% endif %}
     {% endfor %}
 {% endblock %}

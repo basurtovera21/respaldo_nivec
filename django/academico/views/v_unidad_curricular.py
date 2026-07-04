@@ -34,28 +34,44 @@ def listar_unidades(request):
         messages.warning(request, "La Universidad no ha sido registrada actualmente")
         return redirect("panel_principal")
 
-    carrera_id = request.GET.get("carrera")
-    carreras = Carrera.objects.filter(
-        campus__universidad=universidad_usuario,
-        mallas_curriculares__isnull=False,
-    ).distinct()
+    from usuarios.utils import obtener_rol_usuario
+    rol = obtener_rol_usuario(request.user)
+    es_coordinador_ua = (rol == ROL_COORDINADOR_UA)
+
+    carreras_disponibles = Carrera.objects.filter(campus__universidad=universidad_usuario).order_by("nombre")
+    mallas_disponibles = MallaCurricular.objects.filter(carrera__campus__universidad=universidad_usuario).order_by("nombre")
+
+    carrera_filtro = request.GET.get("carrera", "")
+    malla_filtro = request.GET.get("malla", "")
+    busqueda = request.GET.get("busqueda", "").strip()
 
     unidades = UnidadCurricular.objects.filter(
         malla_curricular__carrera__campus__universidad=universidad_usuario
     ).select_related("malla_curricular__carrera")
 
-    if carrera_id:
-        unidades = unidades.filter(malla_curricular__carrera__id=carrera_id)
+    if es_coordinador_ua:
+        perfil_admin = getattr(request.user, 'perfil_administrativo', None)
+        if perfil_admin and perfil_admin.carrera_asignada:
+            unidades = unidades.filter(malla_curricular__carrera=perfil_admin.carrera_asignada)
 
-    carrera_seleccionada = None
-    if carrera_id:
-        carrera_seleccionada = carreras.filter(id=carrera_id).first()
+    if carrera_filtro:
+        unidades = unidades.filter(malla_curricular__carrera_id=carrera_filtro)
+    if malla_filtro:
+        unidades = unidades.filter(malla_curricular_id=malla_filtro)
+    if busqueda:
+        unidades = unidades.filter(nombre__icontains=busqueda)
+
+    solo_lectura = rol in (ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_UA)
 
     return render(request, "academico/listar_unidades.html", {
-        "solo_lectura": usuario_es_solo_lectura(request.user),
+        "solo_lectura": solo_lectura,
         "unidades": unidades,
-        "carreras": carreras,
-        "carrera_seleccionada": carrera_seleccionada,
+        "carreras_disponibles": carreras_disponibles,
+        "mallas_disponibles": mallas_disponibles,
+        "carrera_filtro": carrera_filtro,
+        "malla_filtro": malla_filtro,
+        "busqueda": busqueda,
+        "es_coordinador_ua": es_coordinador_ua,
         "titulo_pagina": "Unidad curricular - NIVEC",
         "titulo": "Unidades curriculares",
         "url_registrar": "registrar_unidad",
