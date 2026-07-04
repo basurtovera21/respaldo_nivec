@@ -42,7 +42,9 @@
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Código</th>
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Unidad curricular</th>
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Docente responsable</th>
+                {% if not solo_lectura or tiene_horario %}
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
+                {% endif %}
             </tr>
         </thead>
         <tbody>
@@ -57,6 +59,7 @@
                         <span style="color: #9db4c0;">Sin designación</span>
                     {% endif %}
                 </td>
+                {% if not solo_lectura or tiene_horario %}
                 <td style="text-align: left; white-space: nowrap;">
                     {% if not solo_lectura and tiene_horario %}
                     <a href="{% url 'asignar_docente_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Docente responsable</a>
@@ -66,6 +69,7 @@
                     <a href="{% url 'listar_evaluaciones_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Calificaciones</a>
                     {% endif %}
                 </td>
+                {% endif %}
             </tr>
             {% empty %}
             <tr>
