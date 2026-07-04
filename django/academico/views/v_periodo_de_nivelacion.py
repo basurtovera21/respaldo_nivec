@@ -6,9 +6,9 @@ from academico.models import PeriodoDeNivelacion
 from academico.forms import FormularioPeriodoDeNivelacion
 from academico import services
 
-from usuarios.utils import generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN
+from usuarios.utils import generar_identificador_siguiente, requiere_perfil, usuario_es_solo_lectura, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN, ROL_COORDINADOR_UA
 
-@requiere_perfil(ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN, ROL_COORDINADOR_UA)
 def listar_periodos(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
@@ -19,7 +19,7 @@ def listar_periodos(request):
 
     from usuarios.utils import obtener_rol_usuario
     rol = obtener_rol_usuario(request.user)
-    solo_lectura = rol in (ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN)
+    solo_lectura = rol in (ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN, ROL_COORDINADOR_UA)
 
     return render(request, "academico/listar_periodos.html", {
         "periodos": periodos,
@@ -44,7 +44,11 @@ def registrar_periodo(request):
             nuevo_periodo = formulario.save(commit=False)
             nuevo_periodo.universidad = universidad_usuario
             nuevo_periodo.codigo_periodo = generar_identificador_siguiente(PeriodoDeNivelacion, 'PNV', 'codigo_periodo')
+            nuevo_periodo.anio = nuevo_periodo.fecha_inicio.year
             nuevo_periodo.periodo = f"{nuevo_periodo.anio}-{nuevo_periodo.numero_periodo}"
+            # Calculate fecha_fin from fecha_inicio + semanas
+            from datetime import timedelta
+            nuevo_periodo.fecha_fin = nuevo_periodo.fecha_inicio + timedelta(days=nuevo_periodo.numero_de_semanas * 7)
             nuevo_periodo.save()
             
             messages.success(request, "El Periodo de nivelación ha sido registrado correctamente")
@@ -74,7 +78,10 @@ def modificar_periodo(request, periodo_id):
         formulario = FormularioPeriodoDeNivelacion(request.POST, instance=periodo, universidad=universidad_usuario)
         if formulario.is_valid():
             periodo_modificado = formulario.save(commit=False)
+            periodo_modificado.anio = periodo_modificado.fecha_inicio.year
             periodo_modificado.periodo = f"{periodo_modificado.anio}-{periodo_modificado.numero_periodo}"
+            from datetime import timedelta
+            periodo_modificado.fecha_fin = periodo_modificado.fecha_inicio + timedelta(days=periodo_modificado.numero_de_semanas * 7)
             periodo_modificado.save()
             messages.success(request, "El Periodo de nivelación ha sido modificado correctamente")
             return redirect("listar_periodos")
@@ -116,7 +123,7 @@ def iniciar_periodo(request, periodo_id):
     if services.servicio_iniciar_periodo_de_nivelacion(periodo_db):
         messages.success(request, f"El Periodo de nivelación {periodo_db.periodo} ha iniciado")
     else:
-        messages.error(request, "No se ha podido iniciar el Periodo de nivelación")
+        messages.error(request, "No se ha podido iniciar el Periodo de nivelación (Periodo de nivelación activo)")
         
     return redirect("listar_periodos")
 

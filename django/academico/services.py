@@ -209,6 +209,15 @@ def _construir_periodo(periodo_db):
 
 def servicio_iniciar_periodo_de_nivelacion(periodo_db):
     from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
+
+    # Validate only 1 periodo can be "En curso" at a time
+    periodos_en_curso = PeriodoDeNivelacion.objects.filter(
+        universidad=periodo_db.universidad,
+        estado=EstadoDePeriodo.EN_CURSO.value
+    ).exclude(pk=periodo_db.pk)
+    if periodos_en_curso.exists():
+        return False
+
     periodo_poo = _construir_periodo(periodo_db)
     facade = CentroDeOperacionAcademica()
     if facade.iniciar_periodo(periodo_poo):
@@ -279,7 +288,7 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
                 ).first()
                 if not carrera_obj:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (Código de Carrera no válido)"
+                        f"El registro de la fila {numero_fila} fue omitido (código de Carrera no válido)"
                     )
                     continue
 
@@ -300,7 +309,7 @@ def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
                 clave_malla = (carrera_obj.id, malla_poo.nombre.strip().lower())
                 if clave_malla in mallas_registradas:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (La Malla curricular ya existe)"
+                        f"El registro de la fila {numero_fila} fue omitido (la Malla curricular ya ha sido registrada)"
                     )
                     continue
 
@@ -356,15 +365,15 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
                 (codigo_malla, nombre, horas_totales,
-                 horas_sincronicas, horas_sincronicas_semanales, horas_asincronicas,
-                 criterio, porcentaje_asistencia) = fila[:8]
+                 horas_sincronicas, horas_asincronicas,
+                 criterio, porcentaje_asistencia) = fila[:7]
 
                 if not any([codigo_malla, nombre, horas_totales,
                             horas_sincronicas, horas_asincronicas]):
                     continue
 
                 if not all([codigo_malla, nombre, horas_totales,
-                            horas_sincronicas, horas_sincronicas_semanales, horas_asincronicas]):
+                            horas_sincronicas, horas_asincronicas]):
                     resultado["advertencias"].append(
                         f"El registro de la fila {numero_fila} fue omitido por falta de información"
                     )
@@ -373,21 +382,18 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                 try:
                     horas_totales_f = float(horas_totales)
                     horas_sincronicas_f = float(horas_sincronicas)
-                    horas_sincronicas_semanales_f = float(horas_sincronicas_semanales)
                     horas_asincronicas_f = float(horas_asincronicas)
                     criterio_f = float(criterio) if criterio is not None else 7.0
                     porcentaje_f = float(porcentaje_asistencia) if porcentaje_asistencia is not None else 70.0
                 except (ValueError, TypeError):
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (registro(s) no válido(s))"
+                        f"El registro de la fila {numero_fila} fue omitido (registros numéricos no válidos)"
                     )
                     continue
 
-                if (horas_sincronicas_semanales_f <= 0
-                        or horas_sincronicas_semanales_f != int(horas_sincronicas_semanales_f)
-                        or horas_sincronicas_semanales_f > horas_sincronicas_f):
+                if horas_sincronicas_f < 6:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (Horas sincrónicas semanales no válidas: entero, > 0 y <= sincrónicas totales)"
+                        f"El registro de la fila {numero_fila} fue omitido (las horas sincrónicas deben ser al menos 6)"
                     )
                     continue
 
@@ -396,20 +402,20 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                 ).first()
                 if not malla_obj:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (Código de Malla no válido)"
+                        f"El registro de la fila {numero_fila} fue omitido (código de Malla no válido)"
                     )
                     continue
 
                 if malla_obj.estado not in estados_editables:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (Estado no válido)"
+                        f"El registro de la fila {numero_fila} fue omitido (estado no válido)"
                     )
                     continue
 
                 clave_unidad = (malla_obj.id, str(nombre).strip().lower())
                 if clave_unidad in unidades_registradas:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (la Unidad curricular ya existe en la Malla especificada)"
+                        f"El registro de la fila {numero_fila} fue omitido (la Unidad curricular ya ha sido registrada en la Malla especificada)"
                     )
                     continue
 
@@ -440,7 +446,7 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                         nombre=unidad_poo.nombre,
                         horas_totales=unidad_poo.horas_totales,
                         horas_sincronicas=unidad_poo.horas_sincronicas,
-                        horas_sincronicas_semanales=horas_sincronicas_semanales_f,
+                        horas_sincronicas_semanales=0,
                         horas_asincronicas=unidad_poo.horas_asincronicas,
                         criterio_de_aprobacion=unidad_poo.criterio_de_aprobacion,
                         porcentaje_minimo_asistencia=unidad_poo.porcentaje_minimo_asistencia,
@@ -1434,11 +1440,11 @@ def _semanas_de_periodo(periodo_db):
 
 
 def _horas_sincronicas_semanales(unidad, periodo_db):
-    # Fuente de verdad: las horas sincrónicas SEMANALES definidas en la unidad.
-    # Retrocompatibilidad: si no se definieron, se derivan de las totales y las semanas.
-    if getattr(unidad, "horas_sincronicas_semanales", 0):
-        return round(unidad.horas_sincronicas_semanales, 2)
-    return round(unidad.horas_sincronicas / _semanas_de_periodo(periodo_db), 2)
+    import math
+    semanas = periodo_db.numero_de_semanas if hasattr(periodo_db, 'numero_de_semanas') and periodo_db.numero_de_semanas else _semanas_de_periodo(periodo_db)
+    if semanas <= 0:
+        return round(unidad.horas_sincronicas, 2)
+    return math.ceil(unidad.horas_sincronicas / semanas)
 
 
 def _construir_docente_poo_para_periodo(docente_db, periodo_db, paralelo_excluir_id=None):

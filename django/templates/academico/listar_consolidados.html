@@ -1,7 +1,20 @@
 {% extends "base_listar.html" %}
 
+{% block filtros %}
+<form method="get" style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+    <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Periodo</span>
+    <select name="periodo" onchange="this.form.submit()"
+            style="padding: 8px 12px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit;">
+        <option value=""></option>
+        {% for p in periodos %}
+        <option value="{{ p.id }}" {% if periodo_filtro == p.id|stringformat:"d" %}selected{% endif %}>{{ p.periodo }} ({{ p.anio }})</option>
+        {% endfor %}
+    </select>
+</form>
+{% endblock %}
+
 {% block cabeceras_tabla %}
-    <th style="font-weight: bold; text-align: left; color: #5c6b73">Código de periodo</th>
+    <th style="font-weight: bold; text-align: left; color: #5c6b73">Código de Periodo</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Periodo de nivelación</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Fecha de corte</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Total de cupos aceptados</th>
@@ -22,10 +35,12 @@
         <td style="text-align: left; color: #1d1d1f;">{{ c.registros_observados }}</td>
     </tr>
     {% empty %}
+    {% if not periodo_filtro %}
     <tr>
         <td colspan="7" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>
+    {% endif %}
     {% endfor %}
 {% endblock %}

@@ -50,13 +50,25 @@
     </div>
     {% endif %}
 
-    {% if tiene_carreras %}
+    {% if tiene_mallas %}
     <div class="tarjeta">
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Estructura curricular</h2>
         <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Base curricular</p>
         <div class="acciones" style="margin-bottom: 0;">
             <a href="{% url 'listar_mallas' %}" class="boton boton-secundario">Mallas curriculares</a>
+            {% if tiene_unidades %}
             <a href="{% url 'listar_unidades' %}" class="boton boton-secundario">Unidades curriculares</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if tiene_consolidados %}
+    <div class="tarjeta">
+        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Matriz de tercer nivel</h2>
+        <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Registro y validación</p>
+        <div class="acciones" style="margin-bottom: 0;">
+            <a href="{% url 'listar_consolidados' %}" class="boton boton-secundario">Resumen de ingreso MTN</a>
         </div>
     </div>
     {% endif %}

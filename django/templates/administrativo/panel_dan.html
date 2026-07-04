@@ -50,7 +50,9 @@
         <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Parámetros curriculares</p>
         <div class="acciones" style="margin-bottom: 0;">
             <a href="{% url 'listar_mallas' %}" class="boton boton-secundario">Mallas curriculares</a>
+            {% if tiene_mallas %}
             <a href="{% url 'listar_unidades' %}" class="boton boton-secundario">Unidades curriculares</a>
+            {% endif %}
         </div>
     </div>
 

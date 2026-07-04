@@ -60,33 +60,39 @@ def panel_director_dan(request):
     if perfil and perfil.universidad:
         tiene_universidad = True
 
-    from academico.models import Campus, Carrera, PeriodoDeNivelacion
+    from academico.models import Campus, Carrera, PeriodoDeNivelacion, MallaCurricular, UnidadCurricular
     tiene_campus = Campus.objects.filter(universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
     tiene_carreras = Carrera.objects.filter(campus__universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
     tiene_periodos = PeriodoDeNivelacion.objects.filter(universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
+    tiene_mallas = MallaCurricular.objects.filter(carrera__campus__universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
+    tiene_unidades = UnidadCurricular.objects.filter(malla_curricular__carrera__campus__universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
 
     return render(request, "administrativo/panel_director_dan.html", {
         "tiene_universidad": tiene_universidad,
         "tiene_campus": tiene_campus,
         "tiene_carreras": tiene_carreras,
         "tiene_periodos": tiene_periodos,
+        "tiene_mallas": tiene_mallas,
+        "tiene_unidades": tiene_unidades,
     })
 
 @login_required
 @never_cache
 def panel_dan(request):
-    from academico.models import Campus, Carrera, PeriodoDeNivelacion
+    from academico.models import Campus, Carrera, PeriodoDeNivelacion, MallaCurricular
     perfil = getattr(request.user, 'perfil_administrativo', None)
     universidad = perfil.universidad if perfil else None
     tiene_universidad = universidad is not None
     tiene_campus = Campus.objects.filter(universidad=universidad).exists() if universidad else False
     tiene_carreras = Carrera.objects.filter(campus__universidad=universidad).exists() if universidad else False
     tiene_periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad).exists() if universidad else False
+    tiene_mallas = MallaCurricular.objects.filter(carrera__campus__universidad=universidad).exists() if universidad else False
     return render(request, "administrativo/panel_dan.html", {
         "tiene_universidad": tiene_universidad,
         "tiene_campus": tiene_campus,
         "tiene_carreras": tiene_carreras,
         "tiene_periodos": tiene_periodos,
+        "tiene_mallas": tiene_mallas,
     })
 
 @login_required
@@ -100,12 +106,13 @@ def panel_ua(request):
     carrera = perfil.carrera_asignada
     universidad = perfil.universidad
 
-    from academico.models import PeriodoDeNivelacion, Carrera as CarreraModel
+    from academico.models import PeriodoDeNivelacion, Carrera as CarreraModel, MallaCurricular
     from usuarios.models import PerfilEstudiante
 
     tiene_periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad).exists() if universidad else False
     tiene_carreras = CarreraModel.objects.filter(campus__universidad=universidad).exists() if universidad else False
     tiene_estudiantes = PerfilEstudiante.objects.filter(carrera_registrada=carrera).exists() if carrera else False
+    tiene_mallas = MallaCurricular.objects.filter(carrera__campus__universidad=universidad).exists() if universidad else False
 
     return render(request, "administrativo/panel_ua.html", {
         "perfil": perfil,
@@ -113,12 +120,13 @@ def panel_ua(request):
         "tiene_periodos": tiene_periodos,
         "tiene_carreras": tiene_carreras,
         "tiene_estudiantes": tiene_estudiantes,
+        "tiene_mallas": tiene_mallas,
     })
 
 @login_required
 @never_cache
 def panel_administrativo(request):
-    from academico.models import Campus, Carrera, PeriodoDeNivelacion
+    from academico.models import Campus, Carrera, PeriodoDeNivelacion, MallaCurricular, UnidadCurricular, ConsolidadoAcademico
     from usuarios.models import PerfilAdministrativo as PAModel, PerfilDocente, PerfilEstudiante
     from poo.clases.enums.perfil_administrativo import PerfilAdministrativo as EnumPA
     perfil = getattr(request.user, 'perfil_administrativo', None)
@@ -127,6 +135,8 @@ def panel_administrativo(request):
     tiene_campus = Campus.objects.filter(universidad=universidad).exists() if universidad else False
     tiene_carreras = Carrera.objects.filter(campus__universidad=universidad).exists() if universidad else False
     tiene_periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad).exists() if universidad else False
+    tiene_mallas = MallaCurricular.objects.filter(carrera__campus__universidad=universidad).exists() if universidad else False
+    tiene_unidades = UnidadCurricular.objects.filter(malla_curricular__carrera__campus__universidad=universidad).exists() if universidad else False
     tiene_administrativos = PAModel.objects.filter(universidad=universidad).exclude(perfil_administrativo__in=[EnumPA.COORDINADOR_DAN.value, EnumPA.COORDINADOR_UA.value]).exists() if universidad else False
     tiene_coordinadores_dan = PAModel.objects.filter(universidad=universidad, perfil_administrativo=EnumPA.COORDINADOR_DAN.value).exists() if universidad else False
     tiene_coordinadores_ua = PAModel.objects.filter(universidad=universidad, perfil_administrativo=EnumPA.COORDINADOR_UA.value).exists() if universidad else False
@@ -134,11 +144,14 @@ def panel_administrativo(request):
     tiene_estudiantes = PerfilEstudiante.objects.filter(carrera_registrada__campus__universidad=universidad).exists() if universidad else False
     tiene_algun_usuario = tiene_administrativos or tiene_coordinadores_dan or tiene_coordinadores_ua or tiene_docentes or tiene_estudiantes
     tiene_algun_institucional = tiene_campus or tiene_carreras or tiene_periodos
+    tiene_consolidados = ConsolidadoAcademico.objects.filter(periodo_academico__universidad=universidad).exists() if universidad else False
     return render(request, "administrativo/panel_administrativo.html", {
         "tiene_universidad": tiene_universidad,
         "tiene_campus": tiene_campus,
         "tiene_carreras": tiene_carreras,
         "tiene_periodos": tiene_periodos,
+        "tiene_mallas": tiene_mallas,
+        "tiene_unidades": tiene_unidades,
         "tiene_administrativos": tiene_administrativos,
         "tiene_coordinadores_dan": tiene_coordinadores_dan,
         "tiene_coordinadores_ua": tiene_coordinadores_ua,
@@ -146,6 +159,7 @@ def panel_administrativo(request):
         "tiene_estudiantes": tiene_estudiantes,
         "tiene_algun_usuario": tiene_algun_usuario,
         "tiene_algun_institucional": tiene_algun_institucional,
+        "tiene_consolidados": tiene_consolidados,
     })
 
 @login_required

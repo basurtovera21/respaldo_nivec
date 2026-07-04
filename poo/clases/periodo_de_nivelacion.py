@@ -93,3 +93,15 @@ class PeriodoDeNivelacion:
             "Duración (en semanas)": self.calcular_duracion_semanas(),
             "Estado": self._estado.value,
         }
+
+    @staticmethod
+    def validar_unico_en_curso(periodos_en_curso_count: int) -> bool:
+        return periodos_en_curso_count == 0
+
+    def validar_numero_de_semanas(self) -> str:
+        semanas = getattr(self, '_numero_de_semanas', None) or self.calcular_duracion_semanas()
+        if semanas < 6:
+            return "El periodo debe tener un mínimo de 6 semanas"
+        if semanas > 12:
+            return "El periodo no puede exceder las 12 semanas"
+        return ""
