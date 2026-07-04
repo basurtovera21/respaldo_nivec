@@ -36,7 +36,7 @@
             <option value="{{ car.id }}" {% if carrera_filtro == car.id|stringformat:"d" %}selected{% endif %}>{{ car.nombre }}</option>
             {% endfor %}
         </select>
-        <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Nombre o Apellidos..."
+        <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Apellidos y Nombres..."
                oninput="this.form.submit()"
                style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; min-width: 300px; font-weight: 500; font-family: inherit;">
     </form>
@@ -79,7 +79,7 @@
                 <a href="{% url 'solicitar_retiro' est.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-naranja">Retirar</a>
                 <a href="{% url 'anular_matricula' est.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-naranja">Anular</a>
             {% else %}
-                <a href="{% url 'formalizar_matricula' est.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-naranja">Matricular</a>
+                <a href="{% url 'formalizar_matricula' est.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-naranja">Reincorporar</a>
             {% endif %}
 
             <a href="{% url 'eliminar_estudiante' est.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-eliminar">Eliminar</a>

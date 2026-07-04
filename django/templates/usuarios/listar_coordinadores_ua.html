@@ -18,7 +18,7 @@
         <option value="{{ car.id }}" {% if carrera_filtro == car.id|stringformat:"d" %}selected{% endif %}>{{ car.nombre }}</option>
         {% endfor %}
     </select>
-    <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Nombre o Apellidos..."
+    <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Apellidos y Nombres..."
            oninput="this.form.submit()"
            style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; min-width: 300px; font-weight: 500; font-family: inherit;">
 </form>
@@ -29,11 +29,11 @@
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Apellidos y Nombres</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Correo institucional</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Número de identificador UA</th>
-    <th style="font-weight: bold; text-align: left; color: #5c6b73">Campus</th>
+    <th style="font-weight: bold; text-align: left; color: #5c6b73">Campus asignado</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Carrera asignada</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Tipo de vinculación</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Tiempo de dedicación</th>
-    <th style="font-weight: bold; text-align: left; color: #5c6b73">Carga horaria máxima</th>
+    <th style="font-weight: bold; text-align: left; color: #5c6b73">Carga horaria máxima (horas)</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Jornada</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Estado de usuario</th>
     {% if not solo_lectura %}

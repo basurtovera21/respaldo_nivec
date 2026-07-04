@@ -27,7 +27,7 @@ def listar_estudiantes(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
 
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     periodos = PeriodoDeNivelacion.objects.filter(
@@ -102,7 +102,7 @@ def descargar_plantilla_estudiante(request):
         ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 40
     
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="formato_estudiantes_nivec.xlsx"'
+    response['Content-Disposition'] = 'attachment; filename="estudiante_documento_nivec.xlsx"'
     wb.save(response)
     return response
 
@@ -110,7 +110,7 @@ def descargar_plantilla_estudiante(request):
 def registrar_estudiante(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
     
     if not PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario).exists():
@@ -188,7 +188,7 @@ def registrar_estudiante(request):
 def modificar_estudiante(request, estudiante_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
     
     if not PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario).exists():
@@ -251,7 +251,7 @@ def eliminar_estudiante(request, estudiante_id):
 def formalizar_matricula(request, estudiante_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     est_db = get_object_or_404(PerfilEstudiante, id=estudiante_id, carrera_registrada__campus__universidad=universidad_usuario)
@@ -267,14 +267,14 @@ def formalizar_matricula(request, estudiante_id):
         usuario.is_active = True
         usuario.save()
         
-    messages.success(request, "La matrícula del Estudiante ha sido formalizada correctamente")
+    messages.success(request, "La matrícula del Estudiante ha sido reincorporada correctamente")
     return redirect("listar_estudiantes")
 
 @requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)
 def anular_matricula(request, estudiante_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     est_db = get_object_or_404(
@@ -306,7 +306,7 @@ def anular_matricula(request, estudiante_id):
 def solicitar_retiro(request, estudiante_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     est_db = get_object_or_404(

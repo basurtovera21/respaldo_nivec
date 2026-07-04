@@ -17,7 +17,7 @@ def validar_jornadas_continuas(jornadas):
     if any(j not in _JORNADAS_ORDENADAS for j in jornadas):
         return "Jornada no válida"
     if len(jornadas) > 2:
-        return "La especificación de la Jornada no es continua"
+        return "Jornada no válida"
     indices = sorted(_JORNADAS_ORDENADAS.index(j) for j in jornadas)
     if len(indices) == 2 and indices[1] - indices[0] != 1:
         return "La especificación de la Jornada no es continua"

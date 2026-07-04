@@ -95,7 +95,7 @@ def descargar_plantilla_administrativo(request):
         ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 40
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="administrativos_documento_nivec.xlsx"'
+    response['Content-Disposition'] = 'attachment; filename="administrativo_documento_nivec.xlsx"'
     wb.save(response)
     return response
 

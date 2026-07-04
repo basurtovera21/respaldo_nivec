@@ -176,7 +176,7 @@ def servicio_coordinador_ua_registrar_masivo_desde_excel(archivo, universidad_us
                 try: UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
                 except ValueError as e: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})"); continue
                 if not UsuarioDeSistemaBase.validar_correo_institucional(correo_str):
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Correo institucional no válido)"); continue
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (correo institucional no válido)"); continue
                 if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (el Coordinador de unidad académica ya ha sido registrado)"); continue
                 if UsuarioDeSistema.objects.filter(correo_institucional__iexact=correo_str).exists():
@@ -242,7 +242,7 @@ def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
                     continue
 
                 if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
-                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (el Docente ya se encuentra registrado)")
+                    resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (el Docente ya ha sido registrado)")
                     continue
                 
                 from usuarios.forms import validar_jornadas_continuas
@@ -329,7 +329,7 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
 
         for registro in depurador.registros_con_observaciones:
             resultado["advertencias"].append(
-                f"El registro de la fila {registro['fila']} fue omitido (Número de cédula no válido)"
+                f"El registro de la fila {registro['fila']} fue omitido (número de cédula no válido)"
             )
 
         for registro in depurador.registros_validos:
@@ -337,7 +337,7 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
                 ident_str = registro["cedula"]
                 if UsuarioDeSistema.objects.filter(identificacion=ident_str).exists():
                     resultado["advertencias"].append(
-                        f"El registro de la fila {registro['fila']} fue omitido (el Estudiante ya se encuentra registrado)"
+                        f"El registro de la fila {registro['fila']} fue omitido (el Estudiante ya ha sido registrado)"
                     )
                     continue
 
@@ -352,7 +352,7 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
                     periodo_asignado = periodo_de_nivelacion
                 if not periodo_asignado:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {registro['fila']} fue omitido (periodo de nivelación no válido)"
+                        f"El registro de la fila {registro['fila']} fue omitido (Periodo de nivelación no válido)"
                     )
                     continue
 
@@ -399,7 +399,7 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
                 elif cupo_val == EnumRegistroDeCupo.EXONERACION.value:
                     resultado["clasificacion"]["exoneracion"] += 1
             except Exception as e:
-                resultado["advertencias"].append(f"Fila {registro['fila']} omitida ({str(e)})")
+                resultado["advertencias"].append(f"El registro de la fila {registro['fila']} fue omitido ({str(e)})")
     except Exception:
         resultado["error"] = "Ha ocurrido un error al procesar el documento"
 
