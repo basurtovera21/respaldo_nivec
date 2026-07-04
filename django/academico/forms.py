@@ -342,6 +342,31 @@ class FormularioUnidadCurricular(forms.ModelForm):
                     {"La Unidad curricular ya ha sido registrada en la Malla curricular especificada"}
                 )
 
+        # Validar que la malla no exceda el límite de horas sincrónicas semanales (20h)
+        if malla and horas_sincronicas:
+            from poo.clases.franja_horaria import validar_malla_cabe_en_horario, SEMANAS_REFERENCIA_MINIMA
+            from django.db.models import Sum
+
+            # Sumar horas sincrónicas de las unidades existentes en la malla
+            horas_existentes_qs = UnidadCurricular.objects.filter(malla_curricular=malla)
+            if self.instance and self.instance.pk:
+                horas_existentes_qs = horas_existentes_qs.exclude(pk=self.instance.pk)
+            suma_existente = horas_existentes_qs.aggregate(
+                total=Sum("horas_sincronicas")
+            )["total"] or 0.0
+
+            total_con_nueva = suma_existente + float(horas_sincronicas)
+            validacion = validar_malla_cabe_en_horario(total_con_nueva, SEMANAS_REFERENCIA_MINIMA)
+
+            if not validacion["ok"]:
+                raise forms.ValidationError({
+                    "horas_sincronicas": (
+                        f"La Malla curricular excede el límite de horas sincrónicas semanales permitido. "
+                        f"Con esta unidad la malla requiere {validacion['horas_semanales']}h semanales "
+                        f"(máximo {validacion['limite']}h con {SEMANAS_REFERENCIA_MINIMA} semanas de periodo)"
+                    )
+                })
+
         return cleaned_data
 
 
@@ -366,7 +391,7 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
         }
         widgets = {
             "fecha_inicio": forms.DateInput(attrs={"type": "date"}, format='%Y-%m-%d'), 
-            "numero_de_semanas": forms.NumberInput(attrs={"min": 6, "max": 12}),
+            "numero_de_semanas": forms.NumberInput(attrs={"min": 8, "max": 16}),
             "numero_periodo": forms.NumberInput(attrs={"min": 1, "max": 2})
         }
 
@@ -423,8 +448,8 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
         anio_calculado = fecha_de_inicio.year if fecha_de_inicio else None
 
         # Validate numero_de_semanas range
-        if numero_semanas is not None and numero_semanas not in range(6, 13):
-            errores["numero_de_semanas"] = "Debe ser entre 6 y 12 semanas"
+        if numero_semanas is not None and numero_semanas not in range(8, 17):
+            errores["numero_de_semanas"] = "Debe ser entre 8 y 16 semanas"
 
         # Calculate fecha_fin for overlap validation
         if fecha_de_inicio and numero_semanas:

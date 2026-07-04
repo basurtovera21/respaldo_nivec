@@ -437,6 +437,23 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
                     )
                     continue
 
+                # Validar límite de horas sincrónicas semanales de la malla (20h)
+                from poo.clases.franja_horaria import validar_malla_cabe_en_horario, SEMANAS_REFERENCIA_MINIMA
+                from django.db.models import Sum
+
+                suma_existente = UnidadCurricular.objects.filter(
+                    malla_curricular=malla_obj
+                ).aggregate(total=Sum("horas_sincronicas"))["total"] or 0.0
+                total_con_nueva = suma_existente + horas_sincronicas_f
+                validacion_malla = validar_malla_cabe_en_horario(total_con_nueva, SEMANAS_REFERENCIA_MINIMA)
+
+                if not validacion_malla["ok"]:
+                    resultado["advertencias"].append(
+                        f"El registro de la fila {numero_fila} fue omitido "
+                        f"(la Malla excede el límite de {validacion_malla['limite']}h sincrónicas semanales)"
+                    )
+                    continue
+
                 with transaction.atomic():
                     UnidadCurricular.objects.create(
                         malla_curricular=malla_obj,
@@ -663,6 +680,24 @@ def servicio_cambiar_estado_malla(malla_db, accion):
     malla_poo = _construir_malla_poo(malla_db)
 
     if accion == "activar":
+        # Validar que la malla no exceda el límite de horas sincrónicas semanales (20h)
+        from poo.clases.franja_horaria import validar_malla_cabe_en_horario, SEMANAS_REFERENCIA_MINIMA
+        from django.db.models import Sum
+
+        total_sincronicas = malla_db.unidades_curriculares.aggregate(
+            total=Sum("horas_sincronicas")
+        )["total"] or 0.0
+
+        validacion = validar_malla_cabe_en_horario(total_sincronicas, SEMANAS_REFERENCIA_MINIMA)
+        if not validacion["ok"]:
+            return (
+                False,
+                f"La Malla curricular no se ha podido habilitar. "
+                f"Requiere {validacion['horas_semanales']}h sincrónicas semanales "
+                f"y el máximo permitido es {validacion['limite']}h "
+                f"(con {SEMANAS_REFERENCIA_MINIMA} semanas de periodo)"
+            )
+
         otra_activa = MallaCurricular.objects.filter(
             carrera=malla_db.carrera,
             estado=EstadoDeMalla.ACTIVA.value,
