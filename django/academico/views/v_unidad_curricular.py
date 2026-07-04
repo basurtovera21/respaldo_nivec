@@ -47,6 +47,8 @@ def listar_unidades(request):
     if carrera_id:
         unidades = unidades.filter(malla_curricular__carrera__id=carrera_id)
 
+    unidades = unidades.order_by("codigo_de_unidad")
+
     carrera_seleccionada = None
     if carrera_id:
         carrera_seleccionada = carreras.filter(id=carrera_id).first()
@@ -76,7 +78,7 @@ def listar_unidades_de_malla(request, malla_id):
 
     unidades = UnidadCurricular.objects.filter(
         malla_curricular=malla
-    ).select_related("malla_curricular")
+    ).select_related("malla_curricular").order_by("codigo_de_unidad")
 
     return render(request, "academico/listar_unidades.html", {
         "solo_lectura": usuario_es_solo_lectura(request.user),

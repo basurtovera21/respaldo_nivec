@@ -37,7 +37,7 @@ def listar_mallas(request):
 
     mallas = MallaCurricular.objects.filter(
         carrera__campus__universidad=universidad_usuario
-    ).select_related("carrera")
+    ).select_related("carrera").order_by("codigo_de_malla")
 
     return render(request, "academico/listar_mallas.html", {
         "solo_lectura": usuario_es_solo_lectura(request.user),
