@@ -37,6 +37,7 @@
             <option value="{{ car.id }}" {% if carrera_filtro == car.id|stringformat:"d" %}selected{% endif %}>{{ car.nombre }}</option>
             {% endfor %}
         </select>
+        {% endif %}
         <input type="text" name="busqueda" value="{{ busqueda }}" placeholder="Apellidos y Nombres..."
                oninput="this.form.submit()"
                style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; min-width: 300px; font-weight: 500; font-family: inherit;">
