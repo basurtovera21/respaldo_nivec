@@ -39,7 +39,7 @@ def descargar_plantilla_mtn(request):
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-    response["Content-Disposition"] = 'attachment; filename="formato_mtn_nivec.xlsx"'
+    response["Content-Disposition"] = 'attachment; filename="mtn_documento_nivec.xlsx"'
     wb.save(response)
     return response
 
@@ -47,7 +47,7 @@ def descargar_plantilla_mtn(request):
 def procesar_mtn(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     periodos = PeriodoDeNivelacion.objects.filter(
@@ -88,12 +88,12 @@ def procesar_mtn(request):
             clasificacion = resultado["clasificacion"]
             messages.success(
                 request,
-                f"{resultado['exitosos']} partícipes registrados ({clasificacion['regular']} regulares, {clasificacion['segunda']} segunda matrícula, {clasificacion['exoneracion']} proceso de exoneración). {resultado['observados']} registros observados"
+                f"{resultado['exitosos']} Partícipes registrados ({clasificacion['regular']} registros regulares, {clasificacion['segunda']} segunda matrícula, {clasificacion['exoneracion']} proceso de exoneración). {resultado['observados']} registros observados"
             )
         else:
             messages.warning(
                 request,
-                f"No se registraron partícipes nuevos. {resultado['observados']} registros observados"
+                f"No se registraron Partícipes nuevos. {resultado['observados']} registros observados"
             )
 
         return redirect("listar_consolidados")
@@ -110,7 +110,7 @@ def procesar_mtn(request):
 def listar_consolidados(request):
     universidad_usuario = request.user.perfil_administrativo.universidad
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario).order_by('-anio', '-numero_periodo')
@@ -128,7 +128,7 @@ def listar_consolidados(request):
         "periodos": periodos,
         "periodo_filtro": periodo_filtro,
         "solo_lectura": usuario_es_solo_lectura(request.user),
-        "titulo_pagina": "Resumen de ingreso - NIVEC",
+        "titulo_pagina": "Matriz de Tercer Nivel - NIVEC",
         "titulo": "Resumen de ingreso MTN",
         "url_registrar": "procesar_mtn",
         "texto_registrar": "Procesar Matriz de tercer nivel",

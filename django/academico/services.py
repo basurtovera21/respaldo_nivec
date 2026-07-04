@@ -393,7 +393,7 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
 
                 if horas_sincronicas_f < 6:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido (las horas sincrónicas deben ser al menos 6)"
+                        f"El registro de la fila {numero_fila} fue omitido (mínimo de horas sincrónicas no válido (6))"
                     )
                     continue
 
@@ -849,14 +849,14 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                 estado_de_matricula=EstadoDeMatricula.MATRICULADO.value,
             ).exists():
                 resumen["advertencias"].append(
-                    f"La Carrera de {carrera.nombre} tiene estudiantes registrados pero no cuenta con una Malla curricular activa"
+                    f"La Carrera {carrera.nombre} tiene estudiantes registrados pero no cuenta con una Malla curricular activa"
                 )
             continue
 
         unidades = list(malla.unidades_curriculares.all())
         if not unidades:
             resumen["advertencias"].append(
-                f"Los registros en la Carrera de {carrera.nombre} fueron omitidos (sin registros asociados)"
+                f"Los registros en la Carrera {carrera.nombre} fueron omitidos (sin registros asociados)"
             )
             continue
 
@@ -1078,7 +1078,7 @@ def servicio_retirar_estudiante_de_paralelo(estudiante_db, paralelo_db):
     carrera = paralelo_db.unidad_curricular.malla_curricular.carrera
 
     if not periodo_permite_gestion_matriculas(periodo):
-        return (False, "Solo se puede gestionar la matrícula en Periodos en planificación o en curso")
+        return (False, "No se ha podido administrar la matrícula")
 
     paralelos_grupo = _paralelos_del_grupo_de_estudiantes(paralelo_db)
     matriculas = MatriculaParalelo.objects.filter(estudiante=estudiante_db, paralelo__in=paralelos_grupo)
@@ -1097,13 +1097,13 @@ def servicio_agregar_estudiante_a_paralelo(estudiante_db, paralelo_db):
     carrera = paralelo_db.unidad_curricular.malla_curricular.carrera
 
     if not periodo_permite_gestion_matriculas(periodo):
-        return (False, "Solo se puede gestionar la matrícula en Periodos en planificación o en curso")
+        return (False, "No se ha podido administrar la matrícula")
 
     # Coherencia: mismo periodo, misma carrera y misma jornada.
     if (estudiante_db.periodo_de_nivelacion_id != periodo.id
             or estudiante_db.carrera_registrada_id != carrera.id
             or estudiante_db.jornada != paralelo_db.jornada):
-        return (False, "El Estudiante no es compatible con el Paralelo (Carrera o Jornada)")
+        return (False, "El Estudiante no es compatible con el Paralelo")
 
     # Solo estudiantes con matrícula activa (no retirados ni anulados).
     if estudiante_db.estado_de_matricula != EstadoDeMatricula.MATRICULADO.value:
@@ -1197,16 +1197,16 @@ def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, e
     from poo.clases.franja_horaria import sesion_dentro_de_franja, DURACIONES_VALIDAS, texto_franja
 
     if not periodo_en_planificacion(paralelo_db.periodo_de_nivelacion):
-        return (False, "Solo se pueden gestionar horarios en un Periodo en planificación")
+        return (False, "No se ha podido administrar el Horario")
 
     try:
         enum_dia = obtener_enum_flexible(DiaDeSemana, dia_semana)
     except ValueError:
-        return (False, "Día no válido")
+        return (False, "Registro no válido")
 
     # Una sola sesión de la misma unidad por día.
     if Horario.objects.filter(paralelo=paralelo_db, dia_semana=dia_semana).exists():
-        return (False, "La Unidad curricular ya tiene una sesión ese día (solo se permite una por día)")
+        return (False, "La Unidad curricular ya cuenta con una sesión en el día especificado")
 
     nuevo_horario_poo = HorarioPOO(
         dia_semana=enum_dia,
@@ -1224,7 +1224,7 @@ def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, e
         return (False, f"La sesión debe estar dentro de la franja de la jornada {paralelo_db.jornada} ({texto_franja(jornada)})")
 
     if nuevo_horario_poo.determinar_duracion_horas() not in DURACIONES_VALIDAS:
-        return (False, "La duración de la sesión debe ser de 1, 2 o 3 horas")
+        return (False, "La duración de la sesión no es válida (1 - 3 horas)")
 
     horarios_externos = [_construir_horario_poo(h) for h in _horarios_externos_para_paralelo(paralelo_db)]
 
@@ -1244,7 +1244,7 @@ def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, e
             )
         return (
             False,
-            "La sesión excede las horas sincrónicas semanales de la unidad curricular")
+            "La sesión excede el número de horas sincrónicas semanales de la Unidad curricular")
 
     Horario.objects.create(
         paralelo=paralelo_db,
@@ -1253,7 +1253,7 @@ def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, e
         hora_fin=hora_fin,
         espacio_de_imparticion=espacio,
     )
-    return (True, "El horario ha sido registrado correctamente")
+    return (True, "El Horario ha sido registrado correctamente")
 
 
 def _sugerir_bloque_libre(dia_poo, franja_inicio, franja_fin, bloque_horas, ocupados):
@@ -1340,7 +1340,7 @@ def _generar_horario_para_unidad(paralelo_unidad_db):
 def servicio_generar_horario_sugerido(representativo_db):
     # Genera el horario de TODO el paralelo lógico (todas sus unidades), de forma simétrica.
     if not periodo_en_planificacion(representativo_db.periodo_de_nivelacion):
-        return (False, "Solo se pueden gestionar horarios en un Periodo en planificación")
+        return (False, "No se ha podido administrar los Horarios")
     unidades = list(
         _paralelos_del_grupo_de_estudiantes(representativo_db).select_related("unidad_curricular")
     )
@@ -1354,14 +1354,14 @@ def servicio_generar_horario_sugerido(representativo_db):
             faltantes.append((row.unidad_curricular.nombre, faltante))
 
     if total_creados == 0 and not faltantes:
-        return (False, "El horario ya cubre las horas sincrónicas semanales de todas las unidades")
+        return (False, "El Horario ya cubre las horas sincrónicas semanales de las Unidades curriculares")
     if total_creados == 0:
-        return (False, "No se encontraron espacios libres dentro de la franja para generar el horario")
+        return (False, "No se encontraron espacios libres dentro de la franja horaria para crear el Horario")
 
-    mensaje = f"Se generaron {total_creados} sesiones automáticamente"
+    mensaje = f"{total_creados} sesiones creadas de forma automática"
     if faltantes:
         detalle = "; ".join(f"{nombre} (faltan {horas} h)" for nombre, horas in faltantes)
-        mensaje += f". Sin espacio suficiente en la franja para: {detalle}"
+        mensaje += f". Espacio insuficiente en la franja horaria ({detalle})"
     return (True, mensaje)
 
 
@@ -1370,15 +1370,15 @@ def servicio_editar_horario(horario_db, dia_semana, hora_inicio, hora_fin, espac
 
     paralelo_db = horario_db.paralelo
     if not periodo_en_planificacion(paralelo_db.periodo_de_nivelacion):
-        return (False, "Solo se pueden gestionar horarios en un Periodo en planificación")
+        return (False, "No se ha podido administrar los Horarios")
     try:
         enum_dia = obtener_enum_flexible(DiaDeSemana, dia_semana)
     except ValueError:
-        return (False, "Día no válido")
+        return (False, "Registro de día no válido")
 
     # Una sola sesión de la misma unidad por día (excluyendo la sesión editada).
     if Horario.objects.filter(paralelo=paralelo_db, dia_semana=dia_semana).exclude(id=horario_db.id).exists():
-        return (False, "La Unidad curricular ya tiene una sesión ese día (solo se permite una por día)")
+        return (False, "La Unidad curricular ya cuenta con una sesión en el día especificado")
 
     nuevo = HorarioPOO(
         dia_semana=enum_dia, hora_inicio=hora_inicio, hora_fin=hora_fin,
@@ -1394,25 +1394,25 @@ def servicio_editar_horario(horario_db, dia_semana, hora_inicio, hora_fin, espac
 
     dur = nuevo.determinar_duracion_horas()
     if dur not in DURACIONES_VALIDAS:
-        return (False, "La duración de la sesión debe ser de 1, 2 o 3 horas")
+        return (False, "La duración de la sesión no es válida (1 - 3 horas)")
 
     propios = [_construir_horario_poo(h) for h in Horario.objects.filter(paralelo=paralelo_db).exclude(id=horario_db.id)]
     externos = [_construir_horario_poo(h) for h in _horarios_externos_para_paralelo(paralelo_db)]
     for o in propios + externos:
         if nuevo.verificar_conflicto_horario(o):
-            return (False, f"Conflicto horario en {o.dia_semana.value} {o.hora_inicio.strftime('%H:%M')}–{o.hora_fin.strftime('%H:%M')}")
+            return (False, f"Exite un conflicto horario ({o.dia_semana.value} {o.hora_inicio.strftime('%H:%M')}–{o.hora_fin.strftime('%H:%M')})")
 
     horas_otras = round(sum(h.determinar_duracion_horas() for h in propios), 2)
     requeridas = _horas_sincronicas_semanales(paralelo_db.unidad_curricular, paralelo_db.periodo_de_nivelacion)
     if horas_otras + dur > requeridas:
-        return (False, "La sesión excede las horas sincrónicas semanales de la unidad curricular")
+        return (False, "La sesión excede las horas sincrónicas semanales de la Unidad curricular")
 
     horario_db.dia_semana = dia_semana
     horario_db.hora_inicio = hora_inicio
     horario_db.hora_fin = hora_fin
     horario_db.espacio_de_imparticion = espacio
     horario_db.save()
-    return (True, "El horario ha sido actualizado correctamente")
+    return (True, "El Horario ha sido actualizado correctamente")
 
 def servicio_obtener_matriz_de_horarios(periodo_db, paralelos_db):
     from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
@@ -1475,17 +1475,17 @@ def _construir_docente_poo_para_periodo(docente_db, periodo_db, paralelo_excluir
 def _texto_motivo_no_asignable(resultado):
     motivo = resultado.get("motivo")
     if motivo == "inactivo":
-        return "El docente no está activo"
+        return "El Docente no se encuentra activo"
     if motivo == "conflicto":
         conflicto = resultado["horario_en_conflicto"]
         return (
-            f"Conflicto de Horario el día '{conflicto.dia_semana.value}'. {conflicto.hora_inicio}–{conflicto.hora_fin}"
+            f"Exite un conflicto horario ('{conflicto.dia_semana.value}'). {conflicto.hora_inicio}–{conflicto.hora_fin}"
         )
     if motivo == "carga":
         return (
-            f"Excede la carga máxima ({resultado['carga_actual']} + {resultado['horas_nuevas']} h > {resultado['carga_maxima']} h máx.)"
+            f"La asignación excede la carga horaria máxima"
         )
-    return "El Docente no puede ser asignado."
+    return "El Docente no ha podido ser asignado"
 
 def servicio_evaluar_docentes_para_paralelo(paralelo_db):
     from usuarios.models import PerfilDocente
@@ -1543,15 +1543,15 @@ def servicio_asignar_docente(paralelo_db, docente_db):
     horas_unidad = _horas_sincronicas_semanales(unidad, periodo)
 
     if not periodo_en_planificacion(periodo):
-        return (False, "Solo se puede asignar docentes en un Periodo en planificación", None)
+        return (False, "No se ha podido asignar al Docente", None)
 
     if not Horario.objects.filter(paralelo=paralelo_db).exists():
-        return (False, "Debe registrar el horario de la Unidad curricular antes de asignar un Docente", None)
+        return (False, "No existen Horarios de la Unidad curricular", None)
 
     # Exigir que el horario esté COMPLETO (horas agendadas >= horas semanales requeridas).
     horas_agendadas = servicio_horas_agendadas_paralelo(paralelo_db)
     if horas_agendadas < horas_unidad:
-        return (False, f"El horario de la Unidad curricular no está completo ({horas_agendadas}/{horas_unidad} h semanales)", None)
+        return (False, f"El Horario de la Unidad curricular no ha sido completado", None)
 
     docente_poo, carga_actual = _construir_docente_poo_para_periodo(
         docente_db, periodo, paralelo_excluir_id=paralelo_db.id
@@ -1559,7 +1559,7 @@ def servicio_asignar_docente(paralelo_db, docente_db):
     paralelo_poo = _construir_paralelo_poo_con_horarios(paralelo_db)
 
     if paralelo_db.jornada not in (docente_db.jornadas or []):
-        return (False, "El Docente no atiende la jornada del paralelo", None)
+        return (False, "El Docente no es compatible con la jornada del Paralelo", None)
 
     facade = CentroDeOperacionAcademica()
     resultado = facade.validar_asignacion_docente(docente_poo, paralelo_poo, horas_unidad)
@@ -1575,10 +1575,10 @@ def servicio_asignar_docente(paralelo_db, docente_db):
 
 def servicio_quitar_docente(paralelo_db):
     if not periodo_en_planificacion(paralelo_db.periodo_de_nivelacion):
-        return (False, "Solo se puede modificar la asignación en un Periodo en planificación")
+        return (False, "No se ha podido modificar al Docente")
     docente_db = paralelo_db.docente_responsable
     if not docente_db:
-        return (False, "El paralelo no tiene un docente designado actualmente")
+        return (False, "El Paralelo no tiene un docente designado actualmente")
 
     paralelo_db.docente_responsable = None
     paralelo_db.save(update_fields=["docente_responsable"])
@@ -1619,12 +1619,12 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
 
             # Validate non-empty identification
             if not identificacion_str:
-                resultado["advertencias"].append(f"Fila {numero_fila} omitida (identificación vacía)")
+                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (número de identificación vacía)")
                 continue
 
             # Validate that at least one grade is provided
             if parcial_1 is None and parcial_2 is None and asistencia is None:
-                resultado["advertencias"].append(f"Fila {numero_fila} omitida (sin calificaciones)")
+                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitida (sin registro de calificaciones)")
                 continue
 
             try:
@@ -1632,15 +1632,15 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
                 p2 = float(parcial_2) if parcial_2 is not None else 0.0
                 asist = float(asistencia) if asistencia is not None else 0.0
             except (ValueError, TypeError):
-                resultado["advertencias"].append(f"Fila {numero_fila} omitida (valores no válidos)")
+                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (registros numéricos no válidos)")
                 continue
 
             # Validate ranges
             if not (0 <= p1 <= 10) or not (0 <= p2 <= 10):
-                resultado["advertencias"].append(f"Fila {numero_fila} omitida (calificaciones deben estar entre 0 y 10)")
+                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (registro de calificaciones no válidos")
                 continue
             if not (0 <= asist <= 100):
-                resultado["advertencias"].append(f"Fila {numero_fila} omitida (asistencia debe estar entre 0 y 100)")
+                resultado["advertencias"].append(f"El registro de la fila{numero_fila} fue omitido (registro de asistencia no válido)")
                 continue
 
             # Find student
@@ -1649,7 +1649,7 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
                 estudiantes_matriculados__paralelo=paralelo_db,
             ).first()
             if not estudiante:
-                resultado["advertencias"].append(f"Fila {numero_fila} omitida (estudiante no encontrado en el paralelo)")
+                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Estudiante no registrado en el Paralelo)")
                 continue
 
             # Calculate final grade and status
@@ -1668,7 +1668,7 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
             ).first()
             if existing:
                 resultado["advertencias"].append(
-                    f"Fila {numero_fila}: el estudiante {identificacion_str} ya tiene calificaciones registradas (no se sobreescribe)"
+                    f"El registro de la fila {numero_fila} fue omitido (el Estudiante ya tiene calificaciones registradas)"
                 )
                 continue
 
