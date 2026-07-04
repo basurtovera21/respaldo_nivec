@@ -16,6 +16,7 @@
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Tipo de vinculación</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Tiempo de dedicación</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Carga horaria máxima</th>
+    <th style="font-weight: bold; text-align: left; color: #5c6b73">Jornada</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Estado de usuario</th>
     {% if not solo_lectura %}
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
@@ -32,6 +33,7 @@
         <td style="text-align: left;">{{ docente.tipo_de_vinculacion }}</td>
         <td style="text-align: left;">{{ docente.tiempo_de_dedicacion }}</td>
         <td style="text-align: left;">{{ docente.carga_horaria_maxima }}h</td>
+        <td style="text-align: left;">{{ docente.jornadas|join:", " }}</td>
         <td style="text-align: left;"><span style="font-weight: bold; color: #253237; font-size: 13px;">{{ docente.usuario_de_sistema.estado_de_usuario }}</span></td>
         {% if not solo_lectura %}
         <td style="text-align: left;">
@@ -55,7 +57,7 @@
     </tr>
     {% empty %}
     <tr>
-        <td colspan="{% if solo_lectura %}8{% else %}9{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
+        <td colspan="{% if solo_lectura %}9{% else %}10{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>

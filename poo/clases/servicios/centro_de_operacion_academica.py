@@ -57,8 +57,8 @@ class CentroDeOperacionAcademica:
     def verificar_disponibilidad_horaria(self, docente: Docente, horario):
         return docente.verificar_disponibilidad_horaria(horario)
 
-    def validar_asignacion_docente(self, docente: Docente, paralelo, horas_de_la_unidad, areas_de_unidad):
-        return docente.validar_asignacion_a_paralelo(paralelo, horas_de_la_unidad, areas_de_unidad)
+    def validar_asignacion_docente(self, docente: Docente, paralelo, horas_de_la_unidad):
+        return docente.validar_asignacion_a_paralelo(paralelo, horas_de_la_unidad)
 
 
 

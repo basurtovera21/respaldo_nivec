@@ -56,7 +56,6 @@ class PerfilDocente(models.Model):
     estado_de_vinculacion = models.CharField(max_length=50, choices=cambiar_enum_a_choices(EstadoDeVinculacion), default=EstadoDeVinculacion.ACTIVO.value, verbose_name="Estado de vinculación")
     carga_horaria_maxima = models.FloatField(default=20.0, verbose_name="Carga horaria máxima (en horas)")
     jornadas = models.JSONField(default=list, verbose_name="Jornadas disponibles")
-    especialidades = models.JSONField(default=list, verbose_name="Especialidades")
     class Meta:
         verbose_name = "Perfil docente"; verbose_name_plural = "Perfiles docentes"
     def __str__(self): return f"DOCENTE: {self.usuario_de_sistema.nombres} {self.usuario_de_sistema.apellidos}"

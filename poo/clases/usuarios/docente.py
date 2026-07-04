@@ -28,14 +28,13 @@ class Docente(UsuarioAcademico, IAsignableAHorario):
             **kwargs
         )
         
-        self.universidad = universidad
-        self.tipo_de_vinculacion = tipo_de_vinculacion
-        self.tiempo_de_dedicacion = tiempo_de_dedicacion
-        self.carga_horaria_maxima = carga_horaria_maxima
+        self._universidad = universidad
+        self._tipo_de_vinculacion = tipo_de_vinculacion
+        self._tiempo_de_dedicacion = tiempo_de_dedicacion
+        self._carga_horaria_maxima = carga_horaria_maxima
         
         self._estado_de_vinculacion = estado_vinculacion
         self._carga_horaria_actual = 0.0
-        self._especialidades = []
         self._disponibilidad_semanal = []
         
     @property
@@ -54,6 +53,26 @@ class Docente(UsuarioAcademico, IAsignableAHorario):
     def apellidos(self, value):
         self._apellidos = value
 
+    @property
+    def universidad(self):
+        return self._universidad
+        
+    @property
+    def tipo_de_vinculacion(self):
+        return self._tipo_de_vinculacion
+
+    @property
+    def tiempo_de_dedicacion(self):
+        return self._tiempo_de_dedicacion
+
+    @property
+    def carga_horaria_maxima(self):
+        return self._carga_horaria_maxima
+
+    @property
+    def estado_de_vinculacion(self):
+        return self._estado_de_vinculacion
+
     def iniciar_sesion(self):
         if self._estado_de_vinculacion.value == "Inactivo":
             return False
@@ -61,7 +80,6 @@ class Docente(UsuarioAcademico, IAsignableAHorario):
 
     def visualizar_carga_academica(self):
         horas_disponibles = self.carga_horaria_maxima - self._carga_horaria_actual
-        especialidades = ", ".join(self._especialidades) if self._especialidades else "No existen registros actualmente"
         
         return {
             "Docente": f"{self.nombres} {self.apellidos}",
@@ -69,7 +87,6 @@ class Docente(UsuarioAcademico, IAsignableAHorario):
             "Carga horaria actual": self._carga_horaria_actual,
             "Carga horaria máxima": self.carga_horaria_maxima,
             "Horas disponibles": horas_disponibles,
-            "Especialidades": especialidades
         }
 
     def inhabilitar(self):
@@ -87,9 +104,6 @@ class Docente(UsuarioAcademico, IAsignableAHorario):
     def establecer_estado_de_vinculacion(self, estado: EstadoDeVinculacion):
         self._estado_de_vinculacion = estado
 
-    def definir_especialidades(self, especialidades):
-        self._especialidades = list(especialidades or [])
-
     def registrar_carga_actual(self, horas: float):
         self._carga_horaria_actual = round(float(horas or 0), 2)
 
@@ -99,18 +113,7 @@ class Docente(UsuarioAcademico, IAsignableAHorario):
     def esta_activo(self):
         return self._estado_de_vinculacion == EstadoDeVinculacion.ACTIVO
 
-    def tiene_especialidad_para(self, areas_de_unidad):
-        if not areas_de_unidad:
-            return True
-        especialidades_normalizadas = {
-            str(esp).strip().lower() for esp in self._especialidades
-        }
-        return any(
-            str(area).strip().lower() in especialidades_normalizadas
-            for area in areas_de_unidad
-        )
-
-    def validar_asignacion_a_paralelo(self, paralelo, horas_de_la_unidad, areas_de_unidad):
+    def validar_asignacion_a_paralelo(self, paralelo, horas_de_la_unidad):
         if not self.esta_activo():
             return {"ok": False, "motivo": "inactivo"}
 
@@ -128,5 +131,4 @@ class Docente(UsuarioAcademico, IAsignableAHorario):
                 "carga_maxima": self.carga_horaria_maxima,
             }
 
-        advertencia = None if self.tiene_especialidad_para(areas_de_unidad) else "especialidad"
-        return {"ok": True, "motivo": "", "advertencia": advertencia}
+        return {"ok": True, "motivo": ""}
