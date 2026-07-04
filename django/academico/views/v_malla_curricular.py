@@ -37,7 +37,7 @@ def listar_mallas(request):
 
     mallas = MallaCurricular.objects.filter(
         carrera__campus__universidad=universidad_usuario
-    ).select_related("carrera")
+    ).select_related("carrera").order_by("codigo_de_malla")
 
     from usuarios.utils import obtener_rol_usuario
     rol = obtener_rol_usuario(request.user)

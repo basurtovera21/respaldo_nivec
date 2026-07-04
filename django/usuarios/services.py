@@ -305,7 +305,16 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
 
         registros = []
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-            tipo_id, ident, nom, ape, corr, cod_periodo, cod_carr, jor, cupo = (list(fila) + [None])[:9]
+            row_data = list(fila) + [None] * 4  # pad safely
+
+            if periodo_de_nivelacion is not None:
+                # MTN format: 8 columns (tipo_id, ident, nom, ape, corr, jor, cupo, cod_carr)
+                tipo_id, ident, nom, ape, corr, jor, cupo, cod_carr = row_data[:8]
+                cod_periodo = None
+            else:
+                # Student bulk format: 9 columns (tipo_id, ident, nom, ape, corr, cod_periodo, cod_carr, jor, cupo)
+                tipo_id, ident, nom, ape, corr, cod_periodo, cod_carr, jor, cupo = row_data[:9]
+
             if not any([tipo_id, ident, nom, ape, corr, jor, cupo, cod_carr]):
                 continue
             if not all([tipo_id, ident, nom, ape, corr, jor, cupo, cod_carr]):
