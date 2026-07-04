@@ -54,7 +54,7 @@ def descargar_plantilla_docente(request):
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Docentes"
-    cabeceras = ["Tipo de identificación (Cédula, Pasaporte, Cédula extranjera)", "Número de identificación", "Nombres", "Apellidos", "Correo institucional", "Tipo de vinculación (Nombramiento, Contrato, Ocasional, Honorario)", "Tiempo de dedicación (Tiempo completo, Medio tiempo, Tiempo parcial)", "Carga horaria máxima (número decimal)", "Especialidades (información separada por comas)", "Jornada (Matutina, Vespertina, Nocturna, (continua, información separada por comas)"]
+    cabeceras = ["Tipo de identificación (Cédula, Pasaporte, Cédula extranjera)", "Número de identificación", "Nombres", "Apellidos", "Correo institucional", "Tipo de vinculación (Nombramiento, Contrato, Ocasional, Honorario)", "Tiempo de dedicación (Tiempo completo, Medio tiempo, Tiempo parcial)", "Carga horaria máxima (número decimal)", "Jornada (Matutina, Vespertina, Nocturna, (continua, información separada por comas)"]
     ws.append(cabeceras)
     for col in range(1, len(cabeceras) + 1): 
         ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 40
@@ -100,7 +100,6 @@ def registrar_docente(request):
                     docente.identificador_institucional = generar_identificador_siguiente(PerfilDocente, "DC", 'identificador_institucional')
                     docente.estado_de_vinculacion = EnumEstadoDeVinculacion.ACTIVO.value
                     docente.universidad = universidad_usuario
-                    docente.especialidades = formulario_docente.cleaned_data.get('especialidades', [])
                     docente.jornadas = formulario_docente.cleaned_data.get('jornadas', [])
                     docente.save()
 
@@ -146,7 +145,6 @@ def modificar_docente(request, docente_id):
                 usuario_guardado.save()
                 
                 docente_guardado = formulario_docente.save(commit=False)
-                docente_guardado.especialidades = formulario_docente.cleaned_data.get('especialidades', [])
                 docente_guardado.jornadas = formulario_docente.cleaned_data.get('jornadas', [])
                 docente_guardado.save()
 

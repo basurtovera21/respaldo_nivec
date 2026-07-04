@@ -150,7 +150,7 @@ def servicio_coordinador_ua_registrar_masivo_desde_excel(archivo, universidad_us
         prefijo_ua = UsuarioAdministrativoBase.definir_prefijo_identificador(EnumPerfilAdministrativo.COORDINADOR_UA)
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
-                tipo_id, identificacion, nombres, apellidos, correo, codigo_carrera, tipo_vinc, tiempo_dedic, carga_max, especialidades_str, jornadas_str = fila[:11]
+                tipo_id, identificacion, nombres, apellidos, correo, codigo_carrera, tipo_vinc, tiempo_dedic, carga_max, jornadas_str = fila[:10]
                 if not any([tipo_id, identificacion, nombres, apellidos, correo, codigo_carrera]): continue
                 if not all([tipo_id, identificacion, nombres, apellidos, correo, codigo_carrera, tiempo_dedic, carga_max]):
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido por falta de información"); continue
@@ -169,7 +169,6 @@ def servicio_coordinador_ua_registrar_masivo_desde_excel(archivo, universidad_us
                 try: carga_max_float = float(carga_max)
                 except ValueError: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Carga horaria no válida)"); continue
                 from usuarios.forms import validar_jornadas_continuas
-                lista_especialidades = [e.strip() for e in str(especialidades_str).split(',') if e.strip()] if especialidades_str else []
                 lista_jornadas = [j.strip().capitalize() for j in str(jornadas_str).split(',') if j.strip()] if jornadas_str else []
                 error_jornadas = validar_jornadas_continuas(lista_jornadas)
                 if error_jornadas:
@@ -190,7 +189,7 @@ def servicio_coordinador_ua_registrar_masivo_desde_excel(archivo, universidad_us
                     usuario = UsuarioDeSistema.objects.create(tipo_de_identificacion=tipo_id_str, identificacion=identificacion_str, nombres=str(nombres).strip(), apellidos=str(apellidos).strip(), correo_institucional=correo_str, estado_de_usuario=EnumEstadoDeUsuario.ACTIVO.value)
                     usuario.set_password(identificacion_str); usuario.save()
                     PerfilAdministrativo.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_administrativo=generar_identificador_siguiente(PerfilAdministrativo, prefijo_ua, 'identificador_administrativo'), identificador_coordinador_ua=generar_identificador_siguiente(PerfilAdministrativo, prefijo_ua, 'identificador_coordinador_ua'), carrera_asignada=carrera_obj, perfil_administrativo=rol_fijo)
-                    PerfilDocente.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_institucional=generar_identificador_siguiente(PerfilDocente, "DC", 'identificador_institucional'), tipo_de_vinculacion=vinc_exacta or "", tiempo_de_dedicacion=dedic_exacta, carga_horaria_maxima=carga_max_float, estado_de_vinculacion=EnumEstadoDeVinculacion.ACTIVO.value, especialidades=lista_especialidades, jornadas=lista_jornadas)
+                    PerfilDocente.objects.create(usuario_de_sistema=usuario, universidad=universidad_usuario, identificador_institucional=generar_identificador_siguiente(PerfilDocente, "DC", 'identificador_institucional'), tipo_de_vinculacion=vinc_exacta or "", tiempo_de_dedicacion=dedic_exacta, carga_horaria_maxima=carga_max_float, estado_de_vinculacion=EnumEstadoDeVinculacion.ACTIVO.value, jornadas=lista_jornadas)
                     resultado["exitosos"] += 1
             except Exception as e: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})")
     except Exception: resultado["error"] = "Ha ocurrido un error al procesar el documento"
@@ -209,7 +208,7 @@ def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
 
         for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             try:
-                tipo_id, identificacion, nombres, apellidos, correo, tipo_vinc, tiempo_dedic, carga_max, especialidades_str, jornadas_str = fila[:10]
+                tipo_id, identificacion, nombres, apellidos, correo, tipo_vinc, tiempo_dedic, carga_max, jornadas_str = fila[:9]
                 
                 if not any([tipo_id, identificacion, nombres, apellidos, correo, tipo_vinc, tiempo_dedic, carga_max]):
                     continue
@@ -246,8 +245,6 @@ def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (el Docente ya se encuentra registrado)")
                     continue
                 
-                lista_especialidades = [esp.strip() for esp in str(especialidades_str).split(',') if esp.strip()] if especialidades_str else []
-
                 from usuarios.forms import validar_jornadas_continuas
                 lista_jornadas = [j.strip().capitalize() for j in str(jornadas_str).split(',') if j.strip()] if jornadas_str else []
                 error_jornadas = validar_jornadas_continuas(lista_jornadas)
@@ -275,7 +272,6 @@ def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
                         tiempo_de_dedicacion=dedic_validas[tiempo_dedic_limpio],
                         carga_horaria_maxima=carga_max_float,
                         estado_de_vinculacion=EnumEstadoDeVinculacion.ACTIVO.value,
-                        especialidades=lista_especialidades,
                         jornadas=lista_jornadas
                     )
                     resultado["exitosos"] += 1

@@ -1449,7 +1449,6 @@ def _construir_docente_poo_para_periodo(docente_db, periodo_db, paralelo_excluir
     docente_poo.establecer_estado_de_vinculacion(
         obtener_enum_flexible(EnumEstadoDeVinculacion, docente_db.estado_de_vinculacion)
     )
-    docente_poo.definir_especialidades(docente_db.especialidades or [])
 
     paralelos_actuales = Paralelo.objects.filter(
         periodo_de_nivelacion=periodo_db, docente_responsable=docente_db
@@ -1555,7 +1554,7 @@ def servicio_asignar_docente(paralelo_db, docente_db):
         return (False, "El Docente no atiende la jornada del paralelo", None)
 
     facade = CentroDeOperacionAcademica()
-    resultado = facade.validar_asignacion_docente(docente_poo, paralelo_poo, horas_unidad, areas)
+    resultado = facade.validar_asignacion_docente(docente_poo, paralelo_poo, horas_unidad)
 
     if not resultado["ok"]:
         return (False, _texto_motivo_no_asignable(resultado), None)
@@ -1564,8 +1563,6 @@ def servicio_asignar_docente(paralelo_db, docente_db):
     paralelo_db.save(update_fields=["docente_responsable"])
 
     advertencia = None
-    if resultado.get("advertencia") == "especialidad":
-        advertencia = ("El área de conocimiento de la Unidad curricular no coincide con las especialidades registradas del Docente")
     return (True, "El Docente ha sido asignado correctamente", advertencia)
 
 def servicio_quitar_docente(paralelo_db):

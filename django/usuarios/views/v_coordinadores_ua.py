@@ -70,7 +70,6 @@ def descargar_plantilla_coordinador_ua(request):
         "Tipo de vinculación (Nombramiento, Contrato, Ocasional, Honorario)",
         "Tiempo de dedicación (Tiempo completo, Medio tiempo, Tiempo parcial)",
         "Carga horaria máxima (número decimal)",
-        "Especialidades (información separada por comas)",
         "Jornada (Matutina, Vespertina, Nocturna, (continua, información separada por comas)"
     ]
     ws.append(cabeceras)
@@ -145,7 +144,6 @@ def registrar_coordinador_ua(request):
                     docente.universidad = universidad_usuario
                     docente.identificador_institucional = generar_identificador_siguiente(PerfilDocente, "DC", 'identificador_institucional')
                     docente.estado_de_vinculacion = EstadoDeVinculacion.ACTIVO.value
-                    docente.especialidades = formulario_docente.cleaned_data.get('especialidades', [])
                     docente.jornadas = formulario_docente.cleaned_data.get('jornadas', [])
                     docente.save()
 
