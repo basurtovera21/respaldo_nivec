@@ -41,6 +41,11 @@ def listar_unidades(request):
     carreras_disponibles = Carrera.objects.filter(campus__universidad=universidad_usuario).order_by("nombre")
     mallas_disponibles = MallaCurricular.objects.filter(carrera__campus__universidad=universidad_usuario).order_by("nombre")
 
+    if es_coordinador_ua:
+        perfil_admin = getattr(request.user, 'perfil_administrativo', None)
+        if perfil_admin and perfil_admin.carrera_asignada:
+            mallas_disponibles = mallas_disponibles.filter(carrera=perfil_admin.carrera_asignada)
+
     carrera_filtro = request.GET.get("carrera", "")
     malla_filtro = request.GET.get("malla", "")
     busqueda = request.GET.get("busqueda", "").strip()
