@@ -218,11 +218,11 @@ def panel_docente(request):
     
     universidad = perfil_docente.universidad
     
-    # Get active period (not closed) - priority: En Curso > Evaluación > Planificación
+    # Get active/recent period - priority: En Curso > Evaluación > Planificación > Cerrado (most recent)
     periodo_actual = None
     if universidad:
-        for estado_buscar in [EstadoDePeriodo.EN_CURSO.value, EstadoDePeriodo.EVALUACION.value, EstadoDePeriodo.PLANIFICACION.value]:
-            p = PeriodoDeNivelacion.objects.filter(universidad=universidad, estado=estado_buscar).first()
+        for estado_buscar in [EstadoDePeriodo.EN_CURSO.value, EstadoDePeriodo.EVALUACION.value, EstadoDePeriodo.PLANIFICACION.value, EstadoDePeriodo.CERRADO.value]:
+            p = PeriodoDeNivelacion.objects.filter(universidad=universidad, estado=estado_buscar).order_by('-anio', '-numero_periodo').first()
             if p:
                 periodo_actual = p
                 break
