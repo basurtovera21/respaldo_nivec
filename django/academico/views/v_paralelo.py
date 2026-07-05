@@ -22,6 +22,7 @@ from usuarios.utils import (
 )
 
 ROLES_VISUALIZAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_UA, ROL_DOCENTE)
+ROLES_VISUALIZAN_CON_ESTUDIANTE = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_UA, ROL_DOCENTE, "ESTUDIANTE")
 ROLES_MODIFICAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_COORDINADOR_UA)
 
 
@@ -295,7 +296,7 @@ def detalle_paralelo(request, paralelo_id):
         "titulo": f"{representativo.nombre} - {carrera.nombre} ({representativo.get_jornada_display()})",
     })
 
-@requiere_perfil(*ROLES_VISUALIZAN)
+@requiere_perfil(*ROLES_VISUALIZAN_CON_ESTUDIANTE)
 def listar_estudiantes_paralelo(request, paralelo_id):
     universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:

@@ -1,17 +1,31 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from usuarios.utils import requiere_perfil, usuario_es_solo_lectura, ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_COORDINADOR_UA, ROL_RECTOR, ROL_VICERRECTOR
+from usuarios.utils import requiere_perfil, usuario_es_solo_lectura, ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_COORDINADOR_UA, ROL_RECTOR, ROL_VICERRECTOR, ROL_DOCENTE, ROL_ESTUDIANTE
 from academico.forms import FormularioUniversidad
 
-@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_COORDINADOR_UA, ROL_RECTOR, ROL_VICERRECTOR)
+@requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_COORDINADOR_UA, ROL_RECTOR, ROL_VICERRECTOR, ROL_DOCENTE, ROL_ESTUDIANTE)
 def detalle_universidad(request):
-    universidad = request.user.perfil_administrativo.universidad
+    # Get universidad from any profile type
+    perfil_admin = getattr(request.user, 'perfil_administrativo', None)
+    perfil_docente = getattr(request.user, 'perfil_docente', None)
+    
+    universidad = None
+    if perfil_admin:
+        universidad = perfil_admin.universidad
+    elif perfil_docente:
+        universidad = perfil_docente.universidad
+    else:
+        from usuarios.models import PerfilEstudiante
+        perfil_est = PerfilEstudiante.objects.filter(usuario_de_sistema=request.user).first()
+        if perfil_est and perfil_est.carrera_registrada:
+            universidad = perfil_est.carrera_registrada.campus.universidad
+
     if not universidad:
-        return redirect("registrar_universidad")
+        return redirect("panel_principal")
 
     from usuarios.utils import obtener_rol_usuario
     rol = obtener_rol_usuario(request.user)
-    solo_lectura = rol in (ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN, ROL_COORDINADOR_UA)
+    solo_lectura = rol in (ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN, ROL_COORDINADOR_UA, ROL_DOCENTE, ROL_ESTUDIANTE)
 
     from academico.permisos import obtener_permisos_periodo
     permisos = obtener_permisos_periodo(universidad)
@@ -20,7 +34,7 @@ def detalle_universidad(request):
         "universidad": universidad,
         "titulo_pagina": "Institución - NIVEC",
         "solo_lectura": solo_lectura,
-        "puede_modificar_universidad": permisos["puede_modificar_universidad"] and not solo_lectura,
+        "puede_modificar_universidad": permisos["puede_modificar_universidad"] and rol == ROL_DIRECTOR_DAN,
     })
 
 @requiere_perfil(ROL_DIRECTOR_DAN)
