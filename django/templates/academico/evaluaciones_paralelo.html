@@ -96,7 +96,7 @@
                 </td>
                 <td style="text-align: left; color: #1d1d1f;">{{ e.estado_revision }}</td>
                 <td style="text-align: left; white-space: nowrap;">
-                    {% if puede_editar_calificacion and e.estado_revision != "Formalizado" and e.estado_revision != "En revisión" %}
+                    {% if puede_editar_calificacion and e.estado_revision != "Formalizado" %}
                     <a href="{% url 'editar_evaluacion' e.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
                     {% endif %}
                     <a href="{% url 'detalle_evaluacion' e.id %}" class="etiqueta-accion etiqueta-naranja">Ver información</a>

@@ -1682,16 +1682,24 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
                 p2 = float(parcial_2) if parcial_2 is not None else 0.0
                 asist = float(asistencia) if asistencia is not None else 0.0
             except (ValueError, TypeError):
-                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (registros numéricos no válidos)")
-                continue
+                # Invalid numeric values default to 0
+                p1 = 0.0
+                p2 = 0.0
+                asist = 0.0
+                resultado["advertencias"].append(
+                    f"El registro de la fila {numero_fila} tiene valores no válidos (se registrarán en 0)"
+                )
 
-            # Validate ranges
-            if not (0 <= p1 <= 10) or not (0 <= p2 <= 10):
-                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (registro de calificaciones no válidos")
-                continue
+            # Out-of-range values default to 0
+            if not (0 <= p1 <= 10):
+                resultado["advertencias"].append(f"El registro de la fila {numero_fila}: Parcial 1 fuera de rango (se registra en 0)")
+                p1 = 0.0
+            if not (0 <= p2 <= 10):
+                resultado["advertencias"].append(f"El registro de la fila {numero_fila}: Parcial 2 fuera de rango (se registra en 0)")
+                p2 = 0.0
             if not (0 <= asist <= 100):
-                resultado["advertencias"].append(f"El registro de la fila{numero_fila} fue omitido (registro de asistencia no válido)")
-                continue
+                resultado["advertencias"].append(f"El registro de la fila {numero_fila}: Asistencia fuera de rango (se registra en 0)")
+                asist = 0.0
 
             # Find student
             estudiante = PerfilEstudiante.objects.filter(

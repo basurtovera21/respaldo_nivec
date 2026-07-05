@@ -70,10 +70,16 @@ def listar_evaluaciones_paralelo(request, paralelo_id):
     hay_en_revision = evaluaciones.filter(estado_revision="En revisión").exists()
 
     # Role-based permissions for calificaciones actions
-    puede_cargar = es_evaluacion and (es_docente or es_coordinador_ua) and not todas_en_revision and not todas_formalizadas
+    # Coordinador UA can edit even when in revision (they review and can correct)
+    puede_cargar = es_evaluacion and (es_docente or es_coordinador_ua) and not todas_formalizadas
     puede_pasar_revision = es_evaluacion and es_docente and not todas_en_revision and not todas_formalizadas
-    puede_formalizar = es_evaluacion and es_coordinador_ua and hay_en_revision and not todas_formalizadas
-    puede_editar_calificacion = es_evaluacion and (es_docente or es_coordinador_ua) and not todas_formalizadas
+    # Coordinador UA can formalizar: when there are evaluaciones en revisión OR when they uploaded directly (borrador)
+    puede_formalizar = es_evaluacion and es_coordinador_ua and evaluaciones.exists() and not todas_formalizadas
+    # Docente can edit only in Borrador; Coordinador UA can edit in Borrador and En revisión (not Formalizado)
+    puede_editar_calificacion = es_evaluacion and (
+        (es_docente and not todas_en_revision and not todas_formalizadas) or
+        (es_coordinador_ua and not todas_formalizadas)
+    )
 
     return render(request, "academico/evaluaciones_paralelo.html", {
         "paralelo": paralelo,
@@ -248,6 +254,12 @@ def editar_evaluacion(request, evaluacion_id):
 
     if evaluacion.estado_revision == "Formalizado":
         messages.error(request, "Las calificaciones formalizadas no se pueden editar")
+        return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
+
+    # Docentes can only edit Borrador; Coordinador UA can edit Borrador and En revisión
+    rol = obtener_rol_usuario(request.user)
+    if rol == ROL_DOCENTE and evaluacion.estado_revision != "Borrador":
+        messages.error(request, "Las calificaciones en revisión no se pueden editar")
         return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
 
     periodo = evaluacion.periodo_de_nivelacion
