@@ -32,17 +32,17 @@
 
 <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">{{ titulo }}</h2>
 <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 20px;">
-    Gestión de reportes institucionales
+    Reportes institucionales
 </p>
 
 <div style="margin-bottom: 20px;">
     <form method="get" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <label style="font-weight: bold; font-size: 13px; color: #5c6b73;">Periodo:</label>
+        <label style="font-weight: bold; font-size: 13px; color: #5c6b73;">Periodo de nivelación</label>
         <select name="periodo" onchange="this.form.submit()" class="select-estandar">
             <option value=""></option>
             {% for p in periodos %}
                 <option value="{{ p.id }}" {% if periodo_seleccionado.id == p.id %}selected{% endif %}>
-                    {{ p.periodo }} ({{ p.anio }}) — {{ p.estado }}
+                    {{ p.periodo }} ({{ p.anio }}) - {{ p.estado }}
                 </option>
             {% endfor %}
         </select>
@@ -50,18 +50,18 @@
     
     {% if periodo_seleccionado and informe %}
     <div style="margin-top: 12px;">
-        <a href="{% url 'descargar_informe_general' %}?periodo={{ periodo_seleccionado.id }}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar informe (Excel)</a>
+        <a href="{% url 'descargar_informe_general' %}?periodo={{ periodo_seleccionado.id }}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar documento</a>
     </div>
     {% endif %}
 </div>
 
 {% if not periodo_seleccionado %}
 <div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 30px; font-weight: bold;">
-    Seleccione un Periodo de nivelación para visualizar el informe
+    Especifique el Periodo de nivelación
 </div>
 {% elif not informe %}
 <div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 30px; font-weight: bold;">
-    No existen datos para este periodo (debe estar en evaluación o cerrado)
+    No existen registros
 </div>
 {% else %}
 <div class="tarjeta" style="padding: 0; overflow-x: auto;">
@@ -71,12 +71,12 @@
                 <th>Código de Periodo</th>
                 <th>Periodo</th>
                 <th>Carrera</th>
-                <th>Total</th>
-                <th>Aprobados</th>
-                <th>Reprobados</th>
-                <th>Retirados</th>
-                <th>Anulados</th>
-                <th>% Aprobación</th>
+                <th>Número total de evaluaciones</th>
+                <th>Número de aprobados</th>
+                <th>Número de reprobados</th>
+                <th>Número de retirados</th>
+                <th>Número de anulados</th>
+                <th>Porcentaje de aprobación</th>
             </tr>
         </thead>
         <tbody>

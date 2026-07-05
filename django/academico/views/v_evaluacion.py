@@ -608,23 +608,23 @@ def descargar_constancia_estudiante(request):
 
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "Constancia"
+    ws.title = "Resultado de nivelación"
 
     # Header
-    ws.append(["Constancia de resultados académicos"])
+    ws.append(["Resultado de nivelación"])
     ws.append([])
     ws.append(["Estudiante", f"{usuario.apellidos} {usuario.nombres}"])
-    ws.append(["Identificación", usuario.identificacion])
+    ws.append(["Número de identificación", usuario.identificacion])
     ws.append(["Correo institucional", usuario.correo_institucional])
     ws.append(["Número de matrícula", perfil_estudiante.numero_de_matricula])
-    ws.append(["Carrera", perfil_estudiante.carrera_registrada.nombre if perfil_estudiante.carrera_registrada else ""])
+    ws.append(["Carrera registrada", perfil_estudiante.carrera_registrada.nombre if perfil_estudiante.carrera_registrada else ""])
     ws.append(["Jornada", perfil_estudiante.jornada])
     ws.append(["Periodo de nivelación", periodo.periodo])
     ws.append(["Año", periodo.anio])
     ws.append([])
 
     # Results table
-    ws.append(["Unidad curricular", "Parcial 1", "Parcial 2", "Nota final", "% Asistencia", "Estado de aprobación"])
+    ws.append(["Unidad curricular", "Calificación parcial 1", "Calificación parcial 2", "Nota final", "Porcentaje de asistencia", "Estado de aprobación"])
     for ev in evaluaciones:
         ws.append([
             ev.unidad_curricular.nombre,
@@ -639,7 +639,7 @@ def descargar_constancia_estudiante(request):
     # Overall status
     if evaluaciones.exists():
         todos_aprobados = all(ev.estado_de_aprobacion == "Aprobado" for ev in evaluaciones)
-        ws.append(["Resultado general", "APROBADO" if todos_aprobados else "NO APROBADO"])
+        ws.append(["Resultado", "APROBADO" if todos_aprobados else "NO APROBADO"])
 
     for col in range(1, 7):
         ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 25
