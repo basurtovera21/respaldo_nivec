@@ -60,13 +60,14 @@ def panel_director_dan(request):
     if perfil and perfil.universidad:
         tiene_universidad = True
 
-    from academico.models import Campus, Carrera, PeriodoDeNivelacion, MallaCurricular, UnidadCurricular, Paralelo
+    from academico.models import Campus, Carrera, PeriodoDeNivelacion, MallaCurricular, UnidadCurricular, Paralelo, Horario
     tiene_campus = Campus.objects.filter(universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
     tiene_carreras = Carrera.objects.filter(campus__universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
     tiene_periodos = PeriodoDeNivelacion.objects.filter(universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
     tiene_mallas = MallaCurricular.objects.filter(carrera__campus__universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
     tiene_unidades = UnidadCurricular.objects.filter(malla_curricular__carrera__campus__universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
     tiene_paralelos = Paralelo.objects.filter(periodo_de_nivelacion__universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
+    tiene_horarios = Horario.objects.filter(paralelo__periodo_de_nivelacion__universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
 
     return render(request, "administrativo/panel_director_dan.html", {
         "tiene_universidad": tiene_universidad,
@@ -76,12 +77,13 @@ def panel_director_dan(request):
         "tiene_mallas": tiene_mallas,
         "tiene_unidades": tiene_unidades,
         "tiene_paralelos": tiene_paralelos,
+        "tiene_horarios": tiene_horarios,
     })
 
 @login_required
 @never_cache
 def panel_dan(request):
-    from academico.models import Campus, Carrera, PeriodoDeNivelacion, MallaCurricular
+    from academico.models import Campus, Carrera, PeriodoDeNivelacion, MallaCurricular, UnidadCurricular, Paralelo, Horario, ConsolidadoAcademico
     perfil = getattr(request.user, 'perfil_administrativo', None)
     universidad = perfil.universidad if perfil else None
     tiene_universidad = universidad is not None
@@ -89,6 +91,21 @@ def panel_dan(request):
     tiene_carreras = Carrera.objects.filter(campus__universidad=universidad).exists() if universidad else False
     tiene_periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad).exists() if universidad else False
     tiene_mallas = MallaCurricular.objects.filter(carrera__campus__universidad=universidad).exists() if universidad else False
+    tiene_unidades = UnidadCurricular.objects.filter(malla_curricular__carrera__campus__universidad=universidad).exists() if universidad else False
+    tiene_paralelos = Paralelo.objects.filter(periodo_de_nivelacion__universidad=universidad).exists() if universidad else False
+    tiene_horarios = Horario.objects.filter(paralelo__periodo_de_nivelacion__universidad=universidad).exists() if universidad else False
+    tiene_consolidados = ConsolidadoAcademico.objects.filter(periodo_academico__universidad=universidad).exists() if universidad else False
+    return render(request, "administrativo/panel_dan.html", {
+        "tiene_universidad": tiene_universidad,
+        "tiene_campus": tiene_campus,
+        "tiene_carreras": tiene_carreras,
+        "tiene_periodos": tiene_periodos,
+        "tiene_mallas": tiene_mallas,
+        "tiene_unidades": tiene_unidades,
+        "tiene_paralelos": tiene_paralelos,
+        "tiene_horarios": tiene_horarios,
+        "tiene_consolidados": tiene_consolidados,
+    })
     return render(request, "administrativo/panel_dan.html", {
         "tiene_universidad": tiene_universidad,
         "tiene_campus": tiene_campus,
@@ -108,7 +125,7 @@ def panel_ua(request):
     carrera = perfil.carrera_asignada
     universidad = perfil.universidad
 
-    from academico.models import PeriodoDeNivelacion, Carrera as CarreraModel, MallaCurricular, Paralelo
+    from academico.models import PeriodoDeNivelacion, Carrera as CarreraModel, MallaCurricular, Paralelo, Horario
     from usuarios.models import PerfilEstudiante
 
     tiene_periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad).exists() if universidad else False
@@ -119,6 +136,10 @@ def panel_ua(request):
         periodo_de_nivelacion__universidad=universidad,
         unidad_curricular__malla_curricular__carrera=carrera,
     ).exists() if (universidad and carrera) else False
+    tiene_horarios = Horario.objects.filter(
+        paralelo__periodo_de_nivelacion__universidad=universidad,
+        paralelo__unidad_curricular__malla_curricular__carrera=carrera,
+    ).exists() if (universidad and carrera) else False
 
     return render(request, "administrativo/panel_ua.html", {
         "perfil": perfil,
@@ -128,6 +149,7 @@ def panel_ua(request):
         "tiene_estudiantes": tiene_estudiantes,
         "tiene_mallas": tiene_mallas,
         "tiene_paralelos": tiene_paralelos,
+        "tiene_horarios": tiene_horarios,
     })
 
 @login_required

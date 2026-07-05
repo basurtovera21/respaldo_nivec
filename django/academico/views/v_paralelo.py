@@ -188,10 +188,9 @@ def generar_paralelos(request):
             capacidad = int(capacidad)
         except (TypeError, ValueError):
             capacidad = 35
-        if capacidad < 20:
-            capacidad = 20
-        elif capacidad > 50:
-            capacidad = 50
+        if capacidad < 20 or capacidad > 50:
+            messages.error(request, "La capacidad máxima debe ser entre 20 y 50 estudiantes")
+            return redirect("generar_paralelos")
 
         resumen = servicio_generar_paralelos(periodo, capacidad)
 
@@ -347,11 +346,23 @@ def listar_estudiantes_paralelo(request, paralelo_id):
             "lleno": ocupacion_destino >= rep.capacidad_maxima,
         })
 
+    # Check if there are students available to add
+    hay_estudiantes_disponibles = PerfilEstudiante.objects.filter(
+        carrera_registrada=carrera,
+        jornada=paralelo.jornada,
+        periodo_de_nivelacion=periodo,
+    ).exclude(
+        estado_de_matricula__in=[EstadoDeMatricula.RETIRADO.value, EstadoDeMatricula.ANULADO.value]
+    ).exclude(
+        estudiantes_matriculados__paralelo__periodo_de_nivelacion=periodo
+    ).exists()
+
     return render(request, "academico/estudiantes_paralelo.html", {
         "paralelo": paralelo,
         "matriculas": matriculas,
         "destinos": destinos,
         "puede_gestionar": puede_gestionar,
+        "hay_estudiantes_disponibles": hay_estudiantes_disponibles,
         "ocupacion": ocupacion,
         "capacidad": capacidad,
         "lleno": ocupacion >= capacidad,

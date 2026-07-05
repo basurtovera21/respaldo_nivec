@@ -51,7 +51,7 @@
             Periddo de nivelación ({{ paralelo.periodo_de_nivelacion.periodo }}). {{ paralelo.unidad_curricular.malla_curricular.carrera.nombre }} (Jornada {{ paralelo.get_jornada_display }}) &middot; {{ ocupacion }}/{{ capacidad }} Estudiantes registrados
         </p>
     </div>
-    {% if not solo_lectura and puede_gestionar %}
+    {% if not solo_lectura and puede_gestionar and hay_estudiantes_disponibles and not lleno %}
     <a href="{% url 'estudiantes_disponibles' paralelo.id %}" class="boton boton-primario" style="font-family: inherit;">Incorporar Estudiante</a>
     {% endif %}
 </div>

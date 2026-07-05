@@ -122,65 +122,64 @@ def listar_horarios_paralelo(request, paralelo_id):
             slots_hora_sabado.append(h_sab)
             h_sab += 1
 
-    # Colores de la paleta de la aplicación por unidad
+    # Colores de la paleta de la aplicación por unidad (tonos claros legibles)
     _COLORES_UNIDAD = [
-        "#DADBDB", "#9db4c0", "#c7c7cc", "#5c6b73", "#e8e8ed",
-        "#b0b0b5", "#d2d2d7", "#aeaeb2", "#c4c4c8", "#bababe",
+        "#e8e8ed", "#d2e4ea", "#dce8d4", "#f0e6d2", "#e2d8ef",
+        "#d8eef0", "#f5e0d8", "#d4e8e0", "#ede4d0", "#dfe0f5",
     ]
     nombres_unidades = sorted(set(h.paralelo.unidad_curricular.nombre for h in horarios))
     mapa_colores = {nombre: _COLORES_UNIDAD[i % len(_COLORES_UNIDAD)] for i, nombre in enumerate(nombres_unidades)}
 
-    # Días para la grilla: lunes a viernes + sábado para nocturna
+    # Días para la grilla: lunes a domingo (todos los días para visualización completa)
     dias_habiles = obtener_dias_habiles()
-    dias_grilla = [d.value for d in dias_habiles]
+    dias_grilla = [d.value for d in DiaDeSemana]  # Lunes a Domingo
+
+    # Días disponibles para el selector de agregar sesión (solo hábiles + sábado nocturna)
+    dias_selector = [d.value for d in dias_habiles]
     if es_nocturna:
-        dias_grilla.append(DiaDeSemana.SABADO.value)
+        dias_selector.append(DiaDeSemana.SABADO.value)
 
-    # Días disponibles para el selector de agregar sesión
-    dias_selector = list(dias_grilla)
-
-    # Grilla: para nocturna necesitamos manejar dos franjas (L-V nocturna + Sáb mañana)
-    # Usamos los slots normales para L-V y los del sábado para la columna del sábado
+    # Grilla: render all days uniformly using the main franja slots
     grilla = []
-    max_slots = max(len(slots_hora), len(slots_hora_sabado)) if es_nocturna else len(slots_hora)
-    for i in range(max_slots):
-        slot_lv = slots_hora[i] if i < len(slots_hora) else None
-        slot_sab = slots_hora_sabado[i] if es_nocturna and i < len(slots_hora_sabado) else None
-        hora_label = f"{slot_lv:02d}:00" if slot_lv is not None else (f"{slot_sab:02d}:00" if slot_sab else "")
-        
-        fila = {"hora": hora_label, "celdas": []}
+    for slot in slots_hora:
+        fila = {"hora": f"{slot:02d}:00", "celdas": []}
         for dia in dias_grilla:
             bloque = None
-            if dia == DiaDeSemana.SABADO.value if es_nocturna else False:
-                # Sábado usa franja de mañana
-                if slot_sab is not None:
-                    for h in horarios:
-                        if h.dia_semana == dia and h.hora_inicio.hour <= slot_sab < h.hora_fin.hour:
-                            bloque = {
-                                "nombre": h.paralelo.unidad_curricular.nombre,
-                                "hora_inicio": h.hora_inicio.strftime("%H:%M"),
-                                "hora_fin": h.hora_fin.strftime("%H:%M"),
-                                "slot_inicio": f"{slot_sab:02d}:00",
-                                "slot_fin": f"{slot_sab+1:02d}:00",
-                                "color": mapa_colores.get(h.paralelo.unidad_curricular.nombre, "#DADBDB"),
-                            }
-                            break
-            else:
-                # Lunes a viernes usa franja nocturna/diurna normal
-                if slot_lv is not None:
-                    for h in horarios:
-                        if h.dia_semana == dia and h.hora_inicio.hour <= slot_lv < h.hora_fin.hour:
-                            bloque = {
-                                "nombre": h.paralelo.unidad_curricular.nombre,
-                                "hora_inicio": h.hora_inicio.strftime("%H:%M"),
-                                "hora_fin": h.hora_fin.strftime("%H:%M"),
-                                "slot_inicio": f"{slot_lv:02d}:00",
-                                "slot_fin": f"{slot_lv+1:02d}:00",
-                                "color": mapa_colores.get(h.paralelo.unidad_curricular.nombre, "#DADBDB"),
-                            }
-                            break
+            for h in horarios:
+                if h.dia_semana == dia and h.hora_inicio.hour <= slot < h.hora_fin.hour:
+                    bloque = {
+                        "nombre": h.paralelo.unidad_curricular.nombre,
+                        "hora_inicio": h.hora_inicio.strftime("%H:%M"),
+                        "hora_fin": h.hora_fin.strftime("%H:%M"),
+                        "slot_inicio": f"{slot:02d}:00",
+                        "slot_fin": f"{slot+1:02d}:00",
+                        "color": mapa_colores.get(h.paralelo.unidad_curricular.nombre, "#e8e8ed"),
+                    }
+                    break
             fila["celdas"].append(bloque)
         grilla.append(fila)
+
+    # For nocturna, also add sábado morning slots if there are sessions there
+    if es_nocturna and slots_hora_sabado:
+        for slot_sab in slots_hora_sabado:
+            if slot_sab not in slots_hora:
+                fila = {"hora": f"{slot_sab:02d}:00", "celdas": []}
+                for dia in dias_grilla:
+                    bloque = None
+                    if dia == DiaDeSemana.SABADO.value:
+                        for h in horarios:
+                            if h.dia_semana == dia and h.hora_inicio.hour <= slot_sab < h.hora_fin.hour:
+                                bloque = {
+                                    "nombre": h.paralelo.unidad_curricular.nombre,
+                                    "hora_inicio": h.hora_inicio.strftime("%H:%M"),
+                                    "hora_fin": h.hora_fin.strftime("%H:%M"),
+                                    "slot_inicio": f"{slot_sab:02d}:00",
+                                    "slot_fin": f"{slot_sab+1:02d}:00",
+                                    "color": mapa_colores.get(h.paralelo.unidad_curricular.nombre, "#e8e8ed"),
+                                }
+                                break
+                    fila["celdas"].append(bloque)
+                grilla.append(fila)
 
     # Generate integer hour options for the session form
     horas_disponibles = []

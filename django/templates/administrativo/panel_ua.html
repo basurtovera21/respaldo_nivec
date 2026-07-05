@@ -37,7 +37,9 @@
         <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Distribución académica</p>
         <div class="acciones" style="margin-bottom: 0;">
             <a href="{% url 'listar_paralelos' %}" class="boton boton-secundario">Paralelos</a>
+            {% if tiene_horarios %}
             <a href="{% url 'matriz_horarios' %}" class="boton boton-secundario">Horarios</a>
+            {% endif %}
         </div>
     </div>
 
