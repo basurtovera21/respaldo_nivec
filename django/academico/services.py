@@ -228,10 +228,38 @@ def servicio_iniciar_periodo_de_nivelacion(periodo_db):
 
 def servicio_pasar_a_evaluacion(periodo_db):
     if periodo_db.estado != EstadoDePeriodo.EN_CURSO.value:
-        return False
+        return (False, "El Periodo de nivelación no se encuentra en curso")
+    
+    from academico.models import Paralelo, Horario, MatriculaParalelo
+    from academico.services import _horas_sincronicas_semanales, servicio_horas_agendadas_paralelo
+    
+    # Validar que existan paralelos
+    paralelos = Paralelo.objects.filter(periodo_de_nivelacion=periodo_db)
+    if not paralelos.exists():
+        return (False, "No existen Paralelos creados para este Periodo")
+    
+    # Validar que todos los paralelos tengan docente asignado
+    sin_docente = paralelos.filter(docente_responsable__isnull=True)
+    if sin_docente.exists():
+        return (False, "Todos los Paralelos deben tener un Docente designado para pasar a evaluación")
+    
+    # Validar que todos los paralelos tengan horario completo
+    for paralelo in paralelos:
+        agendadas = servicio_horas_agendadas_paralelo(paralelo)
+        requeridas = _horas_sincronicas_semanales(paralelo.unidad_curricular, periodo_db)
+        if agendadas < requeridas:
+            return (False, f"El Paralelo {paralelo.nombre} ({paralelo.unidad_curricular.nombre}) no tiene el Horario completo")
+    
+    # Validar que haya estudiantes matriculados
+    tiene_estudiantes = MatriculaParalelo.objects.filter(
+        paralelo__periodo_de_nivelacion=periodo_db
+    ).exists()
+    if not tiene_estudiantes:
+        return (False, "No existen Estudiantes matriculados en los Paralelos")
+    
     periodo_db.estado = EstadoDePeriodo.EVALUACION.value
     periodo_db.save()
-    return True
+    return (True, "El Periodo de nivelación ha pasado a evaluación")
 
 
 def servicio_finalizar_periodo_de_nivelacion(periodo_db):
@@ -1775,11 +1803,11 @@ def servicio_pasar_a_revision(paralelo_db):
 
 
 def servicio_formalizar_evaluaciones(paralelo_db):
-    """Pasa todas las evaluaciones de un paralelo+unidad de En revisión a Formalizado."""
+    """Pasa todas las evaluaciones de un paralelo+unidad (Borrador o En revisión) a Formalizado."""
     count = EvaluacionAcademica.objects.filter(
         unidad_curricular=paralelo_db.unidad_curricular,
         periodo_de_nivelacion=paralelo_db.periodo_de_nivelacion,
-        estado_revision="En revisión",
+        estado_revision__in=["Borrador", "En revisión"],
         estudiante__estudiantes_matriculados__paralelo=paralelo_db,
     ).update(estado_revision="Formalizado")
     return count

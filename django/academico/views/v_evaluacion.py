@@ -120,7 +120,11 @@ def cargar_calificaciones(request, paralelo_id):
         messages.error(request, "El Periodo de nivelación no se encuentra en estado de evaluación")
         return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
 
-    if request.method == "POST" and "archivo_excel" in request.FILES:
+    if request.method == "POST":
+        if "archivo_excel" not in request.FILES:
+            messages.error(request, "Debe seleccionar un documento para procesar")
+            return redirect("cargar_calificaciones", paralelo_id=paralelo.id)
+        
         archivo = request.FILES["archivo_excel"]
         if not archivo.name.endswith(".xlsx"):
             messages.error(request, "Documento con formato no válido")

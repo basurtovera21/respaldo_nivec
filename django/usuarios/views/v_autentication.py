@@ -96,7 +96,10 @@ def panel_dan(request):
     tiene_paralelos = Paralelo.objects.filter(periodo_de_nivelacion__universidad=universidad).exists() if universidad else False
     tiene_horarios = Horario.objects.filter(paralelo__periodo_de_nivelacion__universidad=universidad).exists() if universidad else False
     tiene_consolidados = ConsolidadoAcademico.objects.filter(periodo_academico__universidad=universidad).exists() if universidad else False
-    puede_ver_informe = todas_calificaciones_formalizadas_por_carrera(universidad) if universidad else False
+    # Informe solo disponible cuando periodo está cerrado Y al menos una carrera formalizada
+    from poo.clases.enums.estado_de_periodo import EstadoDePeriodo as EP
+    periodo_cerrado = PeriodoDeNivelacion.objects.filter(universidad=universidad, estado=EP.CERRADO.value).exists() if universidad else False
+    puede_ver_informe = periodo_cerrado and todas_calificaciones_formalizadas_por_carrera(universidad) if universidad else False
     return render(request, "administrativo/panel_dan.html", {
         "tiene_universidad": tiene_universidad,
         "tiene_campus": tiene_campus,
