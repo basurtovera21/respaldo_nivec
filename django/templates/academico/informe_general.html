@@ -3,29 +3,64 @@
 {% block titulo %}{{ titulo_pagina|default:"NIVEC" }}{% endblock %}
 
 {% block contenido %}
-<h2 style="font-size: 16px; font-weight: bold; margin-bottom: 16px;">{{ titulo }}</h2>
+<style>
+    /* Estilos sincronizados para la tabla */
+    .tarjeta table th { 
+        white-space: nowrap; 
+        font-weight: bold; 
+        text-align: left; 
+        color: #5c6b73; 
+        padding: 12px 18px; 
+    }
+    .tarjeta table td { 
+        padding: 12px 18px; 
+        white-space: nowrap; 
+        font-family: inherit;
+        color: #1d1d1f;
+    }
+    .select-estandar {
+        padding: 8px 12px; 
+        border: 1px solid #DADBDB; 
+        border-radius: 8px; 
+        font-size: 13px; 
+        background: white; 
+        color: #1d1d1f; 
+        outline: none; 
+        font-family: inherit;
+    }
+</style>
 
-<form method="get" style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
-    <label style="font-weight: bold; font-size: 13px; color: #5c6b73;">Periodo:</label>
-    <select name="periodo" onchange="this.form.submit()" style="padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 13px; background: white; color: #1d1d1f;">
-        <option value=""></option>
-        {% for p in periodos %}
-            <option value="{{ p.id }}" {% if periodo_seleccionado.id == p.id %}selected{% endif %}>
-                {{ p.periodo }} ({{ p.anio }}) — {{ p.estado }}
-            </option>
-        {% endfor %}
-    </select>
+<h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">{{ titulo }}</h2>
+<p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 20px;">
+    Gestión de reportes institucionales
+</p>
+
+<div style="margin-bottom: 20px;">
+    <form method="get" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <label style="font-weight: bold; font-size: 13px; color: #5c6b73;">Periodo:</label>
+        <select name="periodo" onchange="this.form.submit()" class="select-estandar">
+            <option value=""></option>
+            {% for p in periodos %}
+                <option value="{{ p.id }}" {% if periodo_seleccionado.id == p.id %}selected{% endif %}>
+                    {{ p.periodo }} ({{ p.anio }}) — {{ p.estado }}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
+    
     {% if periodo_seleccionado and informe %}
-    <a href="{% url 'descargar_informe_general' %}?periodo={{ periodo_seleccionado.id }}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar informe (Excel)</a>
+    <div style="margin-top: 12px;">
+        <a href="{% url 'descargar_informe_general' %}?periodo={{ periodo_seleccionado.id }}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar informe (Excel)</a>
+    </div>
     {% endif %}
-</form>
+</div>
 
 {% if not periodo_seleccionado %}
-<div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 30px;">
+<div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 30px; font-weight: bold;">
     Seleccione un Periodo de nivelación para visualizar el informe
 </div>
 {% elif not informe %}
-<div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 30px;">
+<div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 30px; font-weight: bold;">
     No existen datos para este periodo (debe estar en evaluación o cerrado)
 </div>
 {% else %}
@@ -33,29 +68,29 @@
     <table style="width: 100%;">
         <thead>
             <tr>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Carrera</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Total</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Aprobados</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Reprobados</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Retirados</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Anulados</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Pendientes</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Formalizados</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">% Aprobación</th>
+                <th>Carrera</th>
+                <th>Total</th>
+                <th>Aprobados</th>
+                <th>Reprobados</th>
+                <th>Retirados</th>
+                <th>Anulados</th>
+                <th>Pendientes</th>
+                <th>Formalizados</th>
+                <th>% Aprobación</th>
             </tr>
         </thead>
         <tbody>
             {% for f in informe %}
             <tr>
-                <td style="text-align: left; padding: 12px 18px;">{{ f.carrera }}</td>
-                <td style="text-align: left; padding: 12px 18px;">{{ f.total }}</td>
-                <td style="text-align: left; padding: 12px 18px; color: #2e7d32; font-weight: bold;">{{ f.aprobados }}</td>
-                <td style="text-align: left; padding: 12px 18px; color: #c81e1e; font-weight: bold;">{{ f.reprobados }}</td>
-                <td style="text-align: left; padding: 12px 18px;">{{ f.retirados }}</td>
-                <td style="text-align: left; padding: 12px 18px;">{{ f.anulados }}</td>
-                <td style="text-align: left; padding: 12px 18px; color: #b45309;">{{ f.pendientes }}</td>
-                <td style="text-align: left; padding: 12px 18px;">{{ f.formalizados }}</td>
-                <td style="text-align: left; padding: 12px 18px; font-weight: bold;">{{ f.porcentaje_aprobacion }}%</td>
+                <td>{{ f.carrera }}</td>
+                <td>{{ f.total }}</td>
+                <td style="color: #253237; font-weight: bold;">{{ f.aprobados }}</td>
+                <td style="color: #9db4c0; font-weight: bold;">{{ f.reprobados }}</td>
+                <td>{{ f.retirados }}</td>
+                <td>{{ f.anulados }}</td>
+                <td style="color: #5c6b73;">{{ f.pendientes }}</td>
+                <td>{{ f.formalizados }}</td>
+                <td style="font-weight: bold;">{{ f.porcentaje_aprobacion }}%</td>
             </tr>
             {% endfor %}
         </tbody>

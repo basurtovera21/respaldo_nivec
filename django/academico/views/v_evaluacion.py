@@ -491,7 +491,7 @@ def informe_general(request):
 
     universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     from academico.models import PeriodoDeNivelacion
@@ -510,8 +510,8 @@ def informe_general(request):
         "periodos": periodos,
         "periodo_seleccionado": periodo_seleccionado,
         "informe": informe,
-        "titulo_pagina": "Informe General - NIVEC",
-        "titulo": "Informe General de Nivelación",
+        "titulo_pagina": "Informe - NIVEC",
+        "titulo": "Informes de nivelación",
     })
 
 
@@ -546,12 +546,12 @@ def descargar_informe_general(request):
     ws = wb.active
     ws.title = "Informe General"
 
-    ws.append(["Informe General de Nivelación"])
-    ws.append(["Periodo", periodo.periodo])
+    ws.append(["Informe de nivelación"])
+    ws.append(["Periodo de nivelación", periodo.periodo])
     ws.append(["Año", periodo.anio])
     ws.append(["Estado", periodo.estado])
     ws.append([])
-    ws.append(["Carrera", "Total evaluaciones", "Aprobados", "Reprobados", "Retirados", "Anulados", "Pendientes", "Formalizados", "% Aprobación"])
+    ws.append(["Carrera", "Número total de evaluaciones", "Número de aprobados", "Número de reprobados", "Número de retirados", "Número de anulados", "Número de pendientes", "Número de formalizados", "Porcentaje de aprobación"])
 
     for fila in informe:
         ws.append([
