@@ -566,6 +566,14 @@ class FormularioParalelo(forms.ModelForm):
         if errores_poo:
             raise forms.ValidationError(errores_poo)
 
+        # Validar rango de capacidad máxima (20-50)
+        capacidad = cleaned_data.get("capacidad_maxima")
+        if capacidad is not None:
+            if capacidad < 20:
+                raise forms.ValidationError({"capacidad_maxima": "La capacidad mínima es de 20 estudiantes"})
+            if capacidad > 50:
+                raise forms.ValidationError({"capacidad_maxima": "La capacidad máxima es de 50 estudiantes"})
+
         return cleaned_data
 
 

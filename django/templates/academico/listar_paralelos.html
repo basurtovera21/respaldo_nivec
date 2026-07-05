@@ -1,7 +1,7 @@
 {% extends "base_listar.html" %}
 
 {% block boton_registrar %}
-    {% if not solo_lectura %}
+    {% if puede_distribuir %}
     <a href="{% url 'generar_paralelos' %}" class="boton boton-primario">Distribuir Paralelos</a>
     {% endif %}
 {% endblock %}
@@ -20,6 +20,7 @@
             {% endfor %}
         </select>
 
+        {% if not es_coordinador_ua %}
         <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Campus</span>
         <select name="campus" onchange="this.form.submit()"
                 style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit; min-width: 200px;">
@@ -30,8 +31,10 @@
                 </option>
             {% endfor %}
         </select>
+        {% endif %}
     </div>
     <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        {% if not es_coordinador_ua %}
         <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Carrera</span>
         <select name="carrera" onchange="this.form.submit()"
                 style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit; min-width: 200px;">
@@ -42,6 +45,7 @@
                 </option>
             {% endfor %}
         </select>
+        {% endif %}
 
         <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Jornada</span>
         <select name="jornada" onchange="this.form.submit()"

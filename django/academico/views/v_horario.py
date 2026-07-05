@@ -84,6 +84,7 @@ def listar_horarios_paralelo(request, paralelo_id):
     # Validate if required hours exceed what's possible in the franja
     from poo.clases.franja_horaria import validar_horas_semanales_unidad, obtener_dias_habiles
     jornada_enum = Jornada(representativo.jornada)
+    tiene_docente_asignado = False
     for u in unidades:
         validacion = validar_horas_semanales_unidad(u["requeridas"], jornada_enum)
         if not validacion["ok"]:
@@ -92,6 +93,9 @@ def listar_horarios_paralelo(request, paralelo_id):
             u["maximo_disponible"] = validacion["maximo"]
         else:
             u["excede_maximo"] = False
+        # Check if docente is assigned to any unidad
+        if u["docente"]:
+            tiene_docente_asignado = True
 
     horarios = Horario.objects.filter(paralelo__in=unidades_rows).select_related(
         "paralelo__unidad_curricular"
@@ -209,6 +213,7 @@ def listar_horarios_paralelo(request, paralelo_id):
         "dias_semana": dias_grilla,
         "grilla": grilla,
         "horas_disponibles": horas_disponibles,
+        "tiene_docente_asignado": tiene_docente_asignado,
         "mapa_colores": mapa_colores,
         "solo_lectura": usuario_es_solo_lectura(request.user),
         "titulo_pagina": "Horario - NIVEC",
