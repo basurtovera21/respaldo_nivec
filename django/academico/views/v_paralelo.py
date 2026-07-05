@@ -98,10 +98,18 @@ def listar_paralelos(request):
 
     # Role-based filtering
     rol = obtener_rol_usuario(request.user)
-    if rol == ROL_COORDINADOR_UA:
+    es_coordinador_ua = (rol == ROL_COORDINADOR_UA)
+    puede_distribuir = rol in (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
+
+    if es_coordinador_ua:
         perfil_admin = getattr(request.user, 'perfil_administrativo', None)
         if perfil_admin and perfil_admin.carrera_asignada:
             paralelos = paralelos.filter(unidad_curricular__malla_curricular__carrera=perfil_admin.carrera_asignada)
+            # Pre-load campus and carrera filters for coordinador UA
+            if not campus_filtro and perfil_admin.carrera_asignada.campus:
+                campus_filtro = str(perfil_admin.carrera_asignada.campus.id)
+            if not carrera_id:
+                carrera_seleccionada = perfil_admin.carrera_asignada
     elif rol == ROL_DOCENTE:
         perfil_docente = getattr(request.user, 'perfil_docente', None)
         if perfil_docente:
@@ -140,12 +148,14 @@ def listar_paralelos(request):
         "carrera_seleccionada": carrera_seleccionada,
         "jornada_filtro": jornada_filtro or "",
         "solo_lectura": usuario_es_solo_lectura(request.user),
+        "puede_distribuir": puede_distribuir,
+        "es_coordinador_ua": es_coordinador_ua,
         "titulo_pagina": "Paralelo - NIVEC",
         "titulo": "Paralelos",
         "url_volver": "panel_principal",
     })
 
-@requiere_perfil(*ROLES_MODIFICAN)
+@requiere_perfil(ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
 def generar_paralelos(request):
     universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:

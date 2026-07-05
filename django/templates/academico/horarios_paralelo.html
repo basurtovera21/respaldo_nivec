@@ -97,7 +97,7 @@
             Jornada {{ representativo.get_jornada_display }} ({{ franja }})
         </p>
     </div>
-    {% if not solo_lectura and es_planificacion and not todas_completas %}
+    {% if not solo_lectura and es_planificacion and not todas_completas and not tiene_docente_asignado %}
     <form method="post" action="{% url 'generar_horario_sugerido' representativo.id %}" style="margin: 0; font-family: inherit;">
         {% csrf_token %}
         <button type="submit" class="boton boton-primario" onclick="return confirm('Confirmar acción');">Horario sugerido</button>
@@ -192,7 +192,7 @@
     </table>
 </div>
 
-{% if not solo_lectura and es_planificacion %}
+{% if not solo_lectura and es_planificacion and not tiene_docente_asignado %}
 <div class="tarjeta" style="margin-bottom: 20px; font-family: inherit;">
     <h2 style="font-size: 15px; font-weight: bold; margin-bottom: 4px; color: #253237;">Configuración manual</h2>
     <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
@@ -245,7 +245,7 @@
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Hora de inicio</th>
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Hora de finalización</th>
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Espacio de impartición</th>
-                {% if not solo_lectura and es_planificacion %}
+                {% if not solo_lectura and es_planificacion and not tiene_docente_asignado %}
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
                 {% endif %}
             </tr>
@@ -259,7 +259,7 @@
                 <td style="text-align: left; color: #1d1d1f;">{{ h.hora_inicio }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ h.hora_fin }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ h.espacio_de_imparticion }}</td>
-                {% if not solo_lectura and es_planificacion %}
+                {% if not solo_lectura and es_planificacion and not tiene_docente_asignado %}
                 <td style="text-align: left; white-space: nowrap;">
                     <a href="{% url 'editar_horario' h.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
                     <a href="{% url 'eliminar_horario' h.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
