@@ -151,8 +151,9 @@ def finalizar_periodo(request, periodo_id):
 def pasar_a_evaluacion(request, periodo_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     periodo_db = get_object_or_404(PeriodoDeNivelacion, pk=periodo_id, universidad=universidad_usuario)
-    if services.servicio_pasar_a_evaluacion(periodo_db):
-        messages.success(request, f"El Periodo de nivelación {periodo_db.periodo} ha pasado a evaluación")
+    resultado = services.servicio_pasar_a_evaluacion(periodo_db)
+    if resultado[0]:
+        messages.success(request, resultado[1])
     else:
-        messages.error(request, "No se ha podido pasar el Periodo de nivelación a evaluación")
+        messages.error(request, resultado[1])
     return redirect("listar_periodos")
