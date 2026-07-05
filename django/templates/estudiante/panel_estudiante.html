@@ -3,10 +3,19 @@
 
 {% block contenido %}
 <h2 style="margin-bottom: 4px; color: #253237;">Panel del Estudiante</h2>
-<p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 20px;">
+<p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 4px;">
     {{ perfil_estudiante.usuario_de_sistema.apellidos }} {{ perfil_estudiante.usuario_de_sistema.nombres }}
-    — Matrícula: {{ perfil_estudiante.numero_de_matricula }}
-    {% if periodo %} — {{ periodo.periodo }}{% endif %}
+</p>
+<p style="color: #5c6b73; font-size: 13px; margin-bottom: 4px;">
+    <span style="font-weight: bold;">Identificación:</span> {{ perfil_estudiante.usuario_de_sistema.identificacion }}
+    — <span style="font-weight: bold;">Matrícula:</span> {{ perfil_estudiante.numero_de_matricula }}
+    — <span style="font-weight: bold;">Registro de cupo:</span> {{ perfil_estudiante.get_registro_de_cupo_display }}
+</p>
+<p style="color: #5c6b73; font-size: 13px; margin-bottom: 20px;">
+    <span style="font-weight: bold;">Carrera:</span> {{ perfil_estudiante.carrera_registrada.nombre }}
+    — <span style="font-weight: bold;">Campus:</span> {{ perfil_estudiante.campus_registrado.nombre }}
+    — <span style="font-weight: bold;">Jornada:</span> {{ perfil_estudiante.get_jornada_display }}
+    {% if periodo %} — <span style="font-weight: bold;">Periodo:</span> {{ periodo.periodo }} ({{ periodo.anio }}){% endif %}
 </p>
 
 {% if aviso_estado %}
@@ -64,6 +73,7 @@
     <table style="width: 100%;">
         <thead>
             <tr>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Código</th>
                 <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Paralelo</th>
                 <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Unidad curricular</th>
                 <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Docente</th>
@@ -74,6 +84,7 @@
         <tbody>
             {% for m in matriculas %}
             <tr>
+                <td style="font-family: monospace; text-align: left; padding: 12px 18px; color: #253237;">{{ m.paralelo.codigo_de_paralelo }}</td>
                 <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ m.paralelo.nombre }}</td>
                 <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ m.paralelo.unidad_curricular.nombre }}</td>
                 <td style="text-align: left; padding: 12px 18px; color: #253237;">{% if m.paralelo.docente_responsable %}{{ m.paralelo.docente_responsable.usuario_de_sistema.apellidos }} {{ m.paralelo.docente_responsable.usuario_de_sistema.nombres }}{% else %}<span style="color: #9db4c0;">Sin designación</span>{% endif %}</td>
