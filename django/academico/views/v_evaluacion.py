@@ -13,7 +13,7 @@ from usuarios.utils import (
 )
 
 ROLES_CARGAR = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_COORDINADOR_UA, ROL_DOCENTE)
-ROLES_VER = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_UA, ROL_DOCENTE)
+ROLES_VER = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_UA, ROL_DOCENTE, "ESTUDIANTE")
 
 
 def _obtener_universidad_usuario(user):
@@ -51,16 +51,38 @@ def listar_evaluaciones_paralelo(request, paralelo_id):
         "estudiante__usuario_de_sistema__apellidos"
     )
 
+    es_evaluacion = (periodo.estado == EstadoDePeriodo.EVALUACION.value)
+
+    rol = obtener_rol_usuario(request.user)
+    es_docente = (rol == ROL_DOCENTE)
+    es_coordinador_ua = (rol == ROL_COORDINADOR_UA)
+    es_coordinador_o_director = rol in (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
+    es_administrativo = rol in (ROL_RECTOR, ROL_VICERRECTOR)
+
+    # Determine calificaciones state
+    todas_en_revision = evaluaciones.exists() and not evaluaciones.filter(estado_revision="Borrador").exists()
+    todas_formalizadas = evaluaciones.exists() and not evaluaciones.exclude(estado_revision="Formalizado").exists()
+    hay_en_revision = evaluaciones.filter(estado_revision="En revisión").exists()
+
+    # Role-based permissions for calificaciones actions
+    puede_cargar = es_evaluacion and (es_docente or es_coordinador_ua) and not todas_en_revision and not todas_formalizadas
+    puede_pasar_revision = es_evaluacion and es_docente and not todas_en_revision and not todas_formalizadas
+    puede_formalizar = es_evaluacion and es_coordinador_ua and hay_en_revision and not todas_formalizadas
+    puede_editar_calificacion = es_evaluacion and (es_docente or es_coordinador_ua) and not todas_formalizadas
+
     return render(request, "academico/evaluaciones_paralelo.html", {
         "paralelo": paralelo,
         "evaluaciones": evaluaciones,
         "periodo": periodo,
-        "es_evaluacion": periodo.estado == EstadoDePeriodo.EVALUACION.value,
+        "es_evaluacion": es_evaluacion,
         "solo_lectura": usuario_es_solo_lectura(request.user),
-        "es_docente": obtener_rol_usuario(request.user) == ROL_DOCENTE,
-        "puede_formalizar": obtener_rol_usuario(request.user) in (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_COORDINADOR_UA),
+        "puede_cargar": puede_cargar,
+        "puede_pasar_revision": puede_pasar_revision,
+        "puede_formalizar": puede_formalizar,
+        "puede_editar_calificacion": puede_editar_calificacion,
+        "todas_formalizadas": todas_formalizadas,
         "titulo_pagina": "Calificaciones - NIVEC",
-        "titulo": f"Calificaciones - {paralelo.nombre} ({paralelo.unidad_curricular.nombre})",
+        "titulo": f"Registro de calificaciones - {paralelo.nombre} ({paralelo.unidad_curricular.nombre})",
     })
 
 

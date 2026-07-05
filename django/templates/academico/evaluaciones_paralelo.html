@@ -31,8 +31,10 @@
 
 {% if es_evaluacion and not solo_lectura %}
 <div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+    {% if puede_cargar %}
     <a href="{% url 'cargar_calificaciones' paralelo.id %}" class="boton boton-primario">Cargar calificaciones</a>
-    {% if es_docente %}
+    {% endif %}
+    {% if puede_pasar_revision %}
     <form method="post" action="{% url 'pasar_a_revision' paralelo.id %}" style="margin: 0;">
         {% csrf_token %}
         <button type="submit" class="boton boton-secundario" onclick="return confirm('¿Pasar todas las calificaciones en borrador a revisión?');">Pasar a revisión</button>
@@ -80,7 +82,7 @@
                 <td style="text-align: left; padding: 12px 18px; color: {% if e.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif e.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#9db4c0{% endif %}; font-weight: bold;">{{ e.estado_de_aprobacion }}</td>
                 <td style="text-align: left; padding: 12px 18px;">{{ e.estado_revision }}</td>
                 <td style="text-align: left; padding: 12px 18px;">
-                    {% if es_evaluacion and not solo_lectura and e.estado_revision != "Formalizado" %}
+                    {% if puede_editar_calificacion and e.estado_revision != "Formalizado" and e.estado_revision != "En revisión" %}
                     <a href="{% url 'editar_evaluacion' e.id %}" class="etiqueta-accion etiqueta-modificar">Editar</a>
                     {% endif %}
                     <a href="{% url 'detalle_evaluacion' e.id %}" class="etiqueta-accion etiqueta-naranja">Ver detalle</a>
@@ -98,6 +100,6 @@
 </div>
 
 <div style="margin-top: 15px;">
-    <a href="{% url 'panel_principal' %}" class="boton boton-secundario">Volver</a>
+    <a href="{% url 'detalle_paralelo' paralelo.id %}" class="boton boton-secundario">Volver</a>
 </div>
 {% endblock %}
