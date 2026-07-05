@@ -203,24 +203,45 @@ def panel_docente(request):
     if not perfil_docente:
         return redirect('panel_principal')
     
-    from academico.models import Paralelo, PeriodoDeNivelacion
+    from academico.models import Paralelo, PeriodoDeNivelacion, Horario
+    from academico.permisos import obtener_permisos_periodo
     
     universidad = perfil_docente.universidad
     periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad).order_by('-anio', '-numero_periodo') if universidad else PeriodoDeNivelacion.objects.none()
-    periodo_actual = periodos.first()
+    periodo_actual = periodos.exclude(estado="Cerrado").first()
     
     # Get paralelos where this docente is responsible
     paralelos = []
+    tiene_horarios = False
     if periodo_actual:
         paralelos = Paralelo.objects.filter(
             periodo_de_nivelacion=periodo_actual,
             docente_responsable=perfil_docente,
         ).select_related("unidad_curricular__malla_curricular__carrera").order_by("nombre", "unidad_curricular__nombre")
-    
+        tiene_horarios = Horario.objects.filter(
+            paralelo__in=paralelos
+        ).exists()
+
+    # State notice
+    permisos = obtener_permisos_periodo(universidad) if universidad else {}
+    estado = permisos.get("estado_periodo", "")
+    aviso_estado = ""
+    if estado == "PLANIFICACION":
+        aviso_estado = "El Periodo de nivelación se encuentra en planificación"
+    elif estado == "EN_CURSO":
+        aviso_estado = "El Periodo de nivelación se encuentra en curso"
+    elif estado == "EVALUACION":
+        aviso_estado = "El Periodo de nivelación se encuentra en evaluación"
+    elif estado in ("SOLO_CERRADOS", "CERRADO"):
+        aviso_estado = "El Periodo de nivelación ha finalizado"
+
     return render(request, "docente/panel_docente.html", {
         "perfil_docente": perfil_docente,
         "periodo_actual": periodo_actual,
         "paralelos": paralelos,
+        "tiene_horarios": tiene_horarios,
+        "aviso_estado": aviso_estado,
+        "puede_ver_calificaciones": permisos.get("puede_ver_calificaciones", False),
     })
 
 @login_required
@@ -232,8 +253,10 @@ def panel_estudiante(request):
         return redirect('cerrar_sesion')
     
     from academico.models import Paralelo, MatriculaParalelo, Horario, EvaluacionAcademica, PeriodoDeNivelacion
+    from academico.permisos import obtener_permisos_periodo
     
     periodo = perfil_estudiante.periodo_de_nivelacion
+    universidad = perfil_estudiante.carrera_registrada.campus.universidad if perfil_estudiante.carrera_registrada else None
     
     # Get paralelo(s) where the student is enrolled
     matriculas = MatriculaParalelo.objects.filter(
@@ -256,10 +279,25 @@ def panel_estudiante(request):
         paralelo_id__in=paralelo_ids
     ).select_related("paralelo__unidad_curricular").order_by("dia_semana", "hora_inicio") if paralelo_ids else Horario.objects.none()
 
+    # State notice and permissions
+    permisos = obtener_permisos_periodo(universidad) if universidad else {}
+    estado = permisos.get("estado_periodo", "")
+    aviso_estado = ""
+    if estado == "PLANIFICACION":
+        aviso_estado = "El Periodo de nivelación se encuentra en planificación"
+    elif estado == "EN_CURSO":
+        aviso_estado = "El Periodo de nivelación se encuentra en curso"
+    elif estado == "EVALUACION":
+        aviso_estado = "El Periodo de nivelación se encuentra en evaluación"
+    elif estado in ("SOLO_CERRADOS", "CERRADO"):
+        aviso_estado = "El Periodo de nivelación ha finalizado"
+
     return render(request, "estudiante/panel_estudiante.html", {
         "perfil_estudiante": perfil_estudiante,
         "periodo": periodo,
         "matriculas": matriculas,
         "evaluaciones": evaluaciones,
         "horarios": horarios,
+        "aviso_estado": aviso_estado,
+        "puede_ver_calificaciones": permisos.get("puede_ver_calificaciones", False),
     })
