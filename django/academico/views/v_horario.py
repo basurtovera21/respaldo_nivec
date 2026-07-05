@@ -481,7 +481,7 @@ def matriz_horarios(request):
         "mapa_colores": mapa_colores,
         "franja": franja,
         "titulo_pagina": "Horario - NIVEC",
-        "titulo": "Matriz de horarios",
+        "titulo": "Visualización de Horario",
     })
 
 
@@ -493,14 +493,14 @@ def descargar_horarios_excel(request):
 
     universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     periodo_id = request.GET.get("periodo")
     carrera_id = request.GET.get("carrera")
 
     if not periodo_id or not carrera_id:
-        messages.error(request, "Debe especificar un Periodo y una Carrera")
+        messages.error(request, "Especifique el Periodo de nivelación y la Carrera")
         return redirect("matriz_horarios")
 
     periodo = get_object_or_404(PeriodoDeNivelacion, id=periodo_id, universidad=universidad_usuario)
@@ -526,7 +526,7 @@ def descargar_horarios_excel(request):
             jornada_nombre = jornada_valor
 
         ws = wb.create_sheet(title=str(jornada_nombre)[:31])
-        ws.append(["Código de paralelo", "Nombre de paralelo", "Unidad curricular", "Día", "Hora inicio", "Hora fin", "Espacio"])
+        ws.append(["Código de Paralelo", "Nombre", "Unidad curricular", "Día", "Hora de inicio", "Hora de finalización", "Espacio de impartición"])
 
         # Orden personalizado de días para ordenar Lunes primero
         _ORDEN_DIA = {"Lunes": 1, "Martes": 2, "Miércoles": 3, "Jueves": 4, "Viernes": 5, "Sábado": 6, "Domingo": 7}

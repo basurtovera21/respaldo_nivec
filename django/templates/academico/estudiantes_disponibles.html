@@ -4,25 +4,40 @@
 
 {% block contenido %}
 <style>
-    .tarjeta table th, .tarjeta table td { padding: 12px 24px; white-space: nowrap; }
-    .etiqueta-accion {
-        padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: bold;
-        border: none; cursor: pointer; text-decoration: none; display: inline-block;
+    .tarjeta table th, .tarjeta table td { 
+        padding: 12px 24px; 
+        white-space: nowrap; 
+        font-family: inherit;
     }
-    .etiqueta-naranja { background: #9db4c0; color: #253237; border: none; }
+    .etiqueta-accion {
+        padding: 6px 14px; 
+        border-radius: 6px; 
+        font-size: 12px; 
+        font-weight: bold;
+        border: none; 
+        cursor: pointer; 
+        text-decoration: none; 
+        display: inline-block;
+        font-family: inherit;
+        transition: all 0.2s ease;
+    }
+    .etiqueta-naranja { background: #9db4c0; color: white; border: none; }
+    .etiqueta-naranja:hover { opacity: 0.85; }
 </style>
 
-<h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
-<p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 20px;">
-    ({{ paralelo.periodo_de_nivelacion.periodo }}). {{ paralelo.unidad_curricular.malla_curricular.carrera.nombre }} ({{ paralelo.get_jornada_display }}) &middot; {{ ocupacion }}/{{ capacidad }} estudiantes
-</p>
+<div style="font-family: inherit;">
+    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237; font-family: inherit;">{{ titulo }}</h2>
+    <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 20px; font-family: inherit;">
+        Periddo de nivelación ({{ paralelo.periodo_de_nivelacion.periodo }}). {{ paralelo.unidad_curricular.malla_curricular.carrera.nombre }} (Jornada {{ paralelo.get_jornada_display }}) &middot; {{ ocupacion }}/{{ capacidad }} Estudiantes registrados
+    </p>
+</div>
 
 {% if lleno %}
-<div class="tarjeta">
-    <p style="color: #9db4c0; font-size: 13px; margin: 0;">El Paralelo no presenta cupos disponibles</p>
+<div class="tarjeta" style="font-family: inherit;">
+    <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin: 0; font-family: inherit;">El Paralelo no presenta cupos disponibles.</p>
 </div>
 {% else %}
-<div class="tarjeta" style="padding: 0; overflow-x: auto;">
+<div class="tarjeta" style="padding: 0; overflow-x: auto; font-family: inherit;">
     <table style="width: 100%;">
         <thead>
             <tr>
@@ -48,8 +63,8 @@
                 <td style="text-align: left; color: #1d1d1f;">{{ e.numero_de_matricula }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ e.get_registro_de_cupo_display }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ e.get_estado_de_matricula_display }}</td>
-                <td style="text-align: left;">
-                    <form method="post" action="{% url 'agregar_estudiante' paralelo.id %}">
+                <td style="text-align: left; white-space: nowrap;">
+                    <form method="post" action="{% url 'agregar_estudiante' paralelo.id %}" style="margin: 0; font-family: inherit;">
                         {% csrf_token %}
                         <input type="hidden" name="estudiante" value="{{ e.id }}">
                         <button type="submit" class="etiqueta-accion etiqueta-naranja">Agregar</button>
@@ -58,8 +73,8 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="9" style="text-align: center; color: #9db4c0; padding: 30px;">
-                    No existen estudiantes sin asignar para esta Carrera y Jornada
+                <td colspan="9" style="text-align: center; color: #9db4c0; padding: 30px; font-family: inherit;">
+                    No existen estudiantes sin asignar para esta Carrera y Jornada actualmente
                 </td>
             </tr>
             {% endfor %}
@@ -68,7 +83,7 @@
 </div>
 {% endif %}
 
-<div style="margin-top: 15px;">
+<div style="margin-top: 15px; font-family: inherit;">
     <a href="{% url 'listar_estudiantes_paralelo' paralelo.id %}" class="boton boton-secundario">Volver</a>
 </div>
 {% endblock %}

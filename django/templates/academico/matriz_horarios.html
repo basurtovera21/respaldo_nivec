@@ -4,33 +4,50 @@
 
 {% block contenido %}
 <style>
-    .grilla-horario { width: 100%; border-collapse: collapse; }
+    .grilla-horario { width: 100%; border-collapse: collapse; font-family: inherit; }
     .grilla-horario th, .grilla-horario td { border: 1px solid #DADBDB; text-align: center; vertical-align: top; padding: 0; height: 48px; min-width: 120px; }
     .grilla-horario th { background: #F4F4F4; font-size: 12px; font-weight: bold; color: #253237; padding: 10px 8px; }
-    .grilla-hora { font-size: 11px; color: #5c6b73; width: 60px; padding: 4px 8px !important; text-align: right !important; }
+    .grilla-hora { font-size: 11px; color: #5c6b73; width: 60px; padding: 4px 8px !important; text-align: right !important; font-weight: bold; }
     .bloque-materia {
         border-radius: 6px; padding: 6px 8px; margin: 2px 4px;
         font-size: 11px; font-weight: bold; color: #253237;
         text-align: left; line-height: 1.3; min-height: 40px;
         display: flex; flex-direction: column; justify-content: center;
+        font-family: inherit;
     }
     .bloque-materia .bloque-hora-txt { font-size: 10px; font-weight: normal; color: #5c6b73; margin-top: 2px; }
+
+    /* Estilos estandarizados para selects de filtros */
+    .select-filtro {
+        padding: 10px 14px; 
+        border: 1px solid #DADBDB; 
+        border-radius: 8px; 
+        font-size: 13px; 
+        background: white; 
+        color: #253237; 
+        outline: none; 
+        font-weight: 500; 
+        font-family: inherit;
+        transition: border-color 0.2s ease;
+    }
+    .select-filtro:focus {
+        border-color: #9db4c0;
+    }
 </style>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-family: inherit;">
     <div>
-        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">{{ titulo }}</h2>
-        <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin: 0;">
-            Visualización de horarios por paralelo
+        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237; font-family: inherit;">{{ titulo }}</h2>
+        <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin: 0; font-family: inherit;">
+            Representación visual de Horarios por Paralelo
         </p>
     </div>
 </div>
 
-<form method="get" style="margin-bottom: 20px;">
+<form method="get" style="margin-bottom: 20px; font-family: inherit;">
     <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
-        <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Periodo</span>
-        <select name="periodo" onchange="this.form.submit()"
-                style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit; min-width: 200px;">
+        <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Periodo de nivelación</span>
+        <select name="periodo" onchange="this.form.submit()" class="select-filtro" style="min-width: 200px;">
             <option value=""></option>
             {% for p in periodos %}
                 <option value="{{ p.id }}" {% if periodo_seleccionado.id == p.id %}selected{% endif %}>
@@ -39,9 +56,8 @@
             {% endfor %}
         </select>
 
-        <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Carrera</span>
-        <select name="carrera" onchange="this.form.submit()"
-                style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit; min-width: 200px;">
+        <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Carrera especificada</span>
+        <select name="carrera" onchange="this.form.submit()" class="select-filtro" style="min-width: 200px;">
             <option value=""></option>
             {% for c in carreras %}
                 <option value="{{ c.id }}" {% if carrera_seleccionada.id == c.id %}selected{% endif %}>
@@ -52,8 +68,7 @@
     </div>
     <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
         <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Jornada</span>
-        <select name="jornada" onchange="this.form.submit()"
-                style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit; min-width: 200px;">
+        <select name="jornada" onchange="this.form.submit()" class="select-filtro" style="min-width: 200px;">
             <option value=""></option>
             {% for j in jornadas %}
                 <option value="{{ j }}" {% if jornada_filtro == j %}selected{% endif %}>
@@ -64,8 +79,7 @@
 
         {% if grupos %}
         <span style="font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;">Paralelo</span>
-        <select name="paralelo" onchange="this.form.submit()"
-                style="padding: 10px 14px; border: 1px solid #DADBDB; border-radius: 8px; font-size: 13px; background: white; color: #253237; outline: none; font-weight: 500; font-family: inherit; min-width: 280px;">
+        <select name="paralelo" onchange="this.form.submit()" class="select-filtro" style="min-width: 280px;">
             <option value=""></option>
             {% for g in grupos %}
                 <option value="{{ g.representativo_id }}" {% if paralelo_seleccionado.id == g.representativo_id %}selected{% endif %}>
@@ -78,22 +92,22 @@
 </form>
 
 {% if periodo_seleccionado and carrera_seleccionada %}
-<div style="margin-bottom: 16px;">
-    <a href="{% url 'descargar_horarios_excel' %}?periodo={{ periodo_seleccionado.id }}&carrera={{ carrera_seleccionada.id }}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar horarios (Excel)</a>
+<div style="margin-bottom: 16px; font-family: inherit;">
+    <a href="{% url 'descargar_horarios_excel' %}?periodo={{ periodo_seleccionado.id }}&carrera={{ carrera_seleccionada.id }}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none; font-family: inherit;">Descargar Horarios de Paralelo</a>
 </div>
 {% endif %}
 
 {% if not periodo_seleccionado %}
-    <div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 30px;">
-        Seleccione un Periodo de nivelación
+    <div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 20px; font-family: inherit; font-size: 13px; font-weight: bold">
+       Especifique un Periodo de nivelación
     </div>
 {% elif paralelo_seleccionado and grilla %}
-    <div class="tarjeta" style="padding: 12px; overflow-x: auto; margin-bottom: 20px;">
-        <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f; margin-bottom: 4px;">
-            {{ paralelo_seleccionado.nombre }} — {{ paralelo_seleccionado.unidad_curricular.malla_curricular.carrera.nombre }} ({{ paralelo_seleccionado.get_jornada_display }})
+    <div class="tarjeta" style="padding: 12px; overflow-x: auto; margin-bottom: 20px; font-family: inherit;">
+        <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f; margin-bottom: 4px; font-family: inherit;">
+            {{ paralelo_seleccionado.unidad_curricular.malla_curricular.carrera.nombre }} ({{ paralelo_seleccionado.get_jornada_display }}) - {{ paralelo_seleccionado.nombre }}
         </h3>
         {% if franja %}
-        <p style="color: #5c6b73; font-size: 12px; margin-bottom: 12px;">Franja {{ franja }}</p>
+        <p style="color: #5c6b73; font-size: 12px; font-weight: bold; margin-bottom: 12px; font-family: inherit;">{{ franja }} horas</p>
         {% endif %}
         <table class="grilla-horario">
             <thead>
@@ -126,7 +140,7 @@
         {% if mapa_colores %}
         <div style="margin-top: 12px; display: flex; gap: 12px; flex-wrap: wrap;">
             {% for nombre, color in mapa_colores.items %}
-            <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #1d1d1f;">
+            <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #1d1d1f; font-family: inherit; font-weight: bold">
                 <span style="width: 14px; height: 14px; border-radius: 4px; background: {{ color }}; display: inline-block;"></span>
                 {{ nombre }}
             </span>
@@ -135,20 +149,20 @@
         {% endif %}
     </div>
 {% elif paralelo_seleccionado and not grilla %}
-    <div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 30px;">
-        El paralelo seleccionado no tiene sesiones registradas
+    <div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 20px; font-family: inherit; font-size: 13px; font-weight: bold">
+        El Paralelo especificado no tiene registro de sesiones registradas
     </div>
 {% elif periodo_seleccionado and grupos %}
-    <div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 30px;">
-        Seleccione un paralelo para visualizar su horario
+    <div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 20px; font-family: inherit; font-size: 13px; font-weight: bold">
+        Especifique el Paralelo para visualizar su Horario
     </div>
 {% elif periodo_seleccionado %}
-    <div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 30px;">
-        No se encontraron paralelos con los filtros seleccionados
+    <div class="tarjeta" style="text-align: center; color: #9db4c0; padding: 20px; font-family: inherit; font-size: 13px; font-weight: bold">
+        No se encontraron registros
     </div>
 {% endif %}
 
-<div style="margin-top: 20px;">
+<div style="margin-top: 20px; font-family: inherit;">
     <a href="{% url 'panel_principal' %}" class="boton boton-secundario">Volver</a>
 </div>
 {% endblock %}

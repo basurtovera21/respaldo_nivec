@@ -468,7 +468,7 @@ def estudiantes_disponibles(request, paralelo_id):
         "ocupacion": ocupacion,
         "capacidad": capacidad,
         "titulo_pagina": "Paralelo - NIVEC",
-        "titulo": f"Agregar estudiante - {paralelo.nombre}",
+        "titulo": f"Incorporar Estudiante - {paralelo.nombre} ({paralelo.unidad_curricular.nombre})",
     })
 
 
