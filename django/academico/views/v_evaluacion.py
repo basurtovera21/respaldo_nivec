@@ -81,7 +81,7 @@ def listar_evaluaciones_paralelo(request, paralelo_id):
         "puede_formalizar": puede_formalizar,
         "puede_editar_calificacion": puede_editar_calificacion,
         "todas_formalizadas": todas_formalizadas,
-        "titulo_pagina": "Calificaciones - NIVEC",
+        "titulo_pagina": "Resultados - NIVEC",
         "titulo": f"Registro de calificaciones - {paralelo.nombre} ({paralelo.unidad_curricular.nombre})",
     })
 
@@ -90,7 +90,7 @@ def listar_evaluaciones_paralelo(request, paralelo_id):
 def cargar_calificaciones(request, paralelo_id):
     universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     paralelo = get_object_or_404(
@@ -99,7 +99,7 @@ def cargar_calificaciones(request, paralelo_id):
     periodo = paralelo.periodo_de_nivelacion
 
     if periodo.estado != EstadoDePeriodo.EVALUACION.value:
-        messages.error(request, "Solo se pueden cargar calificaciones cuando el Periodo está en evaluación")
+        messages.error(request, "El Periodo de nivelación no se encuentra en estado de evaluación")
         return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
 
     if request.method == "POST" and "archivo_excel" in request.FILES:
@@ -117,14 +117,14 @@ def cargar_calificaciones(request, paralelo_id):
         for adv in resultado["advertencias"]:
             messages.warning(request, adv)
         if resultado["exitosos"] > 0:
-            messages.success(request, f"{resultado['exitosos']} calificaciones registradas correctamente")
+            messages.success(request, f"{resultado['exitosos']} calificaciones procesadas correctamente")
 
         return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
 
     return render(request, "academico/cargar_calificaciones.html", {
         "paralelo": paralelo,
-        "titulo_pagina": "Calificaciones - NIVEC",
-        "titulo": f"Cargar calificaciones - {paralelo.nombre} ({paralelo.unidad_curricular.nombre})",
+        "titulo_pagina": "Resultados - NIVEC",
+        "titulo": f"Procesar calificaciones - {paralelo.nombre} ({paralelo.unidad_curricular.nombre})",
     })
 
 
@@ -138,7 +138,7 @@ def descargar_plantilla_calificaciones(request, paralelo_id):
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Calificaciones"
-    ws.append(["Número de identificación", "Apellidos", "Nombres", "Correo institucional", "Número de matrícula", "Parcial 1 (0-10)", "Parcial 2 (0-10)", "Porcentaje de asistencia (0-100)"])
+    ws.append(["Número de identificación", "Apellidos", "Nombres", "Correo institucional", "Número de matrícula", "Calificación parcial 1 (0-10)", "Calificación parcial 2 (0-10)", "Porcentaje de asistencia (0-100)"])
 
     # Pre-fill with student data
     matriculas = MatriculaParalelo.objects.filter(
@@ -171,7 +171,7 @@ def descargar_plantilla_calificaciones(request, paralelo_id):
 def detalle_evaluacion(request, evaluacion_id):
     universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     evaluacion = get_object_or_404(EvaluacionAcademica, id=evaluacion_id)
@@ -192,18 +192,18 @@ def detalle_evaluacion(request, evaluacion_id):
     cumple_asistencia = asistencia_actual >= criterio_asistencia
 
     if evaluacion.estado_de_aprobacion == "Aprobado":
-        motivo = "El estudiante cumple con el criterio mínimo de calificación y el porcentaje mínimo de asistencia."
+        motivo = "El Estudiante cumple con el criterio de calificación y porcentaje mínimo de asistencia"
     elif evaluacion.estado_de_aprobacion == "Retirado":
-        motivo = "El estudiante se ha retirado del proceso de nivelación."
+        motivo = "El Estudiante fue retirado del proceso de nivelación"
     elif evaluacion.estado_de_aprobacion == "Anulado":
-        motivo = "La matrícula del estudiante ha sido anulada."
+        motivo = "La matrícula del Estudiante fue anulada"
     else:
         razones = []
         if not cumple_nota:
-            razones.append(f"La calificación final ({nota_actual}) no alcanza el criterio mínimo de aprobación ({criterio_nota})")
+            razones.append(f"El registro de la nota final es inferior al criterio mínimo de aprobación establecido")
         if not cumple_asistencia:
-            razones.append(f"El porcentaje de asistencia ({asistencia_actual}%) no alcanza el mínimo requerido ({criterio_asistencia}%)")
-        motivo = ". ".join(razones) + "." if razones else "No cumple con los criterios de aprobación."
+            razones.append(f"El registro del porcentaje de asistencia es inferior al criterio mínimo de aprobación establecido")
+        motivo = ". ".join(razones) if razones else "El estudiante no cumple con los criterios de aprobación establecidos"
 
     return render(request, "academico/detalle_evaluacion.html", {
         "evaluacion": evaluacion,
@@ -218,7 +218,7 @@ def detalle_evaluacion(request, evaluacion_id):
         "cumple_asistencia": cumple_asistencia,
         "motivo": motivo,
         "titulo_pagina": "Evaluación - NIVEC",
-        "titulo": f"Detalle de evaluación - {usuario.apellidos} {usuario.nombres}",
+        "titulo": f"{usuario.apellidos} {usuario.nombres}",
     })
 
 

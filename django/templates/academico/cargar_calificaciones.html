@@ -3,29 +3,50 @@
 {% block titulo %}{{ titulo_pagina|default:"NIVEC" }}{% endblock %}
 
 {% block contenido %}
-<h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
-<p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
-    {{ paralelo.periodo_de_nivelacion.periodo }} — {{ paralelo.get_jornada_display }}
-</p>
+<style>
+    .campo { margin-bottom: 16px; }
+    .campo label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: bold; color: #253237; }
+    .input-estandar {
+        padding: 10px 14px; 
+        border: 1px solid #DADBDB; 
+        border-radius: 8px; 
+        font-size: 13px; 
+        background: white; 
+        color: #1d1d1f; 
+        outline: none; 
+        font-family: inherit; 
+        width: 100%;
+        box-sizing: border-box;
+    }
+</style>
 
-<div class="tarjeta" style="max-width: 520px;">
-    <p style="color: #9db4c0; font-size: 12px; margin-bottom: 12px;">
-        El formato debe contener: Número de identificación, Parcial 1 (0-10), Parcial 2 (0-10), Porcentaje de asistencia (0-100).
+<div class="tarjeta" style="max-width: 500px; font-family: inherit;">
+    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">{{ titulo }}</h2>
+    <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 20px;">
+        Periodo de nivelación {{ paralelo.periodo_de_nivelacion.periodo }} (Jornada {{ paralelo.get_jornada_display }})
     </p>
-    <form method="post" enctype="multipart/form-data" action="{% url 'cargar_calificaciones' paralelo.id %}">
+
+    <form method="post" enctype="multipart/form-data" action="{% url 'cargar_calificaciones' paralelo.id %}" novalidate>
         {% csrf_token %}
+        
         <div class="campo">
-            <label style="font-weight: bold;">Archivo Excel (.xlsx)</label>
-            <input type="file" name="archivo_excel" accept=".xlsx" required>
+            <label style="font-weight: bold;">Procesar documento</label>
+            <input type="file" name="archivo_excel" accept=".xlsx" class="input-estandar" required style="cursor: pointer;">
         </div>
-        <div style="margin-top: 16px;">
-            <button type="submit" class="boton boton-primario">Cargar</button>
+
+        <div style="margin-bottom: 16px;">
+            <a href="{% url 'descargar_plantilla_calificaciones' paralelo.id %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar formato</a>
+        </div>
+
+        <!-- Mensaje informativo sin contenedor gris -->
+        <p style="color: #9db4c0; font-size: 13px; margin-bottom: 20px; line-height: 1.4; font-weight: bold;">
+            <span style="color: #253237;"></span> El documento posee los registros previamente cargados
+        </p>
+
+        <div style="margin-top: 30px; display: flex; gap: 15px;">
+            <button type="submit" class="boton boton-primario">Procesar</button>
             <a href="{% url 'listar_evaluaciones_paralelo' paralelo.id %}" class="boton boton-secundario">Cancelar</a>
         </div>
     </form>
-</div>
-
-<div style="margin-top: 15px;">
-    <a href="{% url 'descargar_plantilla_calificaciones' paralelo.id %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar formato</a>
 </div>
 {% endblock %}

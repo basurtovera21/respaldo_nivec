@@ -3,63 +3,87 @@
 {% block titulo %}{{ titulo_pagina|default:"NIVEC" }}{% endblock %}
 
 {% block contenido %}
-<h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
+<style>
+    /* Estilos estandarizados para tablas en tarjetas */
+    .tarjeta table th { 
+        white-space: nowrap; 
+        font-weight: bold; 
+        text-align: left; 
+        color: #5c6b73; 
+        padding: 12px 18px; 
+    }
+    .tarjeta table td { 
+        padding: 12px 18px; 
+        color: #1d1d1f;
+    }
+</style>
+
+<h2 style="font-weight: bold; margin-bottom: 4px; color: #253237;">{{ titulo }}</h2>
 <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 20px;">
-    {{ unidad.nombre }} — {{ evaluacion.periodo_de_nivelacion.periodo }}
+    {{ unidad.nombre }} (Periodo de nivelación {{ evaluacion.periodo_de_nivelacion.periodo }})
 </p>
 
-<div class="tarjeta" style="margin-bottom: 20px;">
-    <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f; margin-bottom: 12px;">Información del estudiante</h3>
+<h3 style="font-size: 14px; font-weight: bold; color: #253237; margin-bottom: 8px;">Información institucional</h3>
+<div class="tarjeta" style="margin-bottom: 20px; padding: 0;">
     <table style="width: 100%; max-width: 500px;">
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Identificación</td><td style="padding: 6px 0;">{{ usuario.identificacion }}</td></tr>
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Apellidos y nombres</td><td style="padding: 6px 0;">{{ usuario.apellidos }} {{ usuario.nombres }}</td></tr>
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Correo institucional</td><td style="padding: 6px 0;">{{ usuario.correo_institucional }}</td></tr>
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Número de matrícula</td><td style="padding: 6px 0;">{{ estudiante.numero_de_matricula }}</td></tr>
+        <tr><td style="font-weight: bold; color: #5c6b73; width: 250px;">Número de identificación</td><td>{{ usuario.identificacion }}</td></tr>
+        <tr><td style="font-weight: bold; color: #5c6b73;">Apellidos y nombres</td><td>{{ usuario.apellidos }} {{ usuario.nombres }}</td></tr>
+        <tr><td style="font-weight: bold; color: #5c6b73;">Correo institucional</td><td>{{ usuario.correo_institucional }}</td></tr>
+        <tr><td style="font-weight: bold; color: #5c6b73;">Número de matrícula</td><td>{{ estudiante.numero_de_matricula }}</td></tr>
     </table>
 </div>
 
-<div class="tarjeta" style="margin-bottom: 20px;">
-    <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f; margin-bottom: 12px;">Resultado académico</h3>
+<h3 style="font-size: 14px; font-weight: bold; color: #253237; margin-bottom: 8px;">Resultado de Periodo de nivelación</h3>
+<div class="tarjeta" style="margin-bottom: 20px; padding: 0;">
     <table style="width: 100%; max-width: 500px;">
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Parcial 1</td><td style="padding: 6px 0;">{{ evaluacion.calificacion_parcial_1 }}</td></tr>
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Parcial 2</td><td style="padding: 6px 0;">{{ evaluacion.calificacion_parcial_2 }}</td></tr>
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Nota final</td><td style="padding: 6px 0; font-weight: bold;">{{ nota_actual }}</td></tr>
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Porcentaje de asistencia</td><td style="padding: 6px 0;">{{ asistencia_actual }}%</td></tr>
-        <tr><td style="font-weight: bold; padding: 6px 0; color: #5c6b73;">Estado de aprobación</td><td style="padding: 6px 0; font-weight: bold; color: {% if evaluacion.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif evaluacion.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#9db4c0{% endif %};">{{ evaluacion.estado_de_aprobacion }}</td></tr>
+        <tr><td style="font-weight: bold; color: #5c6b73; width: 250px;">Calificación de parcial 1</td><td>{{ evaluacion.calificacion_parcial_1 }}</td></tr>
+        <tr><td style="font-weight: bold; color: #5c6b73;">Calificación de parcial 2</td><td>{{ evaluacion.calificacion_parcial_2 }}</td></tr>
+        <tr><td style="font-weight: bold; color: #5c6b73;">Nota final</td><td style="font-weight: bold;">{{ nota_actual }}</td></tr>
+        <tr><td style="font-weight: bold; color: #5c6b73;">Porcentaje de asistencia</td><td>{{ asistencia_actual }}%</td></tr>
+        <tr>
+            <td style="font-weight: bold; color: #5c6b73;">Estado de aprobación</td>
+            <td style="font-weight: bold; color: {% if evaluacion.estado_de_aprobacion == 'Aprobado' %}#253237{% elif evaluacion.estado_de_aprobacion == 'Reprobado' %}#9db4c0{% else %}#5c6b73{% endif %};">
+                {{ evaluacion.estado_de_aprobacion }}
+            </td>
+        </tr>
     </table>
 </div>
 
-<div class="tarjeta" style="margin-bottom: 20px;">
-    <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f; margin-bottom: 12px;">Criterios de aprobación definidos</h3>
+<h3 style="font-size: 14px; font-weight: bold; color: #253237; margin-bottom: 8px;">Criterios de aprobación definidos</h3>
+<div class="tarjeta" style="margin-bottom: 20px; padding: 0;">
     <table style="width: 100%; max-width: 600px;">
         <thead>
             <tr>
-                <th style="text-align: left; padding: 8px 0; color: #5c6b73; font-weight: bold;">Criterio</th>
-                <th style="text-align: left; padding: 8px 0; color: #5c6b73; font-weight: bold;">Requerido</th>
-                <th style="text-align: left; padding: 8px 0; color: #5c6b73; font-weight: bold;">Obtenido</th>
-                <th style="text-align: left; padding: 8px 0; color: #5c6b73; font-weight: bold;">Cumple</th>
+                <th>Criterio</th>
+                <th>Requerido</th>
+                <th>Obtenido</th>
+                <th>Resultado</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td style="padding: 8px 0;">Calificación mínima</td>
-                <td style="padding: 8px 0;">{{ criterio_nota }}</td>
-                <td style="padding: 8px 0;">{{ nota_actual }}</td>
-                <td style="padding: 8px 0; font-weight: bold; color: {% if cumple_nota %}#2e7d32{% else %}#c81e1e{% endif %};">{% if cumple_nota %}Sí{% else %}No{% endif %}</td>
+                <td>Calificación mínima requerida</td>
+                <td>{{ criterio_nota }}</td>
+                <td>{{ nota_actual }}</td>
+                <td style="font-weight: bold; color: {% if cumple_nota %}#253237{% else %}#9db4c0{% endif %};">
+                    {% if cumple_nota %}Cumple{% else %}No cumple{% endif %}
+                </td>
             </tr>
             <tr>
-                <td style="padding: 8px 0;">Asistencia mínima</td>
-                <td style="padding: 8px 0;">{{ criterio_asistencia }}%</td>
-                <td style="padding: 8px 0;">{{ asistencia_actual }}%</td>
-                <td style="padding: 8px 0; font-weight: bold; color: {% if cumple_asistencia %}#2e7d32{% else %}#c81e1e{% endif %};">{% if cumple_asistencia %}Sí{% else %}No{% endif %}</td>
+                <td>Porcentaje de asistencia mínima requerida</td>
+                <td>{{ criterio_asistencia }}%</td>
+                <td>{{ asistencia_actual }}%</td>
+                <td style="font-weight: bold; color: {% if cumple_asistencia %}#253237{% else %}#9db4c0{% endif %};">
+                    {% if cumple_asistencia %}Cumple{% else %}No cumple{% endif %}
+                </td>
             </tr>
         </tbody>
     </table>
 </div>
 
+<h3 style="font-size: 14px; font-weight: bold; color: #253237; margin-bottom: 8px;">Constancia de resultado</h3>
 <div class="tarjeta" style="margin-bottom: 20px;">
-    <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f; margin-bottom: 8px;">Motivo del resultado</h3>
-    <p style="color: #1d1d1f; font-size: 13px; margin: 0;">{{ motivo }}</p>
+    <p style="color: #5c6b73; font-size: 13px;  font-weight: bold; margin: 0;">{{ motivo }}</p>
 </div>
 
 <div style="margin-top: 15px;">

@@ -4,88 +4,102 @@
 
 {% block contenido %}
 <style>
-.etiqueta-accion {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: bold;
-    text-decoration: none;
-    white-space: nowrap;
-}
-.etiqueta-naranja {
-    background: #9db4c0;
-    color: #253237;
-    border: none;
-}
-.etiqueta-naranja:hover {
-    opacity: 0.85;
-}
-.etiqueta-modificar { background: #5c6b73; color: white; border: none; }
+    /* Estilos sincronizados para la tabla */
+    .tarjeta table th { 
+        white-space: nowrap; /* Mantiene el título en una sola línea */
+    }
+    .tarjeta table th, .tarjeta table td { 
+        padding: 12px 18px; 
+        white-space: nowrap; 
+        font-family: inherit;
+    }
+    .etiqueta-accion {
+        padding: 6px 14px; 
+        border-radius: 6px; 
+        font-size: 12px; 
+        text-decoration: none;
+        display: inline-block; 
+        font-weight: bold; 
+        margin-right: 6px; 
+        transition: all 0.2s ease;
+        border: none; 
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .etiqueta-accion:last-child { margin-right: 0; }
+    .etiqueta-modificar { background: #5c6b73; color: white; }
+    .etiqueta-modificar:hover { opacity: 0.85; }
+    .etiqueta-naranja { background: #9db4c0; color: white; border: none; }
+    .etiqueta-naranja:hover { opacity: 0.85; }
 </style>
 
-<h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">{{ titulo }}</h2>
-<p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
-    {{ paralelo.periodo_de_nivelacion.periodo }} — {{ paralelo.get_jornada_display }}
+<h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237; font-family: inherit;">{{ titulo }}</h2>
+<p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 16px; font-family: inherit;">
+    Periodo de nivelación {{ paralelo.periodo_de_nivelacion.periodo }} (Jornada {{ paralelo.get_jornada_display }})
 </p>
 
 {% if es_evaluacion and not solo_lectura %}
-<div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+<div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-family: inherit;">
     {% if puede_cargar %}
-    <a href="{% url 'cargar_calificaciones' paralelo.id %}" class="boton boton-primario">Cargar calificaciones</a>
+    <a href="{% url 'cargar_calificaciones' paralelo.id %}" class="boton boton-primario">Procesar calificaciones</a>
     {% endif %}
     {% if puede_pasar_revision %}
-    <form method="post" action="{% url 'pasar_a_revision' paralelo.id %}" style="margin: 0;">
+    <form method="post" action="{% url 'pasar_a_revision' paralelo.id %}" style="margin: 0; font-family: inherit;">
         {% csrf_token %}
         <button type="submit" class="boton boton-secundario" onclick="return confirm('¿Pasar todas las calificaciones en borrador a revisión?');">Pasar a revisión</button>
     </form>
     {% endif %}
     {% if puede_formalizar %}
-    <form method="post" action="{% url 'formalizar_evaluaciones' paralelo.id %}" style="margin: 0;">
+    <form method="post" action="{% url 'formalizar_evaluaciones' paralelo.id %}" style="margin: 0; font-family: inherit;">
         {% csrf_token %}
-        <button type="submit" class="boton boton-secundario" onclick="return confirm('¿Formalizar todas las calificaciones en revisión? Esta acción no se puede deshacer.');">Formalizar</button>
+        <button type="submit" class="boton boton-secundario" onclick="return confirm('Confirmar acción');">Formalizar calificaciones</button>
     </form>
     {% endif %}
 </div>
 {% endif %}
 
-<div class="tarjeta" style="padding: 0; overflow-x: auto;">
+<div class="tarjeta" style="padding: 0; overflow-x: auto; font-family: inherit;">
     <table style="width: 100%;">
         <thead>
             <tr>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Identificación</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Apellidos</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Nombres</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Correo</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">N° matrícula</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Parcial 1</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Parcial 2</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Nota final</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Asistencia</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Estado</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Revisión</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Detalle</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73;">Número de identificación</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73;">Apellidos</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73;">Nombres</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73;">Correo institucional</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73;">Número de matrícula</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73;">Calificación parcial 1</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73;">Calificación parcial 2</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73;">Nota final</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73;">Porcentaje de asistencia</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73;">Estado</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73;">Revisión</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73;">Detalle</th>
             </tr>
         </thead>
         <tbody>
             {% for e in evaluaciones %}
             <tr>
-                <td style="font-family: monospace; text-align: left; padding: 12px 18px;">{{ e.estudiante.usuario_de_sistema.identificacion }}</td>
-                <td style="text-align: left; padding: 12px 18px;">{{ e.estudiante.usuario_de_sistema.apellidos }}</td>
-                <td style="text-align: left; padding: 12px 18px;">{{ e.estudiante.usuario_de_sistema.nombres }}</td>
-                <td style="text-align: left; padding: 12px 18px;">{{ e.estudiante.usuario_de_sistema.correo_institucional }}</td>
-                <td style="text-align: left; padding: 12px 18px;">{{ e.estudiante.numero_de_matricula }}</td>
-                <td style="text-align: left; padding: 12px 18px;">{{ e.calificacion_parcial_1 }}</td>
-                <td style="text-align: left; padding: 12px 18px;">{{ e.calificacion_parcial_2 }}</td>
-                <td style="text-align: left; padding: 12px 18px; font-weight: bold;">{{ e.nota_final }}</td>
-                <td style="text-align: left; padding: 12px 18px;">{{ e.porcentaje_asistencia }}%</td>
-                <td style="text-align: left; padding: 12px 18px; color: {% if e.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif e.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#9db4c0{% endif %}; font-weight: bold;">{{ e.estado_de_aprobacion }}</td>
-                <td style="text-align: left; padding: 12px 18px;">{{ e.estado_revision }}</td>
-                <td style="text-align: left; padding: 12px 18px;">
+                <td style="font-family: monospace; text-align: left; color: #1d1d1f;">{{ e.estudiante.usuario_de_sistema.identificacion }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.estudiante.usuario_de_sistema.apellidos }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.estudiante.usuario_de_sistema.nombres }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.estudiante.usuario_de_sistema.correo_institucional }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.estudiante.numero_de_matricula }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.calificacion_parcial_1 }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.calificacion_parcial_2 }}</td>
+                <td style="text-align: left; font-weight: bold; color: #1d1d1f;">{{ e.nota_final }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.porcentaje_asistencia }}%</td>
+                <td style="text-align: left; font-weight: bold; color: 
+                    {% if e.estado_de_aprobacion == 'Aprobado' %}#253237
+                    {% elif e.estado_de_aprobacion == 'Reprobado' %}#9db4c0
+                    {% else %}#5c6b73{% endif %};">
+                    {{ e.estado_de_aprobacion }}
+                </td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.estado_revision }}</td>
+                <td style="text-align: left; white-space: nowrap;">
                     {% if puede_editar_calificacion and e.estado_revision != "Formalizado" and e.estado_revision != "En revisión" %}
-                    <a href="{% url 'editar_evaluacion' e.id %}" class="etiqueta-accion etiqueta-modificar">Editar</a>
+                    <a href="{% url 'editar_evaluacion' e.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
                     {% endif %}
-                    <a href="{% url 'detalle_evaluacion' e.id %}" class="etiqueta-accion etiqueta-naranja">Ver detalle</a>
+                    <a href="{% url 'detalle_evaluacion' e.id %}" class="etiqueta-accion etiqueta-naranja">Ver información</a>
                 </td>
             </tr>
             {% empty %}
@@ -99,7 +113,7 @@
     </table>
 </div>
 
-<div style="margin-top: 15px;">
+<div style="margin-top: 15px; font-family: inherit;">
     <a href="{% url 'detalle_paralelo' paralelo.id %}" class="boton boton-secundario">Volver</a>
 </div>
 {% endblock %}

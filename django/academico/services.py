@@ -1699,7 +1699,7 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
                 estudiantes_matriculados__paralelo=paralelo_db,
             ).first()
             if not estudiante:
-                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (Estudiante no registrado en el Paralelo)")
+                resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (el Estudiante no está registrado en el Paralelo)")
                 continue
 
             # Calculate final grade and status
