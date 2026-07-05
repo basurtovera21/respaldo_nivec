@@ -1,7 +1,7 @@
 {% extends "base_listar.html" %}
 
 {% block boton_registrar %}
-    {% if not solo_lectura %}
+    {% if puede_registrar_unidad and not solo_lectura %}
     {% if malla %}
         <a href="{% url 'registrar_unidad' %}?malla={{ malla.id }}" class="boton boton-primario">Registrar</a>
     {% else %}
@@ -61,7 +61,7 @@
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Horas asincrónicas</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Criterio mínimo de aprobación</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Asistencia mínima de aprobación</th>
-    {% if not solo_lectura %}
+    {% if puede_modificar_unidad or puede_eliminar_unidad %}
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
     {% endif %}
 {% endblock %}
@@ -77,12 +77,16 @@
         <td style="text-align: left;">{{ u.horas_asincronicas }} horas</td>
         <td style="text-align: left; color: #1d1d1f;">{{ u.criterio_de_aprobacion }}</td>
         <td style="text-align: left; color: #1d1d1f;">{{ u.porcentaje_minimo_asistencia }}%</td>
-        {% if not solo_lectura %}
+        {% if puede_modificar_unidad or puede_eliminar_unidad %}
         <td style="text-align: left; white-space: nowrap;">
+            {% if puede_modificar_unidad %}
             <a href="{% url 'modificar_unidad' u.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
+            {% endif %}
+            {% if puede_eliminar_unidad %}
             <a href="{% url 'eliminar_unidad' u.id %}"
                onclick="return confirm('Confirmar acción');"
                class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+            {% endif %}
         </td>
         {% endif %}
     </tr>

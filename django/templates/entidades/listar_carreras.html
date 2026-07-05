@@ -21,7 +21,7 @@
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Campus registrado</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Nombre</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Vigencia SNIESE</th>
-    {% if not solo_lectura %}
+    {% if puede_modificar_carrera or puede_eliminar_carrera %}
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
     {% endif %}
 {% endblock %}
@@ -33,19 +33,23 @@
         <td style="text-align: left;">{{ c.campus.nombre }}</td>
         <td style="text-align: left;">{{ c.nombre }}</td>
         <td style="text-align: left;">{{ c.vigencia_sniese }}</td>
-        {% if not solo_lectura %}
+        {% if puede_modificar_carrera or puede_eliminar_carrera %}
         <td style="text-align: left;">
+            {% if puede_modificar_carrera %}
             <a href="{% url 'modificar_carrera' c.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
+            {% endif %}
+            {% if puede_eliminar_carrera %}
             <a href="{% url 'eliminar_carrera' c.id %}" 
                onclick="return confirm('Confirmar acción');"
                class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+            {% endif %}
         </td>
         {% endif %}
     </tr>
     {% empty %}
     {% if not busqueda and not campus_filtro %}
     <tr>
-        <td colspan="{% if solo_lectura %}4{% else %}5{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
+        <td colspan="{% if puede_modificar_carrera or puede_eliminar_carrera %}5{% else %}4{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>

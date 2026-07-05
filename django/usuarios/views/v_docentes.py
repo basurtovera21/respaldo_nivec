@@ -38,15 +38,21 @@ def listar_docentes(request):
 
     docentes = docentes.order_by("identificador_institucional")
 
+    from academico.permisos import obtener_permisos_periodo
+    permisos = obtener_permisos_periodo(universidad_usuario)
+
     return render(request, "usuarios/listar_docentes.html", {
         "docentes": docentes,
         "busqueda": busqueda,
         "titulo_pagina": "Docente - NIVEC",
         "titulo": "Docentes",
-        "url_registrar": "registrar_docente",
+        "url_registrar": "registrar_docente" if permisos["puede_registrar_docente"] and not usuario_es_solo_lectura(request.user) else None,
         "texto_registrar": "Registrar",
         "url_volver": "panel_principal",
         "solo_lectura": usuario_es_solo_lectura(request.user),
+        "puede_modificar_docente": permisos["puede_modificar_docente"] and not usuario_es_solo_lectura(request.user),
+        "puede_eliminar_docente": permisos["puede_eliminar_docente"] and not usuario_es_solo_lectura(request.user),
+        "puede_inhabilitar_docente": permisos["puede_inhabilitar_docente"] and not usuario_es_solo_lectura(request.user),
     })
 
 @requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)

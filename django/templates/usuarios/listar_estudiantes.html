@@ -3,7 +3,7 @@
 {% block titulo %}Estudiante - NIVEC{% endblock %}
 
 {% block boton_registrar %}
-    {% if url_registrar and not solo_lectura %}
+    {% if puede_registir_estudiante and not solo_lectura %}
     <a href="{% url 'registrar_estudiante' %}{% if periodo_seleccionado %}?periodo={{ periodo_seleccionado.id }}{% endif %}" class="boton boton-primario">{{ texto_registrar|default:"Registrar" }}</a>
     {% endif %}
 {% endblock %}
@@ -55,7 +55,7 @@
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Campus registrado</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Carrera registrada</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Estado de usuario</th>
-    {% if not solo_lectura %}
+    {% if puede_modificar_estudiante or puede_eliminar_estudiante or puede_retirar_estudiante %}
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
     {% endif %}
 {% endblock %}
@@ -73,25 +73,33 @@
         <td style="text-align: left;">{{ est.campus_registrado.nombre }}</td>
         <td style="text-align: left;">{{ est.carrera_registrada.nombre }}</td>
         <td style="text-align: left;"><span style="font-weight: bold; color: #253237; font-size: 13px;">{{ est.usuario_de_sistema.estado_de_usuario }}</span></td>
-        {% if not solo_lectura %}
+        {% if puede_modificar_estudiante or puede_eliminar_estudiante or puede_retirar_estudiante %}
         <td style="text-align: left; white-space: nowrap;">
+            {% if puede_modificar_estudiante %}
             <a href="{% url 'modificar_estudiante' est.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
+            {% endif %}
 
             {% if est.estado_de_matricula == 'Matriculado' %}
+                {% if puede_retirar_estudiante %}
                 <a href="{% url 'solicitar_retiro' est.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-naranja">Retirar</a>
+                {% endif %}
+                {% if puede_anular_estudiante %}
                 <a href="{% url 'anular_matricula' est.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-naranja">Anular</a>
-            {% else %}
+                {% endif %}
+            {% elif puede_reincorporar_estudiante %}
                 <a href="{% url 'formalizar_matricula' est.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-naranja">Reincorporar</a>
             {% endif %}
 
+            {% if puede_eliminar_estudiante %}
             <a href="{% url 'eliminar_estudiante' est.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+            {% endif %}
         </td>
         {% endif %}
     </tr>
     {% empty %}
     {% if not busqueda and not periodo_seleccionado and not campus_filtro and not carrera_filtro %}
     <tr>
-        <td colspan="{% if solo_lectura %}10{% else %}11{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
+        <td colspan="{% if puede_modificar_estudiante or puede_eliminar_estudiante or puede_retirar_estudiante %}11{% else %}10{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>

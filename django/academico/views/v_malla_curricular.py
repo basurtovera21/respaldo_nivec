@@ -60,6 +60,9 @@ def listar_mallas(request):
     if carrera_filtro:
         mallas = mallas.filter(carrera_id=carrera_filtro)
 
+    from academico.permisos import obtener_permisos_periodo
+    permisos = obtener_permisos_periodo(universidad_usuario)
+
     return render(request, "academico/listar_mallas.html", {
         "solo_lectura": solo_lectura,
         "es_coordinador_ua": es_coordinador_ua,
@@ -70,9 +73,13 @@ def listar_mallas(request):
         "mallas": mallas,
         "titulo_pagina": "Malla curricular - NIVEC",
         "titulo": "Mallas curriculares",
-        "url_registrar": "registrar_malla",
+        "url_registrar": "registrar_malla" if permisos["puede_registrar_malla"] and not solo_lectura else None,
         "texto_registrar": "Registrar",
-        "url_volver": "panel_principal"
+        "url_volver": "panel_principal",
+        "puede_modificar_malla": permisos["puede_modificar_malla"] and not solo_lectura,
+        "puede_eliminar_malla": permisos["puede_eliminar_malla"] and not solo_lectura,
+        "puede_copiar_malla": permisos["puede_copiar_malla"] and not solo_lectura,
+        "puede_cambiar_estado_malla": permisos["puede_cambiar_estado_malla"] and not solo_lectura,
     })
 
 @requiere_perfil(*ROLES_MODIFICAN)

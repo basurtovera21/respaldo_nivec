@@ -65,6 +65,9 @@ def listar_administrativos(request):
         )
     ).order_by("es_director", "identificador_administrativo")
 
+    from academico.permisos import obtener_permisos_periodo
+    permisos = obtener_permisos_periodo(universidad_usuario)
+
     return render(request, "usuarios/listar_administrativos.html", {
         "administrativos": administrativos,
         "busqueda": busqueda,
@@ -72,10 +75,12 @@ def listar_administrativos(request):
         "perfiles_disponibles": perfiles_disponibles,
         "titulo_pagina": "Administrativo - NIVEC",
         "titulo": "Administrativos",
-        "url_registrar": "registrar_administrativo",
+        "url_registrar": "registrar_administrativo" if permisos["puede_registrar_administrativo"] and not usuario_es_solo_lectura(request.user) else None,
         "texto_registrar": "Registrar",
         "url_volver": "panel_principal",
         "solo_lectura": usuario_es_solo_lectura(request.user),
+        "puede_modificar_administrativo": permisos["puede_modificar_administrativo"] and not usuario_es_solo_lectura(request.user),
+        "puede_eliminar_administrativo": permisos["puede_eliminar_administrativo"] and not usuario_es_solo_lectura(request.user),
     })
 
 @requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)

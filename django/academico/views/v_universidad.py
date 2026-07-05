@@ -13,10 +13,14 @@ def detalle_universidad(request):
     rol = obtener_rol_usuario(request.user)
     solo_lectura = rol in (ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN, ROL_COORDINADOR_UA)
 
+    from academico.permisos import obtener_permisos_periodo
+    permisos = obtener_permisos_periodo(universidad)
+
     return render(request, "entidades/detalle_universidad.html", {
         "universidad": universidad,
         "titulo_pagina": "Institución - NIVEC",
         "solo_lectura": solo_lectura,
+        "puede_modificar_universidad": permisos["puede_modificar_universidad"] and not solo_lectura,
     })
 
 @requiere_perfil(ROL_DIRECTOR_DAN)

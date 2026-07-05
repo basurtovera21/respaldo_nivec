@@ -32,7 +32,7 @@
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Total horas de nivelación</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Estado</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Unidades curriculares</th>
-    {% if not solo_lectura %}
+    {% if puede_modificar_malla or puede_eliminar_malla %}
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
     {% endif %}
 {% endblock %}
@@ -54,33 +54,41 @@
                 {{ m.unidades_curriculares.count }} unidades
             </a>
         </td>
-        {% if not solo_lectura %}
+        {% if puede_modificar_malla or puede_eliminar_malla %}
         <td style="text-align: left; white-space: nowrap;">
+            {% if puede_modificar_malla %}
             <a href="{% url 'modificar_malla' m.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
-
-            <a href="{% url 'clonar_malla' m.id %}" class="etiqueta-accion etiqueta-naranja">Copiar</a>
-
-            {% if m.estado == "Diseño" %}
-                <a href="{% url 'cambiar_estado_malla' m.id 'activar' %}"
-                   onclick="return confirm('Confirmar acción');"
-                   class="etiqueta-accion etiqueta-naranja">Habilitar</a>
-                <a href="{% url 'cambiar_estado_malla' m.id 'inactivar' %}"
-                   onclick="return confirm('Confirmar acción');"
-                   class="etiqueta-accion etiqueta-naranja">Descontinuar</a>
-            {% elif m.estado == "Activa" %}
-                <a href="{% url 'cambiar_estado_malla' m.id 'historica' %}"
-                   onclick="return confirm('Confirmar acción');"
-                   class="etiqueta-accion etiqueta-naranja">Histórica</a>
-                <a href="{% url 'cambiar_estado_malla' m.id 'inactivar' %}"
-                   onclick="return confirm('Confirmar acción');"
-                   class="etiqueta-accion etiqueta-naranja">Deshabilitar</a>
-            {% elif m.estado == "Inactiva" %}
-                <a href="{% url 'cambiar_estado_malla' m.id 'activar' %}"
-                   onclick="return confirm('Confirmar acción');"
-                   class="etiqueta-accion etiqueta-naranja">Habilitar</a>
             {% endif %}
 
+            {% if puede_copiar_malla %}
+            <a href="{% url 'clonar_malla' m.id %}" class="etiqueta-accion etiqueta-naranja">Copiar</a>
+            {% endif %}
+
+            {% if puede_cambiar_estado_malla %}
+                {% if m.estado == "Diseño" %}
+                    <a href="{% url 'cambiar_estado_malla' m.id 'activar' %}"
+                       onclick="return confirm('Confirmar acción');"
+                       class="etiqueta-accion etiqueta-naranja">Habilitar</a>
+                    <a href="{% url 'cambiar_estado_malla' m.id 'inactivar' %}"
+                       onclick="return confirm('Confirmar acción');"
+                       class="etiqueta-accion etiqueta-naranja">Descontinuar</a>
+                {% elif m.estado == "Activa" %}
+                    <a href="{% url 'cambiar_estado_malla' m.id 'historica' %}"
+                       onclick="return confirm('Confirmar acción');"
+                       class="etiqueta-accion etiqueta-naranja">Histórica</a>
+                    <a href="{% url 'cambiar_estado_malla' m.id 'inactivar' %}"
+                       onclick="return confirm('Confirmar acción');"
+                       class="etiqueta-accion etiqueta-naranja">Deshabilitar</a>
+                {% elif m.estado == "Inactiva" %}
+                    <a href="{% url 'cambiar_estado_malla' m.id 'activar' %}"
+                       onclick="return confirm('Confirmar acción');"
+                       class="etiqueta-accion etiqueta-naranja">Habilitar</a>
+                {% endif %}
+            {% endif %}
+
+            {% if puede_eliminar_malla %}
             <a href="{% url 'eliminar_malla' m.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+            {% endif %}
         </td>
         {% endif %}
     </tr>
