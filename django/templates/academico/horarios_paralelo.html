@@ -46,7 +46,7 @@
 
 {% if not todas_completas or not es_planificacion %}
 <div style="background: white; border: 1px solid #DADBDB; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px;">
-    <span style="color: #5c6b73; font-size: 13px; font-weight: bold;">
+    <span style="color: #253237; font-size: 13px; font-weight: bold;">
         {% if not todas_completas %}Horario del paralelo incompleto{% endif %}
         {% if not es_planificacion %} — Los horarios solo se pueden gestionar cuando el Periodo está en planificación{% endif %}
     </span>
@@ -135,8 +135,8 @@
 {% if not solo_lectura and es_planificacion %}
 <div class="tarjeta" style="margin-bottom: 20px;">
     <h2 style="font-size: 15px; font-weight: bold; margin-bottom: 4px; color: #253237;">Agregar sesión</h2>
-    <p style="color: #9db4c0; font-size: 12px; margin-bottom: 12px;">
-        La sesión debe estar dentro de la franja {{ franja }} y durar 1, 2 o 3 horas.
+    <p style="color: #253237; font-size: 13px; font-weight: bold; margin-bottom: 12px;">
+        La sesión debe estar dentro de la franja {{ franja }} y durar 1, 2 o 3 horas exactas.
     </p>
     <form method="post" action="{% url 'registrar_horario' representativo.id %}">
         {% csrf_token %}
@@ -155,11 +155,15 @@
             </div>
             <div class="campo" style="margin-bottom: 0;">
                 <label style="font-weight: bold; color: #253237;">Hora de inicio</label>
-                <input type="time" name="hora_inicio">
+                <select name="hora_inicio">
+                    {% for h in horas_disponibles %}<option value="{{ h }}">{{ h }}</option>{% endfor %}
+                </select>
             </div>
             <div class="campo" style="margin-bottom: 0;">
                 <label style="font-weight: bold; color: #253237;">Hora de finalización</label>
-                <input type="time" name="hora_fin">
+                <select name="hora_fin">
+                    {% for h in horas_disponibles %}<option value="{{ h }}">{{ h }}</option>{% endfor %}
+                </select>
             </div>
             <div class="campo" style="margin-bottom: 0; flex: 1; min-width: 200px;">
                 <label style="font-weight: bold; color: #253237;">Espacio de impartición</label>

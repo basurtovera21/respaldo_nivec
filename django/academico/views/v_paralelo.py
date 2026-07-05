@@ -170,6 +170,14 @@ def generar_paralelos(request):
 
 
         capacidad = request.POST.get("capacidad") or 35
+        try:
+            capacidad = int(capacidad)
+        except (TypeError, ValueError):
+            capacidad = 35
+        if capacidad < 20:
+            capacidad = 20
+        elif capacidad > 50:
+            capacidad = 50
 
         resumen = servicio_generar_paralelos(periodo, capacidad)
 

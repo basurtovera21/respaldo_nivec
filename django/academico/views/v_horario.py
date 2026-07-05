@@ -99,7 +99,7 @@ def listar_horarios_paralelo(request, paralelo_id):
 
     jornada_enum = Jornada(representativo.jornada)
 
-    # Construir datos de la grilla visual (Día × Hora) - solo lunes a viernes
+    # Construir datos de la grilla visual (Día × Hora)
     franja = obtener_franja(jornada_enum)
     slots_hora = []
     if franja:
@@ -107,6 +107,16 @@ def listar_horarios_paralelo(request, paralelo_id):
         while h < franja[1].hour:
             slots_hora.append(h)
             h += 1
+
+    # Para nocturna, agregar slots del sábado (08:00-13:00)
+    es_nocturna = (jornada_enum == Jornada.NOCTURNA)
+    slots_hora_sabado = []
+    if es_nocturna:
+        from poo.clases.franja_horaria import FRANJA_SABADO_NOCTURNA
+        h_sab = FRANJA_SABADO_NOCTURNA[0].hour
+        while h_sab < FRANJA_SABADO_NOCTURNA[1].hour:
+            slots_hora_sabado.append(h_sab)
+            h_sab += 1
 
     # Colores de la paleta de la aplicación por unidad
     _COLORES_UNIDAD = [
@@ -116,28 +126,75 @@ def listar_horarios_paralelo(request, paralelo_id):
     nombres_unidades = sorted(set(h.paralelo.unidad_curricular.nombre for h in horarios))
     mapa_colores = {nombre: _COLORES_UNIDAD[i % len(_COLORES_UNIDAD)] for i, nombre in enumerate(nombres_unidades)}
 
-    # Solo días hábiles (lunes a viernes) para la grilla
+    # Días para la grilla: lunes a viernes + sábado para nocturna
     dias_habiles = obtener_dias_habiles()
-    dias_semana = [d.value for d in dias_habiles]
-    
+    dias_grilla = [d.value for d in dias_habiles]
+    if es_nocturna:
+        dias_grilla.append(DiaDeSemana.SABADO.value)
+
+    # Días disponibles para el selector de agregar sesión
+    dias_selector = list(dias_grilla)
+
+    # Grilla: para nocturna necesitamos manejar dos franjas (L-V nocturna + Sáb mañana)
+    # Usamos los slots normales para L-V y los del sábado para la columna del sábado
     grilla = []
-    for slot in slots_hora:
-        fila = {"hora": f"{slot:02d}:00", "celdas": []}
-        for dia in dias_semana:
+    max_slots = max(len(slots_hora), len(slots_hora_sabado)) if es_nocturna else len(slots_hora)
+    for i in range(max_slots):
+        slot_lv = slots_hora[i] if i < len(slots_hora) else None
+        slot_sab = slots_hora_sabado[i] if es_nocturna and i < len(slots_hora_sabado) else None
+        hora_label = f"{slot_lv:02d}:00" if slot_lv is not None else (f"{slot_sab:02d}:00" if slot_sab else "")
+        
+        fila = {"hora": hora_label, "celdas": []}
+        for dia in dias_grilla:
             bloque = None
-            for h in horarios:
-                if h.dia_semana == dia and h.hora_inicio.hour <= slot < h.hora_fin.hour:
-                    bloque = {
-                        "nombre": h.paralelo.unidad_curricular.nombre,
-                        "hora_inicio": h.hora_inicio.strftime("%H:%M"),
-                        "hora_fin": h.hora_fin.strftime("%H:%M"),
-                        "slot_inicio": f"{slot:02d}:00",
-                        "slot_fin": f"{slot+1:02d}:00",
-                        "color": mapa_colores.get(h.paralelo.unidad_curricular.nombre, "#DADBDB"),
-                    }
-                    break
+            if dia == DiaDeSemana.SABADO.value if es_nocturna else False:
+                # Sábado usa franja de mañana
+                if slot_sab is not None:
+                    for h in horarios:
+                        if h.dia_semana == dia and h.hora_inicio.hour <= slot_sab < h.hora_fin.hour:
+                            bloque = {
+                                "nombre": h.paralelo.unidad_curricular.nombre,
+                                "hora_inicio": h.hora_inicio.strftime("%H:%M"),
+                                "hora_fin": h.hora_fin.strftime("%H:%M"),
+                                "slot_inicio": f"{slot_sab:02d}:00",
+                                "slot_fin": f"{slot_sab+1:02d}:00",
+                                "color": mapa_colores.get(h.paralelo.unidad_curricular.nombre, "#DADBDB"),
+                            }
+                            break
+            else:
+                # Lunes a viernes usa franja nocturna/diurna normal
+                if slot_lv is not None:
+                    for h in horarios:
+                        if h.dia_semana == dia and h.hora_inicio.hour <= slot_lv < h.hora_fin.hour:
+                            bloque = {
+                                "nombre": h.paralelo.unidad_curricular.nombre,
+                                "hora_inicio": h.hora_inicio.strftime("%H:%M"),
+                                "hora_fin": h.hora_fin.strftime("%H:%M"),
+                                "slot_inicio": f"{slot_lv:02d}:00",
+                                "slot_fin": f"{slot_lv+1:02d}:00",
+                                "color": mapa_colores.get(h.paralelo.unidad_curricular.nombre, "#DADBDB"),
+                            }
+                            break
             fila["celdas"].append(bloque)
         grilla.append(fila)
+
+    # Generate integer hour options for the session form
+    horas_disponibles = []
+    if franja:
+        h_opt = franja[0].hour
+        while h_opt <= franja[1].hour:
+            horas_disponibles.append(f"{h_opt:02d}:00")
+            h_opt += 1
+    # For nocturna, also include sábado morning hours
+    if es_nocturna:
+        from poo.clases.franja_horaria import FRANJA_SABADO_NOCTURNA
+        h_sab_opt = FRANJA_SABADO_NOCTURNA[0].hour
+        while h_sab_opt <= FRANJA_SABADO_NOCTURNA[1].hour:
+            hora_str = f"{h_sab_opt:02d}:00"
+            if hora_str not in horas_disponibles:
+                horas_disponibles.append(hora_str)
+            h_sab_opt += 1
+        horas_disponibles.sort()
 
     return render(request, "academico/horarios_paralelo.html", {
         "representativo": representativo,
@@ -146,10 +203,12 @@ def listar_horarios_paralelo(request, paralelo_id):
         "todas_completas": todas_completas,
         "alguna_excede_maximo": alguna_excede_maximo,
         "es_planificacion": periodo_en_planificacion(representativo.periodo_de_nivelacion),
+        "es_nocturna": es_nocturna,
         "franja": texto_franja(jornada_enum),
-        "dias": [dia.value for dia in dias_habiles],
-        "dias_semana": dias_semana,
+        "dias": dias_selector,
+        "dias_semana": dias_grilla,
         "grilla": grilla,
+        "horas_disponibles": horas_disponibles,
         "mapa_colores": mapa_colores,
         "solo_lectura": usuario_es_solo_lectura(request.user),
         "titulo_pagina": "Horario - NIVEC",
@@ -222,11 +281,38 @@ def editar_horario(request, horario_id):
         messages.error(request, mensaje)
 
     jornada_enum = Jornada(paralelo.jornada)
+    es_nocturna = (jornada_enum == Jornada.NOCTURNA)
+
+    # Días disponibles: L-V + Sábado para nocturna (sin Domingo)
+    from poo.clases.franja_horaria import obtener_dias_habiles, FRANJA_SABADO_NOCTURNA
+    dias_habiles = obtener_dias_habiles()
+    dias_disponibles = [d.value for d in dias_habiles]
+    if es_nocturna:
+        dias_disponibles.append(DiaDeSemana.SABADO.value)
+
+    # Integer hours for select
+    franja = obtener_franja(jornada_enum)
+    horas_disponibles = []
+    if franja:
+        h_opt = franja[0].hour
+        while h_opt <= franja[1].hour:
+            horas_disponibles.append(f"{h_opt:02d}:00")
+            h_opt += 1
+    if es_nocturna:
+        h_sab_opt = FRANJA_SABADO_NOCTURNA[0].hour
+        while h_sab_opt <= FRANJA_SABADO_NOCTURNA[1].hour:
+            hora_str = f"{h_sab_opt:02d}:00"
+            if hora_str not in horas_disponibles:
+                horas_disponibles.append(hora_str)
+            h_sab_opt += 1
+        horas_disponibles.sort()
+
     return render(request, "academico/editar_horario.html", {
         "horario": horario,
         "paralelo": paralelo,
         "franja": texto_franja(jornada_enum),
-        "dias": [dia.value for dia in DiaDeSemana],
+        "dias": dias_disponibles,
+        "horas_disponibles": horas_disponibles,
         "titulo_pagina": "Horario - NIVEC",
         "titulo": f"Editar sesión - {paralelo.unidad_curricular.nombre}",
     })
