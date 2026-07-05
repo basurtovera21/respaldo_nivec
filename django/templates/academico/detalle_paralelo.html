@@ -26,9 +26,15 @@
             {{ representativo.codigo_de_paralelo }} ({{ representativo.periodo_de_nivelacion.periodo }})
         </p>
     </div>
+    {% if not solo_lectura %}
     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
         <a href="{% url 'listar_horarios_paralelo' representativo.id %}" class="boton boton-primario">Configurar Horario</a>
     </div>
+    {% else %}
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <a href="{% url 'listar_horarios_paralelo' representativo.id %}" class="boton boton-secundario">Horario</a>
+    </div>
+    {% endif %}
 </div>
 
 <div style="margin-bottom: 16px;">
@@ -42,7 +48,7 @@
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Código de Unidad curricular</th>
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Nombre</th>
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Docente designado</th>
-                {% if not solo_lectura or tiene_horario %}
+                {% if not solo_lectura %}
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
                 {% endif %}
             </tr>
@@ -59,13 +65,13 @@
                         <span style="color: #9db4c0;">Sin designación actualmente</span>
                     {% endif %}
                 </td>
-                {% if not solo_lectura or tiene_horario %}
+                {% if not solo_lectura %}
                 <td style="text-align: left; white-space: nowrap;">
-                    {% if not solo_lectura and tiene_horario %}
+                    {% if tiene_horario %}
                     <a href="{% url 'asignar_docente_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Designación Docente</a>
                     {% endif %}
-                    {% if es_evaluacion_o_cerrado %}
                     <a href="{% url 'listar_estudiantes_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Estudiantes registrados</a>
+                    {% if es_evaluacion_o_cerrado %}
                     <a href="{% url 'listar_evaluaciones_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Registrar calificaciones</a>
                     {% endif %}
                 </td>
