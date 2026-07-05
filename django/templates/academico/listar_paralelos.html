@@ -69,9 +69,7 @@
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Unidades curriculares</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Número de estudiantes registrados</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Capacidad máxima de estudiantes especificada</th>
-    {% if not solo_lectura %}
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
-    {% endif %}
 {% endblock %}
 
 {% block cuerpo_tabla %}
@@ -86,7 +84,6 @@
         <td style="text-align: left; color: #1d1d1f;">{{ p.unidades }} unidades curriculares</td>
         <td style="text-align: left; color: #1d1d1f;">{{ p.estudiantes }} estudiantes</td>
         <td style="text-align: left; color: #1d1d1f;">{{ p.capacidad }} estudiantes</td>
-        {% if not solo_lectura %}
         <td style="text-align: left; white-space: nowrap;">
             <a href="{% url 'detalle_paralelo' p.representativo_id %}" class="etiqueta-accion etiqueta-naranja">Ver información</a>
             {% if puede_eliminar_paralelo %}
@@ -95,16 +92,11 @@
                class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
             {% endif %}
         </td>
-        {% else %}
-        <td style="text-align: left; white-space: nowrap;">
-            <a href="{% url 'detalle_paralelo' p.representativo_id %}" class="etiqueta-accion etiqueta-naranja">Ver información</a>
-        </td>
-        {% endif %}
     </tr>
     {% empty %}
     {% if not periodo_seleccionado and not carrera_seleccionada and not jornada_filtro and not campus_filtro %}
     <tr>
-        <td colspan="{% if solo_lectura %}9{% else %}10{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
+        <td colspan="10" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>
