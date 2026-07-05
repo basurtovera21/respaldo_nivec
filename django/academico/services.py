@@ -238,13 +238,22 @@ def servicio_finalizar_periodo_de_nivelacion(periodo_db):
     if periodo_db.estado != EstadoDePeriodo.EVALUACION.value:
         return (False, "El Periodo de nivelación debe estar en evaluación para poder finalizarlo")
     
-    # Verificar que no hay evaluaciones sin formalizar
-    no_formalizadas = EvaluacionAcademica.objects.filter(
-        periodo_de_nivelacion=periodo_db,
-    ).exclude(estado_revision="Formalizado").count()
+    # Verificar que al menos una carrera tenga todas sus calificaciones formalizadas
+    from academico.models import Carrera
+    carreras = Carrera.objects.filter(campus__universidad=periodo_db.universidad)
     
-    if no_formalizadas > 0:
-        return (False, f"Las calificaciones no han sido formalizadas actualmente")
+    alguna_carrera_formalizada = False
+    for carrera in carreras:
+        evaluaciones_carrera = EvaluacionAcademica.objects.filter(
+            periodo_de_nivelacion=periodo_db,
+            estudiante__carrera_registrada=carrera,
+        )
+        if evaluaciones_carrera.exists() and not evaluaciones_carrera.exclude(estado_revision="Formalizado").exists():
+            alguna_carrera_formalizada = True
+            break
+    
+    if not alguna_carrera_formalizada:
+        return (False, "Al menos una Carrera debe tener todas sus calificaciones formalizadas para finalizar el Periodo")
     
     periodo_db.estado = EstadoDePeriodo.CERRADO.value
     periodo_db.save()

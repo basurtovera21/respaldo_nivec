@@ -241,9 +241,20 @@ def panel_docente(request):
         # Build horario grid from paralelos assigned to this docente
         if paralelos:
             paralelo_ids = [p.id for p in paralelos]
+            from django.db.models import Case, When, Value, IntegerField
+            dias_orden = {
+                "Lunes": 1, "Martes": 2, "Miércoles": 3, "Miercoles": 3,
+                "Jueves": 4, "Viernes": 5, "Sábado": 6, "Sabado": 6, "Domingo": 7,
+            }
             horarios = Horario.objects.filter(
                 paralelo_id__in=paralelo_ids
-            ).select_related("paralelo__unidad_curricular").order_by("dia_semana", "hora_inicio")
+            ).select_related("paralelo__unidad_curricular").annotate(
+                dia_orden=Case(
+                    *[When(dia_semana=dia, then=Value(orden)) for dia, orden in dias_orden.items()],
+                    default=Value(8),
+                    output_field=IntegerField(),
+                )
+            ).order_by("dia_orden", "hora_inicio")
             
             tiene_horarios = horarios.exists()
             horarios_list = list(horarios)
@@ -338,9 +349,23 @@ def panel_estudiante(request):
 
     # Get horarios
     paralelo_ids = [m.paralelo_id for m in matriculas]
-    horarios = Horario.objects.filter(
-        paralelo_id__in=paralelo_ids
-    ).select_related("paralelo__unidad_curricular").order_by("dia_semana", "hora_inicio") if paralelo_ids else Horario.objects.none()
+    if paralelo_ids:
+        from django.db.models import Case, When, Value, IntegerField
+        dias_orden_est = {
+            "Lunes": 1, "Martes": 2, "Miércoles": 3, "Miercoles": 3,
+            "Jueves": 4, "Viernes": 5, "Sábado": 6, "Sabado": 6, "Domingo": 7,
+        }
+        horarios = Horario.objects.filter(
+            paralelo_id__in=paralelo_ids
+        ).select_related("paralelo__unidad_curricular").annotate(
+            dia_orden=Case(
+                *[When(dia_semana=dia, then=Value(orden)) for dia, orden in dias_orden_est.items()],
+                default=Value(8),
+                output_field=IntegerField(),
+            )
+        ).order_by("dia_orden", "hora_inicio")
+    else:
+        horarios = Horario.objects.none()
 
     # Build visual grid for the student's schedule
     from poo.clases.enums.dia_de_semana import DiaDeSemana
