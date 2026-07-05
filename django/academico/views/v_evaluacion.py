@@ -70,15 +70,22 @@ def listar_evaluaciones_paralelo(request, paralelo_id):
     hay_en_revision = evaluaciones.filter(estado_revision="En revisión").exists()
 
     # Role-based permissions for calificaciones actions
-    # Coordinador UA can edit even when in revision (they review and can correct)
-    puede_cargar = es_evaluacion and (es_docente or es_coordinador_ua) and not todas_formalizadas
-    puede_pasar_revision = es_evaluacion and es_docente and not todas_en_revision and not todas_formalizadas
-    # Coordinador UA can formalizar: when there are evaluaciones en revisión OR when they uploaded directly (borrador)
-    puede_formalizar = es_evaluacion and es_coordinador_ua and evaluaciones.exists() and not todas_formalizadas
+    ya_tiene_calificaciones = evaluaciones.exists()
+    
+    # Point 1: Hide cargar once calificaciones have been processed (evaluaciones exist)
+    puede_cargar = es_evaluacion and (es_docente or es_coordinador_ua) and not ya_tiene_calificaciones
+    
+    # Point 2: Docente can only pass to revisión if evaluaciones are in Borrador and exist
+    puede_pasar_revision = es_evaluacion and es_docente and ya_tiene_calificaciones and not todas_en_revision and not todas_formalizadas
+    
+    # Coordinador UA can formalizar if evaluaciones exist and not all formalized
+    puede_formalizar = es_evaluacion and es_coordinador_ua and ya_tiene_calificaciones and not todas_formalizadas
+    
     # Docente can edit only in Borrador; Coordinador UA can edit in Borrador and En revisión (not Formalizado)
+    # If coordinador UA uploaded (todas_en_revision without docente passing), docente can't edit
     puede_editar_calificacion = es_evaluacion and (
-        (es_docente and not todas_en_revision and not todas_formalizadas) or
-        (es_coordinador_ua and not todas_formalizadas)
+        (es_docente and ya_tiene_calificaciones and not todas_en_revision and not todas_formalizadas) or
+        (es_coordinador_ua and ya_tiene_calificaciones and not todas_formalizadas)
     )
 
     return render(request, "academico/evaluaciones_paralelo.html", {
