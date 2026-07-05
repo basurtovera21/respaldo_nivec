@@ -158,12 +158,12 @@ def obtener_permisos_periodo(universidad):
         "puede_gestionar_calificaciones": es_evaluacion,
 
         # ── INFORMES ──
-        "puede_generar_informe": estado in ("EVALUACION", "CERRADO"),
+        "puede_generar_informe": estado in ("EVALUACION", "SOLO_CERRADOS"),
 
         # ── VISUALIZACIÓN (siempre que haya registros) ──
         "puede_ver_matriz_horarios": True,
         "puede_ver_paralelos": True,
-        "puede_ver_calificaciones": estado in ("EVALUACION", "CERRADO"),
+        "puede_ver_calificaciones": estado in ("EVALUACION", "SOLO_CERRADOS"),
     }
 
 
