@@ -15,7 +15,7 @@ def listar_periodos(request):
         messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
-    periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario).order_by("-anio", "-numero_periodo")
+    periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario).order_by("codigo_periodo")
 
     from usuarios.utils import obtener_rol_usuario
     rol = obtener_rol_usuario(request.user)

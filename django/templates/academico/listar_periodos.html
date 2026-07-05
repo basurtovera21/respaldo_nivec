@@ -32,7 +32,7 @@
                 <a href="{% url 'iniciar_periodo' p.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-naranja">Iniciar</a>
                 <a href="{% url 'eliminar_periodo' p.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
             {% elif p.estado == "En curso" %}
-                <a href="{% url 'pasar_a_evaluacion' p.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-naranja">Pasar a evaluación</a>
+                <a href="{% url 'pasar_a_evaluacion' p.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-naranja">Evaluar</a>
             {% elif p.estado == "Evaluación" %}
                 <a href="{% url 'finalizar_periodo' p.id %}" onclick="return confirm('Confirmar acción');" class="etiqueta-accion etiqueta-naranja">Finalizar</a>
             {% endif %}
