@@ -68,28 +68,28 @@
     <table style="width: 100%;">
         <thead>
             <tr>
+                <th>Código de Periodo</th>
+                <th>Periodo</th>
                 <th>Carrera</th>
                 <th>Total</th>
                 <th>Aprobados</th>
                 <th>Reprobados</th>
                 <th>Retirados</th>
                 <th>Anulados</th>
-                <th>Pendientes</th>
-                <th>Formalizados</th>
                 <th>% Aprobación</th>
             </tr>
         </thead>
         <tbody>
             {% for f in informe %}
             <tr>
+                <td style="font-family: monospace;">{{ periodo_seleccionado.codigo_periodo }}</td>
+                <td>{{ periodo_seleccionado.periodo }}</td>
                 <td>{{ f.carrera }}</td>
                 <td>{{ f.total }}</td>
                 <td style="color: #253237; font-weight: bold;">{{ f.aprobados }}</td>
                 <td style="color: #9db4c0; font-weight: bold;">{{ f.reprobados }}</td>
                 <td>{{ f.retirados }}</td>
                 <td>{{ f.anulados }}</td>
-                <td style="color: #5c6b73;">{{ f.pendientes }}</td>
-                <td>{{ f.formalizados }}</td>
                 <td style="font-weight: bold;">{{ f.porcentaje_aprobacion }}%</td>
             </tr>
             {% endfor %}
