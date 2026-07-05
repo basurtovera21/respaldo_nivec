@@ -123,6 +123,9 @@ def listar_consolidados(request):
     if periodo_filtro:
         consolidados = consolidados.filter(periodo_academico_id=periodo_filtro)
 
+    from academico.permisos import obtener_permisos_periodo
+    permisos = obtener_permisos_periodo(universidad_usuario)
+
     return render(request, "academico/listar_consolidados.html", {
         "consolidados": consolidados,
         "periodos": periodos,
@@ -130,7 +133,7 @@ def listar_consolidados(request):
         "solo_lectura": usuario_es_solo_lectura(request.user),
         "titulo_pagina": "Matriz de Tercer Nivel - NIVEC",
         "titulo": "Resumen de ingreso",
-        "url_registrar": "procesar_mtn",
+        "url_registrar": "procesar_mtn" if permisos["puede_procesar_mtn"] and not usuario_es_solo_lectura(request.user) else None,
         "texto_registrar": "Procesar Matriz de Tercer Nivel",
         "url_volver": "panel_principal",
     })

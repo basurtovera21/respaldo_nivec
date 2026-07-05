@@ -27,7 +27,7 @@
         </p>
     </div>
     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <a href="{% url 'listar_horarios_paralelo' representativo.id %}" class="boton boton-primario">{% if solo_lectura %}Horario{% else %}Configurar Horario{% endif %}</a>
+        <a href="{% url 'listar_horarios_paralelo' representativo.id %}" class="boton boton-primario">{% if puede_configurar_horario %}Configurar Horario{% else %}Horario{% endif %}</a>
     </div>
 </div>
 
@@ -58,7 +58,7 @@
                     {% endif %}
                 </td>
                 <td style="text-align: left; white-space: nowrap;">
-                    {% if not solo_lectura and tiene_horario %}
+                    {% if puede_designar_docente and not solo_lectura and tiene_horario %}
                     <a href="{% url 'asignar_docente_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Designación Docente</a>
                     {% endif %}
                     <a href="{% url 'listar_estudiantes_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Estudiantes registrados</a>
