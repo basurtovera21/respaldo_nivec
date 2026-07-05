@@ -359,11 +359,15 @@ def listar_estudiantes_paralelo(request, paralelo_id):
         estudiantes_matriculados__paralelo__periodo_de_nivelacion=periodo
     ).exists()
 
+    # Determine if this user can manage students (reasignar/retirar)
+    rol = obtener_rol_usuario(request.user)
+    puede_gestionar_estudiantes = puede_gestionar and rol not in (ROL_DOCENTE, "ESTUDIANTE")
+
     return render(request, "academico/estudiantes_paralelo.html", {
         "paralelo": paralelo,
         "matriculas": matriculas,
         "destinos": destinos,
-        "puede_gestionar": puede_gestionar,
+        "puede_gestionar": puede_gestionar_estudiantes,
         "hay_estudiantes_disponibles": hay_estudiantes_disponibles,
         "ocupacion": ocupacion,
         "capacidad": capacidad,
