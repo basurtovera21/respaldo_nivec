@@ -212,7 +212,7 @@ def listar_horarios_paralelo(request, paralelo_id):
         "mapa_colores": mapa_colores,
         "solo_lectura": usuario_es_solo_lectura(request.user),
         "titulo_pagina": "Horario - NIVEC",
-        "titulo": f"Horarios - {representativo.nombre} ({representativo.unidad_curricular.malla_curricular.carrera.nombre})",
+        "titulo": f"Horario - {representativo.nombre} ({representativo.unidad_curricular.malla_curricular.carrera.nombre})",
     })
 
 @requiere_perfil(*ROLES_MODIFICAN)
@@ -314,7 +314,7 @@ def editar_horario(request, horario_id):
         "dias": dias_disponibles,
         "horas_disponibles": horas_disponibles,
         "titulo_pagina": "Horario - NIVEC",
-        "titulo": f"Editar sesión - {paralelo.unidad_curricular.nombre}",
+        "titulo": f"Modificar sesión - {paralelo.unidad_curricular.nombre}",
     })
 
 @requiere_perfil(*ROLES_MODIFICAN)

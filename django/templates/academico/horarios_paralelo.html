@@ -4,11 +4,23 @@
 
 {% block contenido %}
 <style>
-    .tarjeta table th, .tarjeta table td { padding: 12px 24px; white-space: nowrap; }
+    .tarjeta table th, .tarjeta table td { 
+        padding: 12px 24px; 
+        white-space: nowrap; 
+        font-family: inherit;
+    }
     .etiqueta-accion {
-        padding: 6px 14px; border-radius: 6px; font-size: 12px; text-decoration: none;
-        display: inline-block; font-weight: bold; margin-right: 6px; transition: all 0.2s ease;
-        border: none; cursor: pointer;
+        padding: 6px 14px; 
+        border-radius: 6px; 
+        font-size: 12px; 
+        text-decoration: none;
+        display: inline-block; 
+        font-weight: bold; 
+        margin-right: 6px; 
+        transition: all 0.2s ease;
+        border: none; 
+        cursor: pointer;
+        font-family: inherit;
     }
     .etiqueta-accion:last-child { margin-right: 0; }
     .etiqueta-modificar { background: #5c6b73; color: white; }
@@ -16,54 +28,99 @@
     .etiqueta-eliminar { background: #253237; color: white; }
     .etiqueta-eliminar:hover { opacity: 0.85; }
 
-    .grilla-horario { width: 100%; border-collapse: collapse; }
-    .grilla-horario th, .grilla-horario td { border: 1px solid #DADBDB; text-align: center; vertical-align: top; padding: 0; height: 48px; min-width: 120px; }
-    .grilla-horario th { background: #F4F4F4; font-size: 12px; font-weight: bold; color: #253237; padding: 10px 8px; }
-    .grilla-hora { font-size: 11px; color: #5c6b73; width: 60px; padding: 4px 8px !important; text-align: right !important; }
-    .bloque-materia {
-        border-radius: 6px; padding: 6px 8px; margin: 2px 4px;
-        font-size: 11px; font-weight: bold; color: #253237;
-        text-align: left; line-height: 1.3; min-height: 40px;
-        display: flex; flex-direction: column; justify-content: center;
+    .grilla-horario { width: 100%; border-collapse: collapse; font-family: inherit; }
+    .grilla-horario th, .grilla-horario td { 
+        border: 1px solid #DADBDB; 
+        text-align: center; 
+        vertical-align: top; 
+        padding: 0; 
+        height: 48px; 
+        min-width: 120px; 
     }
-    .bloque-materia .bloque-hora-txt { font-size: 10px; font-weight: normal; color: #5c6b73; margin-top: 2px; }
+    .grilla-horario th { 
+        background: #F4F4F4; 
+        font-size: 12px; 
+        font-weight: bold; 
+        color: #253237; 
+        padding: 10px 8px; 
+    }
+    .grilla-hora { 
+        font-size: 11px; 
+        color: #5c6b73; 
+        width: 60px; 
+        padding: 4px 8px !important; 
+        text-align: right !important; 
+        font-weight: bold;
+    }
+    .bloque-materia {
+        border-radius: 6px; 
+        padding: 6px 8px; 
+        margin: 2px 4px;
+        font-size: 11px; 
+        font-weight: bold; 
+        color: #253237;
+        text-align: left; 
+        line-height: 1.3; 
+        min-height: 40px;
+        display: flex; 
+        flex-direction: column; 
+        justify-content: center;
+        font-family: inherit;
+    }
+    .bloque-materia .bloque-hora-txt { 
+        font-size: 10px; 
+        font-weight: normal; 
+        color: #5c6b73; 
+        margin-top: 2px; 
+    }
+    
+    /* Estilos estandarizados para inputs y selects del sistema */
+    .input-estandar {
+        padding: 10px 14px; 
+        border: 1px solid #DADBDB; 
+        border-radius: 8px; 
+        font-size: 13px; 
+        background: white; 
+        color: #253237; 
+        outline: none; 
+        font-weight: 500; 
+        font-family: inherit; 
+        width: 100%;
+        box-sizing: border-box;
+    }
 </style>
 
 <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
     <div>
-        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">{{ titulo }}</h2>
-        <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin: 0;">
-            {{ representativo.periodo_de_nivelacion.periodo }} — {{ representativo.get_jornada_display }} (franja {{ franja }})
+        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237; font-family: inherit;">{{ titulo }}</h2>
+        <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin: 0; font-family: inherit;">
+            Jornada {{ representativo.get_jornada_display }} ({{ franja }})
         </p>
     </div>
     {% if not solo_lectura and es_planificacion and not todas_completas %}
-    <form method="post" action="{% url 'generar_horario_sugerido' representativo.id %}" style="margin: 0;">
+    <form method="post" action="{% url 'generar_horario_sugerido' representativo.id %}" style="margin: 0; font-family: inherit;">
         {% csrf_token %}
-        <button type="submit" class="boton boton-primario" onclick="return confirm('¿Generar el horario sugerido de todo el paralelo (todas las unidades) dentro de la franja?');">Generar horario sugerido</button>
+        <button type="submit" class="boton boton-primario" onclick="return confirm('Confirmar acción');">Horario sugerido</button>
     </form>
     {% endif %}
 </div>
 
 {% if not todas_completas or not es_planificacion %}
-<div style="background: white; border: 1px solid #DADBDB; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px;">
-    <span style="color: #253237; font-size: 13px; font-weight: bold;">
-        {% if not todas_completas %}Horario del paralelo incompleto{% endif %}
-        {% if not es_planificacion %} — Los horarios solo se pueden gestionar cuando el Periodo está en planificación{% endif %}
-    </span>
-</div>
+<p style="color: #253237; font-size: 13px; font-weight: bold; margin-bottom: 16px; font-family: inherit;">
+    {% if not todas_completas %}El Horario no ha sido completado {% endif %}
+    {% if not es_planificacion %}La configuración del Horario está deshabilitada.{% endif %}
+</p>
 {% endif %}
 
 {% if alguna_excede_maximo %}
-<div style="background: white; border: 1px solid #DADBDB; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px;">
-    <span style="color: #253237; font-size: 13px; font-weight: bold;">
-        Algunas unidades curriculares requieren más horas semanales de las que caben en la franja horaria (5 días × 3h máximo por sesión). Se recomienda aumentar el número de semanas del periodo o reducir las horas sincrónicas de la unidad.
-    </span>
-</div>
+<p style="color: #B22222; font-size: 13px; font-weight: bold; margin-bottom: 16px; font-family: inherit;">
+    Existen Unidades curriculares que requieren más horas sincrónicas semanales.
+</p>
 {% endif %}
 
 {% if grilla %}
-<div class="tarjeta" style="padding: 12px; overflow-x: auto; margin-bottom: 20px;">
-    <h3 style="font-size: 14px; font-weight: bold; color: #253237; margin-bottom: 12px;">Horario semanal</h3>
+<div class="tarjeta" style="padding: 12px; overflow-x: auto; margin-bottom: 20px; font-family: inherit;">
+    <h3 style="font-size: 14px; font-weight: bold; color: #253237; margin-bottom: 12px;">Representación visual</h3>
     <table class="grilla-horario">
         <thead>
             <tr>
@@ -95,7 +152,7 @@
     {% if mapa_colores %}
     <div style="margin-top: 12px; display: flex; gap: 12px; flex-wrap: wrap;">
         {% for nombre, color in mapa_colores.items %}
-        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #253237;">
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #253237; font-weight: bold;">
             <span style="width: 14px; height: 14px; border-radius: 4px; background: {{ color }}; display: inline-block;"></span>
             {{ nombre }}
         </span>
@@ -109,10 +166,10 @@
     <table style="width: 100%;">
         <thead>
             <tr>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73">Código</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73">Unidad curricular</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73">Docente responsable</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73">Horas semanales</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73">Código de Unidad curricular</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73">Nombre</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73">Docente designado</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73">Horas sincrónicas semanales</th>
             </tr>
         </thead>
         <tbody>
@@ -121,55 +178,58 @@
                 <td style="font-family: monospace; text-align: left; color: #1d1d1f;">{{ u.codigo }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ u.nombre }}</td>
                 <td style="text-align: left; color: #1d1d1f;">
-                    {% if u.docente %}{{ u.docente.usuario_de_sistema.nombres }} {{ u.docente.usuario_de_sistema.apellidos }}{% else %}<span style="color: #9db4c0;">Sin designación</span>{% endif %}
+                    {% if u.docente %}{{ u.docente.usuario_de_sistema.apellidos }} {{ u.docente.usuario_de_sistema.nombres }}{% else %}<span style="color: #9db4c0">Sin designación actualmente</span>{% endif %}
                 </td>
-                <td style="text-align: left; color: {% if u.completo %}#253237{% elif u.excede_maximo %}#B22222{% else %}#5c6b73{% endif %}; font-weight: bold;">{{ u.agendadas }} / {{ u.requeridas }}{% if u.excede_maximo %} (máx. {{ u.maximo_disponible }}){% endif %}</td>
+                <td style="text-align: left; color: {% if u.completo %}#253237{% elif u.excede_maximo %}#B22222{% else %}#5c6b73{% endif %};">
+                    {{ u.agendadas }} / {{ u.requeridas }} horas
+                    {% if u.excede_maximo %} (máx. {{ u.maximo_disponible }} horas){% endif %}
+                </td>
             </tr>
             {% empty %}
-            <tr><td colspan="4" style="text-align:center; color:#9db4c0; padding:20px;">No existen unidades en este paralelo</td></tr>
+            <tr><td colspan="4" style="text-align:center; color:#9db4c0; padding:30px; font-family: inherit;">No existen Unidades curriculares actualmente</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
 {% if not solo_lectura and es_planificacion %}
-<div class="tarjeta" style="margin-bottom: 20px;">
-    <h2 style="font-size: 15px; font-weight: bold; margin-bottom: 4px; color: #253237;">Agregar sesión</h2>
-    <p style="color: #253237; font-size: 13px; font-weight: bold; margin-bottom: 12px;">
-        La sesión debe estar dentro de la franja {{ franja }} y durar 1, 2 o 3 horas exactas.
+<div class="tarjeta" style="margin-bottom: 20px; font-family: inherit;">
+    <h2 style="font-size: 15px; font-weight: bold; margin-bottom: 4px; color: #253237;">Configuración manual</h2>
+    <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
+        La sesión debe estar comprendida entre las {{ franja }} horas. 1 - 3 horas disponibles
     </p>
     <form method="post" action="{% url 'registrar_horario' representativo.id %}">
         {% csrf_token %}
         <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
-            <div class="campo" style="margin-bottom: 0; min-width: 200px;">
-                <label style="font-weight: bold; color: #253237;">Unidad curricular</label>
-                <select name="unidad_paralelo">
+            <div class="campo" style="margin-bottom: 0; min-width: 200px; flex: 1;">
+                <label style="font-weight: bold; color: #253237; font-size: 13px; display: block; margin-bottom: 6px;">Unidad curricular</label>
+                <select name="unidad_paralelo" class="input-estandar" required>
                     {% for u in unidades %}<option value="{{ u.id }}">{{ u.nombre }}</option>{% endfor %}
                 </select>
             </div>
-            <div class="campo" style="margin-bottom: 0;">
-                <label style="font-weight: bold; color: #253237;">Día</label>
-                <select name="dia_semana">
+            <div class="campo" style="margin-bottom: 0; flex: 1; min-width: 120px;">
+                <label style="font-weight: bold; color: #253237; font-size: 13px; display: block; margin-bottom: 6px;">Día</label>
+                <select name="dia_semana" class="input-estandar" required>
                     {% for d in dias %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
                 </select>
             </div>
-            <div class="campo" style="margin-bottom: 0;">
-                <label style="font-weight: bold; color: #253237;">Hora de inicio</label>
-                <select name="hora_inicio">
+            <div class="campo" style="margin-bottom: 0; flex: 1; min-width: 120px;">
+                <label style="font-weight: bold; color: #253237; font-size: 13px; display: block; margin-bottom: 6px;">Hora de inicio</label>
+                <select name="hora_inicio" class="input-estandar" required>
                     {% for h in horas_disponibles %}<option value="{{ h }}">{{ h }}</option>{% endfor %}
                 </select>
             </div>
-            <div class="campo" style="margin-bottom: 0;">
-                <label style="font-weight: bold; color: #253237;">Hora de finalización</label>
-                <select name="hora_fin">
+            <div class="campo" style="margin-bottom: 0; flex: 1; min-width: 120px;">
+                <label style="font-weight: bold; color: #253237; font-size: 13px; display: block; margin-bottom: 6px;">Hora de finalización</label>
+                <select name="hora_fin" class="input-estandar" required>
                     {% for h in horas_disponibles %}<option value="{{ h }}">{{ h }}</option>{% endfor %}
                 </select>
             </div>
-            <div class="campo" style="margin-bottom: 0; flex: 1; min-width: 200px;">
-                <label style="font-weight: bold; color: #253237;">Espacio de impartición</label>
-                <input type="text" name="espacio_de_imparticion" placeholder="Aula física o virtual (opcional)">
+            <div class="campo" style="margin-bottom: 0; flex: 2; min-width: 200px;">
+                <label style="font-weight: bold; color: #253237; font-size: 13px; display: block; margin-bottom: 6px;">Espacio de impartición</label>
+                <input type="text" name="espacio_de_imparticion" placeholder="Descripción (opcional)" class="input-estandar">
             </div>
-            <button type="submit" class="boton boton-primario">Agregar</button>
+            <button type="submit" class="boton boton-primario" style="height: 38px;">Registrar</button>
         </div>
     </form>
 </div>
@@ -179,12 +239,12 @@
     <table style="width: 100%;">
         <thead>
             <tr>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73">Código</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73">Unidad curricular</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73">Código de Unidad curricular</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73">Nombre</th>
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Día</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73">Inicio</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73">Fin</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73">Espacio</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73">Hora de inicio</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73">Hora de finalización</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73">Espacio de impartición</th>
                 {% if not solo_lectura and es_planificacion %}
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
                 {% endif %}
@@ -198,7 +258,7 @@
                 <td style="text-align: left; color: #1d1d1f;">{{ h.get_dia_semana_display }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ h.hora_inicio }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ h.hora_fin }}</td>
-                <td style="text-align: left; color: #1d1d1f;">{{ h.espacio_de_imparticion|default:"—" }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ h.espacio_de_imparticion }}</td>
                 {% if not solo_lectura and es_planificacion %}
                 <td style="text-align: left; white-space: nowrap;">
                     <a href="{% url 'editar_horario' h.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
@@ -208,7 +268,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7" style="text-align: center; color: #9db4c0; padding: 30px;">
+                <td colspan="7" style="text-align: center; color: #9db4c0; padding: 30px; font-family: inherit;">
                     No existen sesiones registradas actualmente
                 </td>
             </tr>
@@ -217,7 +277,7 @@
     </table>
 </div>
 
-<div style="margin-top: 15px;">
+<div style="margin-top: 15px; font-family: inherit;">
     <a href="{% url 'detalle_paralelo' representativo.id %}" class="boton boton-secundario">Volver</a>
 </div>
 {% endblock %}

@@ -27,7 +27,7 @@
         </p>
     </div>
     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <a href="{% url 'listar_horarios_paralelo' representativo.id %}" class="boton boton-primario">Horarios del paralelo</a>
+        <a href="{% url 'listar_horarios_paralelo' representativo.id %}" class="boton boton-primario">Configurar Horario</a>
     </div>
 </div>
 
@@ -39,9 +39,9 @@
     <table style="width: 100%;">
         <thead>
             <tr>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73">Código</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73">Unidad curricular</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73">Docente responsable</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73">Código de Unidad curricular</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73">Nombre</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73">Docente designado</th>
                 {% if not solo_lectura or tiene_horario %}
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
                 {% endif %}
@@ -56,17 +56,17 @@
                     {% if u.docente_responsable %}
                         {{ u.docente_responsable.usuario_de_sistema.nombres }} {{ u.docente_responsable.usuario_de_sistema.apellidos }}
                     {% else %}
-                        <span style="color: #9db4c0;">Sin designación</span>
+                        <span style="color: #9db4c0;">Sin designación actualmente</span>
                     {% endif %}
                 </td>
                 {% if not solo_lectura or tiene_horario %}
                 <td style="text-align: left; white-space: nowrap;">
                     {% if not solo_lectura and tiene_horario %}
-                    <a href="{% url 'asignar_docente_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Docente responsable</a>
+                    <a href="{% url 'asignar_docente_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Designación Docente</a>
                     {% endif %}
                     {% if es_evaluacion_o_cerrado %}
                     <a href="{% url 'listar_estudiantes_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Estudiantes registrados</a>
-                    <a href="{% url 'listar_evaluaciones_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Calificaciones</a>
+                    <a href="{% url 'listar_evaluaciones_paralelo' u.id %}" class="etiqueta-accion etiqueta-naranja">Registrar calificaciones</a>
                     {% endif %}
                 </td>
                 {% endif %}

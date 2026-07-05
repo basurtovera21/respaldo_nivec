@@ -6,14 +6,14 @@
 <div class="tarjeta">
     <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">{{ titulo }}</h2>
     <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
-        Distribución por capacidad máxima definida
+        Distribución de forma automatizada por capacidad máxima de Estudiantes definida
     </p>
 
     <form method="post" novalidate style="max-width: 500px;">
         {% csrf_token %}
 
         <div class="campo">
-            <label for="periodo" style="font-weight: bold; color: #253237;">Periodo de nivelación</label>
+            <label for="periodo" style="font-weight: bold; color: #253237;">Periodo de nivelación (en planificación)</label>
             <select name="periodo" id="periodo">
                 <option value=""></option>
                 {% for p in periodos %}
@@ -24,12 +24,12 @@
 
         <div class="campo">
             <label for="capacidad" style="font-weight: bold; color: #253237;">Capacidad máxima especificada</label>
-            <input type="number" name="capacidad" id="capacidad" min="20" max="50" value="35">
-            <div class="ayuda" style="font-weight: bold;">Mínimo 20 — Máximo 50 estudiantes por paralelo (por defecto 35)</div>
+            <input type="number" name="capacidad" id="capacidad" min="20" max="50">
+            <div class="ayuda" style="font-weight: bold;">De 20 - 50 Estudiantes por paralelo</div>
         </div>
 
         <div style="margin-top: 30px; display: flex; gap: 15px;">
-            <button type="submit" class="boton boton-primario">Crear</button>
+            <button type="submit" class="boton boton-primario">Distribuir</button>
             <a href="{% if url_cancelar %}{% url url_cancelar %}{% else %}#{% endif %}" class="boton boton-secundario">Cancelar</a>
         </div>
     </form>

@@ -64,7 +64,7 @@ def _paralelos_del_grupo(representativo):
 def listar_paralelos(request):
     universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad_usuario)
@@ -149,7 +149,7 @@ def listar_paralelos(request):
 def generar_paralelos(request):
     universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     periodos = PeriodoDeNivelacion.objects.filter(
@@ -200,7 +200,7 @@ def generar_paralelos(request):
     return render(request, "academico/generar_paralelos.html", {
         "periodos": periodos,
         "titulo_pagina": "Paralelo - NIVEC",
-        "titulo": "Crear Paralelos",
+        "titulo": "Distribuir Paralelos",
         "url_cancelar": "listar_paralelos",
     })
 
@@ -208,7 +208,7 @@ def generar_paralelos(request):
 def eliminar_paralelo(request, paralelo_id):
     universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     representativo = get_object_or_404(
@@ -232,7 +232,7 @@ def eliminar_paralelo(request, paralelo_id):
 def detalle_paralelo(request, paralelo_id):
     universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     representativo = get_object_or_404(
@@ -285,7 +285,7 @@ def detalle_paralelo(request, paralelo_id):
 def listar_estudiantes_paralelo(request, paralelo_id):
     universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     paralelo = get_object_or_404(
@@ -350,7 +350,7 @@ def listar_estudiantes_paralelo(request, paralelo_id):
 def mover_estudiante(request, paralelo_id):
     universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     paralelo = get_object_or_404(
@@ -389,7 +389,7 @@ def mover_estudiante(request, paralelo_id):
 def retirar_estudiante(request, paralelo_id):
     universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     paralelo = get_object_or_404(
@@ -417,7 +417,7 @@ def retirar_estudiante(request, paralelo_id):
 def estudiantes_disponibles(request, paralelo_id):
     universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     paralelo = get_object_or_404(
@@ -499,7 +499,7 @@ def descargar_info_paralelo(request, paralelo_id):
 
     universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     representativo = get_object_or_404(
@@ -524,25 +524,25 @@ def descargar_info_paralelo(request, paralelo_id):
     ws = wb.active
     ws.title = "Información general"
 
-    ws.append(["Información registrada del paralelo"])
+    ws.append(["Información registrada del Paralelo"])
     ws.append([])
     ws.append(["Nombre", representativo.nombre])
-    ws.append(["Código", representativo.codigo_de_paralelo])
-    ws.append(["Carrera", carrera.nombre])
+    ws.append(["Código de Paralelo", representativo.codigo_de_paralelo])
+    ws.append(["Carrera asignada", carrera.nombre])
     ws.append(["Jornada", representativo.get_jornada_display()])
     ws.append(["Modalidad", representativo.get_modalidad_display()])
     ws.append(["Periodo de nivelación", periodo.periodo])
     ws.append(["Año", periodo.anio])
     ws.append(["Fecha de inicio", str(periodo.fecha_inicio)])
     ws.append(["Fecha de finalización", str(periodo.fecha_fin)])
-    ws.append(["Capacidad máxima", representativo.capacidad_maxima])
+    ws.append(["Capacidad máxima de estudiantes especificada", representativo.capacidad_maxima])
     estudiantes_count = MatriculaParalelo.objects.filter(paralelo=representativo).count()
-    ws.append(["Estudiantes matriculados", estudiantes_count])
+    ws.append(["Número de estudiantes registrados", estudiantes_count])
     ws.append([])
 
     # Unidades con docente y horario
     ws.append(["Unidades curriculares"])
-    ws.append(["Código", "Nombre", "Docente responsable", "Horario semanal"])
+    ws.append(["Código de Unidad curricular", "Nombre", "Docente designado", "Horario"])
     for row in unidades_rows:
         docente = ""
         if row.docente_responsable:

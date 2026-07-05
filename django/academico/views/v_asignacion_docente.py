@@ -77,5 +77,5 @@ def asignar_docente_paralelo(request, paralelo_id):
         "horario_completo": horario_completo,
         "solo_lectura": solo_lectura,
         "titulo_pagina": "Docente - NIVEC",
-        "titulo": f"Asignación Docente - {paralelo.nombre} ({paralelo.unidad_curricular.nombre})",
+        "titulo": f"Designación Docente - {paralelo.nombre} ({paralelo.unidad_curricular.nombre})",
     })

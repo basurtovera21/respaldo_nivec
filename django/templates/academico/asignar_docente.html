@@ -4,10 +4,21 @@
 
 {% block contenido %}
 <style>
-    .tarjeta table th, .tarjeta table td { padding: 12px 18px; white-space: nowrap; }
+    .tarjeta table th, .tarjeta table td { 
+        padding: 12px 18px; 
+        white-space: nowrap; 
+        font-family: inherit; 
+    }
     .etiqueta-accion {
-        padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: bold;
-        border: none; cursor: pointer; text-decoration: none; display: inline-block;
+        font-family: inherit;
+        padding: 6px 14px; 
+        border-radius: 6px; 
+        font-size: 12px; 
+        font-weight: bold;
+        border: none; 
+        cursor: pointer; 
+        text-decoration: none; 
+        display: inline-block;
         transition: all 0.2s ease;
     }
     .etiqueta-naranja { background: #9db4c0; color: white; border: none; }
@@ -15,39 +26,39 @@
     .etiqueta-eliminar { background: #253237; color: white; border: none; }
     .etiqueta-eliminar:hover { opacity: 0.85; }
     .etiqueta-estado {
-        font-size: 13px; font-weight: bold; color: #253237;
+        font-size: 13px; font-weight: bold; color: #253237; font-family: inherit;
     }
 </style>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
     <div>
-        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">{{ titulo }}</h2>
-        <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin: 0;">
-            {{ paralelo.unidad_curricular.malla_curricular.carrera.nombre }} ({{ paralelo.get_jornada_display }}). Horas sincrónicas especificadas: {{ paralelo.unidad_curricular.horas_sincronicas }} horas
+        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237; font-family: inherit;">{{ titulo }}</h2>
+        <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin: 0; font-family: inherit;">
+            {{ paralelo.unidad_curricular.malla_curricular.carrera.nombre }} ({{ paralelo.get_jornada_display }}). Horas sincrónicas semanales: {{ paralelo.unidad_curricular.horas_sincronicas }} horas
         </p>
     </div>
 </div>
 
-<p style="color: #5c6b73; font-size: 13px; margin-bottom: 8px;">
+<p style="color: #5c6b73; font-size: 13px; margin-bottom: 24px; font-family: inherit;">
     <span style="font-weight: bold;">Docente designado:</span>
     {% if paralelo.docente_responsable %}
-        {{ paralelo.docente_responsable.usuario_de_sistema.nombres }} {{ paralelo.docente_responsable.usuario_de_sistema.apellidos }}
+        <span style="font-weight: bold; color: #253237;">{{ paralelo.docente_responsable.usuario_de_sistema.apellidos }} {{ paralelo.docente_responsable.usuario_de_sistema.nombres }}</span>
     {% else %}
-        <span style="color: #9db4c0;">Sin designación</span>
+        <span style="color: #9db4c0; font-weight: bold;">Sin designación actualmente</span>
     {% endif %}
 </p>
 
-<p style="color: #253237; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
-    El listado muestra únicamente los docentes que no presentan conflictos con el horario registrado.
+<p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 16px; font-family: inherit;">
+    Listado de Docentes disponibles conforme el Horario previamente registrado
 </p>
 
 <div class="tarjeta" style="padding: 0; overflow-x: auto;">
     <table style="width: 100%;">
         <thead>
             <tr>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73">Identificador</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73">Nombres</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73">Identificador institucional</th>
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Apellidos</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73">Nombres</th>
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Estado</th>
                 <th style="font-weight: bold; text-align: left; color: #5c6b73">Carga horaria semanal</th>
                 {% if not solo_lectura %}
@@ -59,25 +70,25 @@
             {% for e in evaluaciones %}
             <tr>
                 <td style="text-align: left; color: #1d1d1f;">{{ e.docente.identificador_institucional }}</td>
-                <td style="text-align: left; color: #1d1d1f;">{{ e.docente.usuario_de_sistema.nombres }}</td>
                 <td style="text-align: left; color: #1d1d1f;">{{ e.docente.usuario_de_sistema.apellidos }}</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.docente.usuario_de_sistema.nombres }}</td>
                 <td style="text-align: left;">
                     <span class="etiqueta-estado">{% if e.activo %}Activo{% else %}Inactivo{% endif %}</span>
                 </td>
-                <td style="text-align: left; color: #1d1d1f;">{{ e.carga_real }} / {{ e.carga_maxima }} h</td>
+                <td style="text-align: left; color: #1d1d1f;">{{ e.carga_real }} / {{ e.carga_maxima }} horas</td>
                 {% if not solo_lectura %}
                 <td style="text-align: left;">
                     {% if e.es_actual %}
-                    <form method="post" action="{% url 'asignar_docente_paralelo' paralelo.id %}">
+                    <form method="post" action="{% url 'asignar_docente_paralelo' paralelo.id %}" style="margin: 0; font-family: inherit;">
                         {% csrf_token %}
                         <input type="hidden" name="accion" value="quitar">
                         <button type="submit" class="etiqueta-accion etiqueta-eliminar" onclick="return confirm('Confirmar acción');">Eliminar</button>
                     </form>
                     {% elif not paralelo.docente_responsable and tiene_horario %}
-                    <form method="post" action="{% url 'asignar_docente_paralelo' paralelo.id %}">
+                    <form method="post" action="{% url 'asignar_docente_paralelo' paralelo.id %}" style="margin: 0; font-family: inherit;">
                         {% csrf_token %}
                         <input type="hidden" name="docente_id" value="{{ e.docente.id }}">
-                        <button type="submit" class="etiqueta-accion etiqueta-naranja">Asignar</button>
+                        <button type="submit" class="etiqueta-accion etiqueta-naranja">Designar</button>
                     </form>
                     {% endif %}
                 </td>
@@ -86,7 +97,7 @@
             {% empty %}
             <tr>
                 <td colspan="6" style="text-align: center; color: #9db4c0; padding: 30px;">
-                    No existen docentes compatibles con la jornada del paralelo
+                    No existen Docentes disponibles conforme el Horario actualmente
                 </td>
             </tr>
             {% endfor %}
@@ -94,7 +105,7 @@
     </table>
 </div>
 
-<div style="margin-top: 15px;">
+<div style="margin-top: 15px; font-family: inherit;">
     <a href="{% url 'detalle_paralelo' paralelo.id %}" class="boton boton-secundario">Volver</a>
 </div>
 {% endblock %}

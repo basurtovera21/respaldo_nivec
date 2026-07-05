@@ -449,8 +449,7 @@ def servicio_unidad_registrar_masivo_desde_excel(archivo, universidad_usuario):
 
                 if not validacion_malla["ok"]:
                     resultado["advertencias"].append(
-                        f"El registro de la fila {numero_fila} fue omitido "
-                        f"(la Malla excede el límite de {validacion_malla['limite']}h sincrónicas semanales)"
+                        f"El registro de la fila {numero_fila} fue omitido (la Malla curricular excede el límite de {validacion_malla['limite']} horas sincrónicas semanales)"
                     )
                     continue
 
