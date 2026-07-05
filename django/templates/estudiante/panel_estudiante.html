@@ -219,6 +219,33 @@
         </div>
         {% endif %}
     </div>
+
+    {% if horarios %}
+    <div class="tarjeta" style="margin-bottom: 20px; padding: 0; overflow-x: auto; font-family: inherit;">
+        <table style="width: 100%;">
+            <thead>
+                <tr>
+                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Día</th>
+                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Hora inicio</th>
+                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Hora fin</th>
+                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Unidad curricular</th>
+                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Espacio</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in horarios %}
+                <tr>
+                    <td style="text-align: left; color: #1d1d1f;">{{ h.get_dia_semana_display }}</td>
+                    <td style="text-align: left; color: #1d1d1f;">{{ h.hora_inicio }}</td>
+                    <td style="text-align: left; color: #1d1d1f;">{{ h.hora_fin }}</td>
+                    <td style="text-align: left; color: #1d1d1f;">{{ h.paralelo.unidad_curricular.nombre }}</td>
+                    <td style="text-align: left; color: #1d1d1f;">{{ h.espacio_de_imparticion|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
     {% endif %}
 
     {% if not matriculas and not evaluaciones and not grilla %}

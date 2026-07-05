@@ -17,13 +17,18 @@ ROLES_VER = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
 
 
 def _obtener_universidad_usuario(user):
-    """Get universidad from perfil_administrativo or perfil_docente."""
+    """Get universidad from perfil_administrativo, perfil_docente, or perfil_estudiante."""
     perfil_admin = getattr(user, 'perfil_administrativo', None)
     if perfil_admin:
         return perfil_admin.universidad
     perfil_docente = getattr(user, 'perfil_docente', None)
     if perfil_docente:
         return perfil_docente.universidad
+    # For students
+    from usuarios.models import PerfilEstudiante
+    perfil_est = PerfilEstudiante.objects.filter(usuario_de_sistema=user).select_related("carrera_registrada__campus__universidad").first()
+    if perfil_est and perfil_est.carrera_registrada:
+        return perfil_est.carrera_registrada.campus.universidad
     return None
 
 

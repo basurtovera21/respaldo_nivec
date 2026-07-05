@@ -84,6 +84,7 @@ def panel_director_dan(request):
 @never_cache
 def panel_dan(request):
     from academico.models import Campus, Carrera, PeriodoDeNivelacion, MallaCurricular, UnidadCurricular, Paralelo, Horario, ConsolidadoAcademico
+    from academico.permisos import todas_calificaciones_formalizadas_por_carrera
     perfil = getattr(request.user, 'perfil_administrativo', None)
     universidad = perfil.universidad if perfil else None
     tiene_universidad = universidad is not None
@@ -95,6 +96,7 @@ def panel_dan(request):
     tiene_paralelos = Paralelo.objects.filter(periodo_de_nivelacion__universidad=universidad).exists() if universidad else False
     tiene_horarios = Horario.objects.filter(paralelo__periodo_de_nivelacion__universidad=universidad).exists() if universidad else False
     tiene_consolidados = ConsolidadoAcademico.objects.filter(periodo_academico__universidad=universidad).exists() if universidad else False
+    puede_ver_informe = todas_calificaciones_formalizadas_por_carrera(universidad) if universidad else False
     return render(request, "administrativo/panel_dan.html", {
         "tiene_universidad": tiene_universidad,
         "tiene_campus": tiene_campus,
@@ -105,6 +107,7 @@ def panel_dan(request):
         "tiene_paralelos": tiene_paralelos,
         "tiene_horarios": tiene_horarios,
         "tiene_consolidados": tiene_consolidados,
+        "puede_ver_informe": puede_ver_informe,
     })
     return render(request, "administrativo/panel_dan.html", {
         "tiene_universidad": tiene_universidad,
@@ -224,6 +227,7 @@ def panel_docente(request):
     # Get paralelos where this docente is responsible in the active period
     paralelos = []
     tiene_horarios = False
+    horarios_list = []
     grilla = []
     dias_semana = [d.value for d in DiaDeSemana]
     mapa_colores = {}
@@ -242,6 +246,7 @@ def panel_docente(request):
             ).select_related("paralelo__unidad_curricular").order_by("dia_semana", "hora_inicio")
             
             tiene_horarios = horarios.exists()
+            horarios_list = list(horarios)
 
             if tiene_horarios:
                 # Determine franja from the first paralelo's jornada
@@ -294,6 +299,7 @@ def panel_docente(request):
         "periodo_actual": periodo_actual,
         "paralelos": paralelos,
         "tiene_horarios": tiene_horarios,
+        "horarios": horarios_list,
         "grilla": grilla,
         "dias_semana": dias_semana,
         "mapa_colores": mapa_colores,
