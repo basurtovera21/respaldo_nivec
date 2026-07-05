@@ -2,10 +2,7 @@
 {% block titulo %}Panel Docente — NIVEC{% endblock %}
 
 {% block contenido %}
-<h2 style="margin-bottom: 4px; color: #253237;">Panel Docente</h2>
-<p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 4px;">
-    {{ perfil_docente.usuario_de_sistema.apellidos }} {{ perfil_docente.usuario_de_sistema.nombres }}
-</p>
+<h2 style="margin-bottom: 4px; color: #253237;">Panel Docente — {{ perfil_docente.usuario_de_sistema.apellidos }} {{ perfil_docente.usuario_de_sistema.nombres }}</h2>
 <p style="color: #5c6b73; font-size: 13px; margin-bottom: 4px;">
     <span style="font-weight: bold;">Identificador:</span> {{ perfil_docente.identificador_institucional }}
     — <span style="font-weight: bold;">Vinculación:</span> {{ perfil_docente.tipo_de_vinculacion }}

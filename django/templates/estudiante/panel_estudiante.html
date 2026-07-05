@@ -2,10 +2,7 @@
 {% block titulo %}Panel Estudiante — NIVEC{% endblock %}
 
 {% block contenido %}
-<h2 style="margin-bottom: 4px; color: #253237;">Panel del Estudiante</h2>
-<p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 4px;">
-    {{ perfil_estudiante.usuario_de_sistema.apellidos }} {{ perfil_estudiante.usuario_de_sistema.nombres }}
-</p>
+<h2 style="margin-bottom: 4px; color: #253237;">Panel del Estudiante — {{ perfil_estudiante.usuario_de_sistema.apellidos }} {{ perfil_estudiante.usuario_de_sistema.nombres }}</h2>
 <p style="color: #5c6b73; font-size: 13px; margin-bottom: 4px;">
     <span style="font-weight: bold;">Identificación:</span> {{ perfil_estudiante.usuario_de_sistema.identificacion }}
     — <span style="font-weight: bold;">Matrícula:</span> {{ perfil_estudiante.numero_de_matricula }}

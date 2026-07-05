@@ -27,13 +27,18 @@ ROLES_MODIFICAN = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_COORDINADOR_UA)
 
 
 def _obtener_universidad_usuario(user):
-    """Get universidad from perfil_administrativo or perfil_docente."""
+    """Get universidad from perfil_administrativo, perfil_docente, or perfil_estudiante."""
     perfil_admin = getattr(user, 'perfil_administrativo', None)
     if perfil_admin:
         return perfil_admin.universidad
     perfil_docente = getattr(user, 'perfil_docente', None)
     if perfil_docente:
         return perfil_docente.universidad
+    # For students, get from their carrera's campus
+    from usuarios.models import PerfilEstudiante
+    perfil_est = PerfilEstudiante.objects.filter(usuario_de_sistema=user).select_related("carrera_registrada__campus__universidad").first()
+    if perfil_est and perfil_est.carrera_registrada:
+        return perfil_est.carrera_registrada.campus.universidad
     return None
 
 
@@ -315,6 +320,19 @@ def listar_estudiantes_paralelo(request, paralelo_id):
         if perfil_docente and paralelo.docente_responsable != perfil_docente:
             messages.error(request, "No tiene acceso a este paralelo")
             return redirect("panel_principal")
+    elif rol == "ESTUDIANTE":
+        from usuarios.models import PerfilEstudiante as PEstudiante
+        perfil_est = PEstudiante.objects.filter(usuario_de_sistema=request.user).first()
+        if perfil_est:
+            esta_matriculado = MatriculaParalelo.objects.filter(
+                estudiante=perfil_est,
+                paralelo__periodo_de_nivelacion=paralelo.periodo_de_nivelacion,
+                paralelo__nombre=paralelo.nombre,
+                paralelo__unidad_curricular__malla_curricular__carrera=carrera,
+            ).exists()
+            if not esta_matriculado:
+                messages.error(request, "No tiene acceso a este paralelo")
+                return redirect("panel_principal")
 
     matriculas = MatriculaParalelo.objects.filter(
         paralelo=paralelo
