@@ -165,3 +165,40 @@ def obtener_permisos_periodo(universidad):
         "puede_ver_paralelos": True,
         "puede_ver_calificaciones": estado in ("EVALUACION", "CERRADO"),
     }
+
+
+
+def todas_calificaciones_formalizadas_por_carrera(universidad, carrera=None):
+    """
+    Verifica si todas las evaluaciones académicas del periodo activo están formalizadas.
+    Si se especifica carrera, verifica solo para esa carrera.
+    
+    Returns: True si todas están formalizadas (o no hay evaluaciones), False si hay pendientes.
+    """
+    from academico.models import EvaluacionAcademica, PeriodoDeNivelacion
+    
+    if not universidad:
+        return False
+    
+    # Get active period in evaluación or cerrado
+    periodo = PeriodoDeNivelacion.objects.filter(
+        universidad=universidad,
+        estado__in=[EstadoDePeriodo.EVALUACION.value, EstadoDePeriodo.CERRADO.value]
+    ).first()
+    
+    if not periodo:
+        return False
+    
+    evaluaciones = EvaluacionAcademica.objects.filter(periodo_de_nivelacion=periodo)
+    
+    if carrera:
+        evaluaciones = evaluaciones.filter(
+            estudiante__carrera_registrada=carrera
+        )
+    
+    if not evaluaciones.exists():
+        return False
+    
+    # Check if any are NOT formalized
+    no_formalizadas = evaluaciones.exclude(estado_revision="Formalizado").exists()
+    return not no_formalizadas
