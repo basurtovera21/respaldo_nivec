@@ -89,9 +89,11 @@
         {% if not solo_lectura %}
         <td style="text-align: left; white-space: nowrap;">
             <a href="{% url 'detalle_paralelo' p.representativo_id %}" class="etiqueta-accion etiqueta-naranja">Ver información</a>
+            {% if puede_distribuir %}
             <a href="{% url 'eliminar_paralelo' p.representativo_id %}"
                onclick="return confirm('Confirmar acción');"
                class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+            {% endif %}
         </td>
         {% else %}
         <td style="text-align: left; white-space: nowrap;">

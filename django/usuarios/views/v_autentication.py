@@ -108,13 +108,17 @@ def panel_ua(request):
     carrera = perfil.carrera_asignada
     universidad = perfil.universidad
 
-    from academico.models import PeriodoDeNivelacion, Carrera as CarreraModel, MallaCurricular
+    from academico.models import PeriodoDeNivelacion, Carrera as CarreraModel, MallaCurricular, Paralelo
     from usuarios.models import PerfilEstudiante
 
     tiene_periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad).exists() if universidad else False
     tiene_carreras = CarreraModel.objects.filter(campus__universidad=universidad).exists() if universidad else False
     tiene_estudiantes = PerfilEstudiante.objects.filter(carrera_registrada=carrera).exists() if carrera else False
     tiene_mallas = MallaCurricular.objects.filter(carrera__campus__universidad=universidad).exists() if universidad else False
+    tiene_paralelos = Paralelo.objects.filter(
+        periodo_de_nivelacion__universidad=universidad,
+        unidad_curricular__malla_curricular__carrera=carrera,
+    ).exists() if (universidad and carrera) else False
 
     return render(request, "administrativo/panel_ua.html", {
         "perfil": perfil,
@@ -123,6 +127,7 @@ def panel_ua(request):
         "tiene_carreras": tiene_carreras,
         "tiene_estudiantes": tiene_estudiantes,
         "tiene_mallas": tiene_mallas,
+        "tiene_paralelos": tiene_paralelos,
     })
 
 @login_required
