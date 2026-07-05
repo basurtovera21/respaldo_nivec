@@ -205,12 +205,20 @@ def panel_docente(request):
     
     from academico.models import Paralelo, PeriodoDeNivelacion, Horario
     from academico.permisos import obtener_permisos_periodo
+    from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
     
     universidad = perfil_docente.universidad
-    periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad).order_by('-anio', '-numero_periodo') if universidad else PeriodoDeNivelacion.objects.none()
-    periodo_actual = periodos.exclude(estado="Cerrado").first()
     
-    # Get paralelos where this docente is responsible
+    # Get active period (not closed) - priority: En Curso > Evaluación > Planificación
+    periodo_actual = None
+    if universidad:
+        for estado_buscar in [EstadoDePeriodo.EN_CURSO.value, EstadoDePeriodo.EVALUACION.value, EstadoDePeriodo.PLANIFICACION.value]:
+            p = PeriodoDeNivelacion.objects.filter(universidad=universidad, estado=estado_buscar).first()
+            if p:
+                periodo_actual = p
+                break
+    
+    # Get paralelos where this docente is responsible in the active period
     paralelos = []
     tiene_horarios = False
     if periodo_actual:
@@ -219,7 +227,8 @@ def panel_docente(request):
             docente_responsable=perfil_docente,
         ).select_related("unidad_curricular__malla_curricular__carrera").order_by("nombre", "unidad_curricular__nombre")
         tiene_horarios = Horario.objects.filter(
-            paralelo__in=paralelos
+            paralelo__periodo_de_nivelacion=periodo_actual,
+            paralelo__docente_responsable=perfil_docente,
         ).exists()
 
     # State notice
@@ -279,6 +288,50 @@ def panel_estudiante(request):
         paralelo_id__in=paralelo_ids
     ).select_related("paralelo__unidad_curricular").order_by("dia_semana", "hora_inicio") if paralelo_ids else Horario.objects.none()
 
+    # Build visual grid for the student's schedule
+    from poo.clases.enums.dia_de_semana import DiaDeSemana
+    from poo.clases.enums.jornada import Jornada
+    from poo.clases.franja_horaria import obtener_franja
+
+    grilla = []
+    dias_semana = [d.value for d in DiaDeSemana]
+    mapa_colores = {}
+
+    if horarios.exists():
+        # Determine franja from student's jornada
+        jornada_estudiante = perfil_estudiante.jornada
+        try:
+            jornada_enum = Jornada(jornada_estudiante)
+            franja = obtener_franja(jornada_enum)
+        except (ValueError, KeyError):
+            franja = None
+
+        if franja:
+            slots_hora = list(range(franja[0].hour, franja[1].hour))
+
+            _COLORES_UNIDAD = [
+                "#e8e8ed", "#d2e4ea", "#dce8d4", "#f0e6d2", "#e2d8ef",
+                "#d8eef0", "#f5e0d8", "#d4e8e0", "#ede4d0", "#dfe0f5",
+            ]
+            nombres_unidades = sorted(set(h.paralelo.unidad_curricular.nombre for h in horarios))
+            mapa_colores = {nombre: _COLORES_UNIDAD[i % len(_COLORES_UNIDAD)] for i, nombre in enumerate(nombres_unidades)}
+
+            for slot in slots_hora:
+                fila = {"hora": f"{slot:02d}:00", "celdas": []}
+                for dia in dias_semana:
+                    bloque = None
+                    for h in horarios:
+                        if h.dia_semana == dia and h.hora_inicio.hour <= slot < h.hora_fin.hour:
+                            bloque = {
+                                "nombre": h.paralelo.unidad_curricular.nombre,
+                                "slot_inicio": f"{slot:02d}:00",
+                                "slot_fin": f"{slot+1:02d}:00",
+                                "color": mapa_colores.get(h.paralelo.unidad_curricular.nombre, "#e8e8ed"),
+                            }
+                            break
+                    fila["celdas"].append(bloque)
+                grilla.append(fila)
+
     # State notice and permissions
     permisos = obtener_permisos_periodo(universidad) if universidad else {}
     estado = permisos.get("estado_periodo", "")
@@ -298,6 +351,9 @@ def panel_estudiante(request):
         "matriculas": matriculas,
         "evaluaciones": evaluaciones,
         "horarios": horarios,
+        "grilla": grilla,
+        "dias_semana": dias_semana,
+        "mapa_colores": mapa_colores,
         "aviso_estado": aviso_estado,
         "puede_ver_calificaciones": permisos.get("puede_ver_calificaciones", False),
     })

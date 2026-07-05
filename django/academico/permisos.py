@@ -104,18 +104,18 @@ def obtener_permisos_periodo(universidad):
         "puede_finalizar_periodo": es_evaluacion,
 
         # ── ADMINISTRATIVOS / COORDINADORES ──
-        "puede_registrar_administrativo": es_editable,
-        "puede_modificar_administrativo": es_editable,
-        "puede_eliminar_administrativo": es_editable,
+        "puede_registrar_administrativo": es_gestionable,
+        "puede_modificar_administrativo": es_gestionable,
+        "puede_eliminar_administrativo": es_gestionable,
 
         # ── DOCENTES ──
-        "puede_registrar_docente": es_gestionable,
+        "puede_registrar_docente": es_editable,
         "puede_modificar_docente": es_gestionable,
         "puede_eliminar_docente": es_editable,
         "puede_inhabilitar_docente": es_gestionable,
 
         # ── ESTUDIANTES ──
-        "puede_registrar_estudiante": es_planificacion_o_en_curso,
+        "puede_registrar_estudiante": es_editable,
         "puede_modificar_estudiante": es_planificacion_o_en_curso,
         "puede_eliminar_estudiante": es_editable,
         "puede_matricular_estudiante": es_planificacion_o_en_curso,
@@ -136,7 +136,7 @@ def obtener_permisos_periodo(universidad):
         "puede_eliminar_unidad": es_editable,
 
         # ── MTN ──
-        "puede_procesar_mtn": es_planificacion_o_en_curso,
+        "puede_procesar_mtn": es_planificacion,
 
         # ── PARALELOS ──
         "puede_distribuir_paralelos": es_planificacion,
