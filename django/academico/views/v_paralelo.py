@@ -451,7 +451,8 @@ def estudiantes_disponibles(request, paralelo_id):
         carrera_registrada=carrera,
         jornada=paralelo.jornada,
         periodo_de_nivelacion=periodo,
-        estado_de_matricula=EstadoDeMatricula.MATRICULADO.value,
+    ).exclude(
+        estado_de_matricula__in=[EstadoDeMatricula.RETIRADO.value, EstadoDeMatricula.ANULADO.value]
     ).exclude(
         estudiantes_matriculados__paralelo__periodo_de_nivelacion=periodo
     ).distinct().select_related("usuario_de_sistema").order_by(
