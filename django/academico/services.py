@@ -1134,6 +1134,9 @@ def servicio_retirar_estudiante_de_paralelo(estudiante_db, paralelo_db):
 
     with transaction.atomic():
         matriculas.delete()
+        # Cambiar estado de matrícula del estudiante a Retirado
+        estudiante_db.estado_de_matricula = EstadoDeMatricula.RETIRADO.value
+        estudiante_db.save(update_fields=["estado_de_matricula"])
 
     servicio_recalcular_cohorte_de_carrera(periodo, carrera)
     return (True, "El Estudiante fue retirado del Paralelo correctamente")
@@ -1152,8 +1155,8 @@ def servicio_agregar_estudiante_a_paralelo(estudiante_db, paralelo_db):
             or estudiante_db.jornada != paralelo_db.jornada):
         return (False, "El Estudiante no es compatible con el Paralelo")
 
-    # Solo estudiantes con matrícula activa (no retirados ni anulados).
-    if estudiante_db.estado_de_matricula != EstadoDeMatricula.MATRICULADO.value:
+    # Solo estudiantes que no estén retirados ni anulados.
+    if estudiante_db.estado_de_matricula in (EstadoDeMatricula.RETIRADO.value, EstadoDeMatricula.ANULADO.value):
         return (False, "El Estudiante no tiene una matrícula activa")
 
     # No debe estar ya asignado a ningún paralelo del periodo.

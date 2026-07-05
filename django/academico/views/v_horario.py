@@ -376,6 +376,15 @@ def matriz_horarios(request):
     jornada_filtro = request.GET.get("jornada") or None
     paralelo_id = request.GET.get("paralelo") or None
 
+    # Role-based: Coordinador UA gets carrera pre-loaded
+    from usuarios.utils import obtener_rol_usuario, ROL_COORDINADOR_UA
+    rol = obtener_rol_usuario(request.user)
+    es_coordinador_ua = (rol == ROL_COORDINADOR_UA)
+    if es_coordinador_ua:
+        perfil_admin = getattr(request.user, 'perfil_administrativo', None)
+        if perfil_admin and perfil_admin.carrera_asignada:
+            carrera_id = str(perfil_admin.carrera_asignada.id)
+
     periodo_seleccionado = None
     carrera_seleccionada = None
     grupos = []
@@ -474,6 +483,7 @@ def matriz_horarios(request):
         "periodo_seleccionado": periodo_seleccionado,
         "carrera_seleccionada": carrera_seleccionada,
         "jornada_filtro": jornada_filtro or "",
+        "es_coordinador_ua": es_coordinador_ua,
         "grupos": grupos,
         "paralelo_seleccionado": paralelo_seleccionado,
         "grilla": grilla,
