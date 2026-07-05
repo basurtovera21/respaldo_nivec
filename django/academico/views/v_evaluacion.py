@@ -547,16 +547,18 @@ def descargar_informe_general(request):
     ws.title = "Informe General"
 
     ws.append(["Informe de nivelación"])
+    ws.append(["Código de Periodo", periodo.codigo_periodo])
     ws.append(["Periodo de nivelación", periodo.periodo])
     ws.append(["Año", periodo.anio])
     ws.append(["Estado", periodo.estado])
     ws.append([])
-    ws.append(["Carrera", "Número total de evaluaciones", "Número de aprobados", "Número de reprobados", "Número de retirados", "Número de anulados", "Número de pendientes", "Número de formalizados", "Porcentaje de aprobación"])
+    ws.append(["Código de Periodo", "Periodo", "Carrera", "Número total de evaluaciones", "Número de aprobados", "Número de reprobados", "Número de retirados", "Número de anulados", "Porcentaje de aprobación"])
 
     for fila in informe:
         ws.append([
+            periodo.codigo_periodo, periodo.periodo,
             fila["carrera"], fila["total"], fila["aprobados"], fila["reprobados"],
-            fila["retirados"], fila["anulados"], fila["pendientes"], fila["formalizados"],
+            fila["retirados"], fila["anulados"],
             fila["porcentaje_aprobacion"],
         ])
 
@@ -567,13 +569,11 @@ def descargar_informe_general(request):
     total_rep = sum(f["reprobados"] for f in informe)
     total_ret = sum(f["retirados"] for f in informe)
     total_anu = sum(f["anulados"] for f in informe)
-    total_pen = sum(f["pendientes"] for f in informe)
-    total_for = sum(f["formalizados"] for f in informe)
     pct = round(total_apr / total_eval * 100, 1) if total_eval > 0 else 0
-    ws.append(["TOTAL", total_eval, total_apr, total_rep, total_ret, total_anu, total_pen, total_for, pct])
+    ws.append(["", "", "TOTAL", total_eval, total_apr, total_rep, total_ret, total_anu, pct])
 
     for col in range(1, 10):
-        ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 20
+        ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 25
 
     nombre = f"informe_general_{periodo.periodo}".lower().replace(" ", "_")
     response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
