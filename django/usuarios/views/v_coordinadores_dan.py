@@ -42,12 +42,15 @@ def listar_coordinadores_dan(request):
 
     coordinadores = coordinadores.order_by("identificador_coordinador_dan")
 
+    from academico.permisos import obtener_permisos_periodo
+    permisos = obtener_permisos_periodo(universidad_usuario)
+
     return render(request, "usuarios/listar_coordinadores_dan.html", {
         "coordinadores": coordinadores,
         "busqueda": busqueda,
         "titulo_pagina": "Coordinador de dirección de admisión y nivelación - NIVEC",
         "titulo": "Coordinadores de dirección de admisión y nivelación",
-        "url_registrar": "registrar_coordinador_dan",
+        "url_registrar": "registrar_coordinador_dan" if permisos["puede_registrar_administrativo"] and not usuario_es_solo_lectura(request.user) else None,
         "texto_registrar": "Registrar",
         "url_volver": "panel_principal",
         "solo_lectura": usuario_es_solo_lectura(request.user),
