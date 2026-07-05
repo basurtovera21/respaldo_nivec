@@ -62,18 +62,24 @@
         <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Registro y resumen</p>
         <div class="acciones" style="margin-bottom: 0;">
             <a href="{% url 'procesar_mtn' %}" class="boton boton-secundario">Matriz de Tercer Nivel</a>
+            {% if tiene_consolidados %}
             <a href="{% url 'listar_consolidados' %}" class="boton boton-secundario">Resumen de ingreso</a>
+            {% endif %}
         </div>
     </div>
 
+    {% if tiene_unidades %}
     <div class="tarjeta">
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Conformación académica</h2>
         <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Distribución académica</p>
         <div class="acciones" style="margin-bottom: 0;">
             <a href="{% url 'listar_paralelos' %}" class="boton boton-secundario">Paralelos</a>
+            {% if tiene_horarios %}
             <a href="{% url 'matriz_horarios' %}" class="boton boton-secundario">Horarios</a>
+            {% endif %}
         </div>
     </div>
+    {% endif %}
 
     {% if puede_ver_calificaciones %}
     <div class="tarjeta">
