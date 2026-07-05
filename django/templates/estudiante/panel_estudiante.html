@@ -2,46 +2,52 @@
 {% block titulo %}Panel Estudiante — NIVEC{% endblock %}
 
 {% block contenido %}
-<h2 style="margin-bottom: 20px;">Panel del Estudiante</h2>
+<h2 style="margin-bottom: 4px; color: #253237;">Panel del Estudiante</h2>
+<p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 20px;">
+    {{ perfil_estudiante.usuario_de_sistema.apellidos }} {{ perfil_estudiante.usuario_de_sistema.nombres }}
+    — Matrícula: {{ perfil_estudiante.numero_de_matricula }}
+    {% if periodo %} — {{ periodo.periodo }}{% endif %}
+</p>
 
-<div class="tarjeta" style="margin-bottom: 16px;">
-    <p style="color: #5c6b73; font-size: 13px; margin: 0;">
-        <span style="font-weight: bold;">Estudiante:</span> {{ perfil_estudiante.usuario_de_sistema.nombres }} {{ perfil_estudiante.usuario_de_sistema.apellidos }}
-        — <span style="font-weight: bold;">Matrícula:</span> {{ perfil_estudiante.numero_de_matricula }}
-        {% if periodo %} — <span style="font-weight: bold;">Periodo:</span> {{ periodo.periodo }}{% endif %}
-    </p>
+{% if aviso_estado %}
+<p style="color: #253237; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
+    {{ aviso_estado }}
+</p>
+{% endif %}
+
+<div style="margin-bottom: 20px;">
+    <a href="{% url 'detalle_universidad' %}" class="boton boton-secundario">Información institucional</a>
 </div>
 
-{% if evaluaciones %}
+{% if puede_ver_calificaciones and evaluaciones %}
 <div style="margin-bottom: 16px;">
     <a href="{% url 'descargar_constancia_estudiante' %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Descargar constancia de resultados</a>
 </div>
-{% endif %}
 
-{% if evaluaciones %}
-<div class="tarjeta" style="margin-bottom: 16px;">
-    <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f; margin-bottom: 12px;">Calificaciones</h3>
+<div class="tarjeta" style="margin-bottom: 20px;">
+    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">Calificaciones</h2>
+    <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Resultados académicos</p>
     <div style="overflow-x: auto;">
     <table style="width: 100%;">
         <thead>
             <tr>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 8px 12px;">Unidad curricular</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 8px 12px;">Parcial 1</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 8px 12px;">Parcial 2</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 8px 12px;">Nota final</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 8px 12px;">Asistencia</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 8px 12px;">Estado</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Unidad curricular</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Parcial 1</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Parcial 2</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Nota final</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Asistencia</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Estado</th>
             </tr>
         </thead>
         <tbody>
             {% for e in evaluaciones %}
             <tr>
-                <td style="text-align: left; padding: 8px 12px;">{{ e.unidad_curricular.nombre }}</td>
-                <td style="text-align: left; padding: 8px 12px;">{{ e.calificacion_parcial_1 }}</td>
-                <td style="text-align: left; padding: 8px 12px;">{{ e.calificacion_parcial_2 }}</td>
-                <td style="text-align: left; padding: 8px 12px; font-weight: bold;">{{ e.nota_final }}</td>
-                <td style="text-align: left; padding: 8px 12px;">{{ e.porcentaje_asistencia }}%</td>
-                <td style="text-align: left; padding: 8px 12px; font-weight: bold; color: {% if e.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif e.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#9db4c0{% endif %};">{{ e.estado_de_aprobacion }}</td>
+                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ e.unidad_curricular.nombre }}</td>
+                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ e.calificacion_parcial_1 }}</td>
+                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ e.calificacion_parcial_2 }}</td>
+                <td style="text-align: left; padding: 12px 18px; font-weight: bold; color: #253237;">{{ e.nota_final }}</td>
+                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ e.porcentaje_asistencia }}%</td>
+                <td style="text-align: left; padding: 12px 18px; font-weight: bold; color: {% if e.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif e.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#9db4c0{% endif %};">{{ e.estado_de_aprobacion }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -51,25 +57,30 @@
 {% endif %}
 
 {% if matriculas %}
-<div class="tarjeta" style="margin-bottom: 16px;">
-    <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f; margin-bottom: 12px;">Paralelo y unidades</h3>
+<div class="tarjeta" style="margin-bottom: 20px;">
+    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">Paralelo y unidades</h2>
+    <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Información académica registrada</p>
     <div style="overflow-x: auto;">
     <table style="width: 100%;">
         <thead>
             <tr>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 8px 12px;">Paralelo</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 8px 12px;">Unidad curricular</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 8px 12px;">Docente</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 8px 12px;">Jornada</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Paralelo</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Unidad curricular</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Docente</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Jornada</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Acciones</th>
             </tr>
         </thead>
         <tbody>
             {% for m in matriculas %}
             <tr>
-                <td style="text-align: left; padding: 8px 12px;">{{ m.paralelo.nombre }}</td>
-                <td style="text-align: left; padding: 8px 12px;">{{ m.paralelo.unidad_curricular.nombre }}</td>
-                <td style="text-align: left; padding: 8px 12px;">{% if m.paralelo.docente_responsable %}{{ m.paralelo.docente_responsable.usuario_de_sistema.nombres }} {{ m.paralelo.docente_responsable.usuario_de_sistema.apellidos }}{% else %}—{% endif %}</td>
-                <td style="text-align: left; padding: 8px 12px;">{{ m.paralelo.get_jornada_display }}</td>
+                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ m.paralelo.nombre }}</td>
+                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ m.paralelo.unidad_curricular.nombre }}</td>
+                <td style="text-align: left; padding: 12px 18px; color: #253237;">{% if m.paralelo.docente_responsable %}{{ m.paralelo.docente_responsable.usuario_de_sistema.apellidos }} {{ m.paralelo.docente_responsable.usuario_de_sistema.nombres }}{% else %}<span style="color: #9db4c0;">Sin designación</span>{% endif %}</td>
+                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ m.paralelo.get_jornada_display }}</td>
+                <td style="text-align: left; padding: 12px 18px; white-space: nowrap;">
+                    <a href="{% url 'listar_estudiantes_paralelo' m.paralelo.id %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Compañeros</a>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -80,26 +91,27 @@
 
 {% if horarios %}
 <div class="tarjeta">
-    <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f; margin-bottom: 12px;">Horario semanal</h3>
+    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">Horario semanal</h2>
+    <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Sesiones registradas</p>
     <div style="overflow-x: auto;">
     <table style="width: 100%;">
         <thead>
             <tr>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 8px 12px;">Día</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 8px 12px;">Hora inicio</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 8px 12px;">Hora fin</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 8px 12px;">Unidad curricular</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 8px 12px;">Espacio</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Día</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Hora inicio</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Hora fin</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Unidad curricular</th>
+                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Espacio</th>
             </tr>
         </thead>
         <tbody>
             {% for h in horarios %}
             <tr>
-                <td style="text-align: left; padding: 8px 12px;">{{ h.get_dia_semana_display }}</td>
-                <td style="text-align: left; padding: 8px 12px;">{{ h.hora_inicio }}</td>
-                <td style="text-align: left; padding: 8px 12px;">{{ h.hora_fin }}</td>
-                <td style="text-align: left; padding: 8px 12px;">{{ h.paralelo.unidad_curricular.nombre }}</td>
-                <td style="text-align: left; padding: 8px 12px;">{{ h.espacio_de_imparticion|default:"—" }}</td>
+                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ h.get_dia_semana_display }}</td>
+                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ h.hora_inicio }}</td>
+                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ h.hora_fin }}</td>
+                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ h.paralelo.unidad_curricular.nombre }}</td>
+                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ h.espacio_de_imparticion|default:"—" }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -108,9 +120,9 @@
 </div>
 {% endif %}
 
-{% if not matriculas and not evaluaciones %}
-<div class="tarjeta">
-    <p style="color: #9db4c0; font-size: 13px; margin: 0;">No tiene información académica registrada actualmente.</p>
-</div>
+{% if not matriculas and not evaluaciones and not horarios %}
+<p style="color: #5c6b73; font-size: 13px; font-weight: bold;">
+    No tiene información académica registrada actualmente
+</p>
 {% endif %}
 {% endblock %}

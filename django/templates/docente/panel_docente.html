@@ -2,21 +2,27 @@
 {% block titulo %}Panel Docente — NIVEC{% endblock %}
 
 {% block contenido %}
-<h2 style="margin-bottom: 20px;">Panel Docente</h2>
+<h2 style="margin-bottom: 4px; color: #253237;">Panel Docente</h2>
+<p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 20px;">
+    {{ perfil_docente.usuario_de_sistema.apellidos }} {{ perfil_docente.usuario_de_sistema.nombres }}
+    {% if periodo_actual %} — {{ periodo_actual.periodo }}{% endif %}
+</p>
 
-<div class="tarjeta" style="margin-bottom: 16px;">
-    <p style="color: #5c6b73; font-size: 13px; margin: 0;">
-        <span style="font-weight: bold;">Docente:</span> {{ perfil_docente.usuario_de_sistema.nombres }} {{ perfil_docente.usuario_de_sistema.apellidos }}
-        {% if periodo_actual %} — <span style="font-weight: bold;">Periodo:</span> {{ periodo_actual.periodo }} ({{ periodo_actual.estado }}){% endif %}
-    </p>
-</div>
+{% if aviso_estado %}
+<p style="color: #253237; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
+    {{ aviso_estado }}
+</p>
+{% endif %}
 
-<div style="margin-bottom: 16px;">
-    <a href="{% url 'horario_consolidado_docente' %}" style="color: #0071e3; font-size: 13px; font-weight: bold; text-decoration: none;">Ver horario consolidado</a>
+<div style="margin-bottom: 20px;">
+    <a href="{% url 'detalle_universidad' %}" class="boton boton-secundario">Información institucional</a>
 </div>
 
 {% if paralelos %}
-<div class="tarjeta" style="padding: 0; overflow-x: auto;">
+<div class="tarjeta" style="margin-bottom: 20px;">
+    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">Paralelos asignados</h2>
+    <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Unidades curriculares a cargo</p>
+    <div style="overflow-x: auto;">
     <table style="width: 100%;">
         <thead>
             <tr>
@@ -30,23 +36,33 @@
         <tbody>
             {% for p in paralelos %}
             <tr>
-                <td style="text-align: left; padding: 12px 18px;">{{ p.nombre }}</td>
-                <td style="text-align: left; padding: 12px 18px;">{{ p.unidad_curricular.malla_curricular.carrera.nombre }}</td>
-                <td style="text-align: left; padding: 12px 18px;">{{ p.unidad_curricular.nombre }}</td>
-                <td style="text-align: left; padding: 12px 18px;">{{ p.get_jornada_display }}</td>
+                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ p.nombre }}</td>
+                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ p.unidad_curricular.malla_curricular.carrera.nombre }}</td>
+                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ p.unidad_curricular.nombre }}</td>
+                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ p.get_jornada_display }}</td>
                 <td style="text-align: left; padding: 12px 18px; white-space: nowrap;">
-                    <a href="{% url 'listar_evaluaciones_paralelo' p.id %}" style="color: #0071e3; font-size: 13px; font-weight: bold; text-decoration: none; margin-right: 12px;">Calificaciones</a>
-                    <a href="{% url 'listar_horarios_paralelo' p.id %}" style="color: #0071e3; font-size: 13px; font-weight: bold; text-decoration: none; margin-right: 12px;">Horarios</a>
-                    <a href="{% url 'listar_estudiantes_paralelo' p.id %}" style="color: #0071e3; font-size: 13px; font-weight: bold; text-decoration: none;">Estudiantes</a>
+                    <a href="{% url 'listar_estudiantes_paralelo' p.id %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none; margin-right: 12px;">Estudiantes</a>
+                    <a href="{% url 'listar_horarios_paralelo' p.id %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none; margin-right: 12px;">Horario</a>
+                    {% if puede_ver_calificaciones %}
+                    <a href="{% url 'listar_evaluaciones_paralelo' p.id %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Calificaciones</a>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </div>
+
+{% if tiene_horarios %}
+<div style="margin-bottom: 20px;">
+    <a href="{% url 'horario_consolidado_docente' %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Ver horario consolidado</a>
+</div>
+{% endif %}
+
 {% else %}
-<div class="tarjeta">
-    <p style="color: #9db4c0; font-size: 13px; margin: 0;">No tiene paralelos asignados en el periodo actual.</p>
-</div>
+<p style="color: #5c6b73; font-size: 13px; font-weight: bold;">
+    No se le ha asignado ningún Paralelo actualmente
+</p>
 {% endif %}
 {% endblock %}

@@ -4,6 +4,16 @@
 {% block contenido %}
     <h2 style="margin-bottom: 20px;">Coordinación de dirección de admisión y nivelación</h2>
 
+    {% if estado_periodo == "EN_CURSO" %}
+    <p style="color: #253237; font-size: 13px; font-weight: bold; margin-bottom: 16px;">El Periodo de nivelación se encuentra en curso. Algunas opciones están deshabilitadas</p>
+    {% elif estado_periodo == "EVALUACION" %}
+    <p style="color: #253237; font-size: 13px; font-weight: bold; margin-bottom: 16px;">El Periodo de nivelación se encuentra en evaluación. Algunas opciones están deshabilitadas</p>
+    {% elif estado_periodo == "SOLO_CERRADOS" %}
+    <p style="color: #253237; font-size: 13px; font-weight: bold; margin-bottom: 16px;">El Periodo de nivelación ha finalizado</p>
+    {% elif estado_periodo == "PLANIFICACION" %}
+    <p style="color: #253237; font-size: 13px; font-weight: bold; margin-bottom: 16px;">El Periodo de nivelación se encuentra en planificación</p>
+    {% endif %}
+
     <div style="margin-bottom: 20px;">
         <a href="{% url 'detalle_universidad' %}" class="boton boton-secundario">Información institucional</a>
     </div>
@@ -61,7 +71,9 @@
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Matriz de Tercer Nivel</h2>
         <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Registro y resumen</p>
         <div class="acciones" style="margin-bottom: 0;">
+            {% if puede_procesar_mtn %}
             <a href="{% url 'procesar_mtn' %}" class="boton boton-secundario">Matriz de Tercer Nivel</a>
+            {% endif %}
             {% if tiene_consolidados %}
             <a href="{% url 'listar_consolidados' %}" class="boton boton-secundario">Resumen de ingreso</a>
             {% endif %}
