@@ -152,6 +152,7 @@
                     <th style="font-weight: bold; text-align: left; color: #5c6b73">Nota final</th>
                     <th style="font-weight: bold; text-align: left; color: #5c6b73">Asistencia</th>
                     <th style="font-weight: bold; text-align: left; color: #5c6b73">Estado</th>
+                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -163,6 +164,9 @@
                     <td style="text-align: left; font-weight: bold; color: #253237;">{{ e.nota_final }}</td>
                     <td style="text-align: left; color: #1d1d1f;">{{ e.porcentaje_asistencia }}%</td>
                     <td style="text-align: left; font-weight: bold; color: {% if e.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif e.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#9db4c0{% endif %};">{{ e.estado_de_aprobacion }}</td>
+                    <td style="text-align: left;">
+                        <a href="{% url 'detalle_evaluacion' e.id %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Ver detalle</a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
