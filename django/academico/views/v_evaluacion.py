@@ -382,15 +382,15 @@ def formalizar_evaluaciones(request, paralelo_id):
         return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
 
     from academico.models import EvaluacionAcademica as EA
-    en_revision = EA.objects.filter(
+    pendientes = EA.objects.filter(
         unidad_curricular=paralelo.unidad_curricular,
         periodo_de_nivelacion=periodo,
-        estado_revision="En revisión",
+        estado_revision__in=["Borrador", "En revisión"],
         estudiante__estudiantes_matriculados__paralelo=paralelo,
     ).count()
 
-    if en_revision == 0:
-        messages.warning(request, "No existen calificaciones en revisión para formalizar")
+    if pendientes == 0:
+        messages.warning(request, "No existen calificaciones pendientes de formalizar")
         return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
 
     count = servicio_formalizar_evaluaciones(paralelo)
