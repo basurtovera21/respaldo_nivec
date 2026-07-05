@@ -18,7 +18,7 @@
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Carga horaria máxima (horas)</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Jornada</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Estado de usuario</th>
-    {% if not solo_lectura %}
+    {% if puede_modificar_docente or puede_eliminar_docente or puede_inhabilitar_docente %}
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
     {% endif %}
 {% endblock %}
@@ -35,30 +35,36 @@
         <td style="text-align: left;">{{ docente.carga_horaria_maxima }} horas</td>
         <td style="text-align: left;">{{ docente.jornadas|join:", " }}</td>
         <td style="text-align: left;"><span style="font-weight: bold; color: #253237; font-size: 13px;">{{ docente.estado_de_vinculacion }}</span></td>
-        {% if not solo_lectura %}
+        {% if puede_modificar_docente or puede_eliminar_docente or puede_inhabilitar_docente %}
         <td style="text-align: left;">
+            {% if puede_modificar_docente %}
             <a href="{% url 'modificar_docente' docente.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
+            {% endif %}
             
-            {% if docente.estado_de_vinculacion == 'Activo' %}
-                <a href="{% url 'inhabilitar_docente' docente.id %}" 
-                   onclick="return confirm('Confirmar acción');" 
-                   class="etiqueta-accion etiqueta-naranja">Inhabilitar</a>
-            {% else %}
-                <a href="{% url 'habilitar_docente' docente.id %}" 
-                   onclick="return confirm('Confirmar acción');" 
-                  class="etiqueta-accion etiqueta-naranja">Habilitar</a>
+            {% if puede_inhabilitar_docente %}
+                {% if docente.estado_de_vinculacion == 'Activo' %}
+                    <a href="{% url 'inhabilitar_docente' docente.id %}" 
+                       onclick="return confirm('Confirmar acción');" 
+                       class="etiqueta-accion etiqueta-naranja">Inhabilitar</a>
+                {% else %}
+                    <a href="{% url 'habilitar_docente' docente.id %}" 
+                       onclick="return confirm('Confirmar acción');" 
+                      class="etiqueta-accion etiqueta-naranja">Habilitar</a>
+                {% endif %}
             {% endif %}
 
+            {% if puede_eliminar_docente %}
             <a href="{% url 'eliminar_docente' docente.id %}" 
                onclick="return confirm('Confirmar acción');" 
                class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+            {% endif %}
         </td>
         {% endif %}
     </tr>
     {% empty %}
     {% if not busqueda %}
     <tr>
-        <td colspan="{% if solo_lectura %}9{% else %}10{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
+        <td colspan="{% if puede_modificar_docente or puede_eliminar_docente or puede_inhabilitar_docente %}10{% else %}9{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>

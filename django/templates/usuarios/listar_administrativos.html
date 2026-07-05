@@ -23,7 +23,7 @@
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Número de identificador administrativo</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Perfil administrativo</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Estado de usuario</th>
-    {% if not solo_lectura %}
+    {% if puede_modificar_administrativo or puede_eliminar_administrativo %}
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
     {% endif %}
 {% endblock %}
@@ -37,13 +37,17 @@
         <td style="font-family: monospace; text-align: left;">{{ admin.identificador_administrativo }}</td>
         <td style="text-align: left;">{{ admin.perfil_administrativo }}</td>
         <td style="text-align: left;"><span style="font-weight: bold; color: #253237; font-size: 13px;">{{ admin.usuario_de_sistema.estado_de_usuario }}</span></td>
-        {% if not solo_lectura %}
+        {% if puede_modificar_administrativo or puede_eliminar_administrativo %}
         <td style="text-align: left;">
             {% if admin.perfil_administrativo != "Director de dirección de admisión y nivelación" %}
+                {% if puede_modificar_administrativo %}
                 <a href="{% url 'modificar_administrativo' admin.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
+                {% endif %}
+                {% if puede_eliminar_administrativo %}
                 <a href="{% url 'eliminar_administrativo' admin.id %}" 
                    onclick="return confirm('Confirmar acción');"
                    class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+                {% endif %}
             {% endif %}
         </td>
         {% endif %}
@@ -51,7 +55,7 @@
     {% empty %}
     {% if not busqueda and not perfil_filtro %}
     <tr>
-        <td colspan="{% if solo_lectura %}6{% else %}7{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
+        <td colspan="{% if puede_modificar_administrativo or puede_eliminar_administrativo %}7{% else %}6{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>

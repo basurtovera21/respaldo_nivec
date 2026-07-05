@@ -137,6 +137,9 @@ def listar_paralelos(request):
 
     paralelos_agrupados = sorted(grupos.values(), key=lambda g: g["codigo"])
 
+    from academico.permisos import obtener_permisos_periodo
+    permisos = obtener_permisos_periodo(universidad_usuario)
+
     return render(request, "academico/listar_paralelos.html", {
         "paralelos": paralelos_agrupados,
         "periodos": periodos,
@@ -148,7 +151,8 @@ def listar_paralelos(request):
         "carrera_seleccionada": carrera_seleccionada,
         "jornada_filtro": jornada_filtro or "",
         "solo_lectura": usuario_es_solo_lectura(request.user),
-        "puede_distribuir": puede_distribuir,
+        "puede_distribuir": puede_distribuir and permisos["puede_distribuir_paralelos"],
+        "puede_eliminar_paralelo": permisos["puede_eliminar_paralelo"] and puede_distribuir,
         "es_coordinador_ua": es_coordinador_ua,
         "titulo_pagina": "Paralelo - NIVEC",
         "titulo": "Paralelos",

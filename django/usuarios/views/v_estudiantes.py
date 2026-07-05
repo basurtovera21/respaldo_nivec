@@ -70,6 +70,9 @@ def listar_estudiantes(request):
     es_coordinador_ua = (rol == ROL_COORDINADOR_UA)
     url_registrar_ctx = None if es_coordinador_ua else "registrar_estudiante"
 
+    from academico.permisos import obtener_permisos_periodo
+    permisos = obtener_permisos_periodo(universidad_usuario)
+
     return render(request, "usuarios/listar_estudiantes.html", {
         "estudiantes": estudiantes,
         "busqueda": busqueda,
@@ -82,10 +85,16 @@ def listar_estudiantes(request):
         "es_coordinador_ua": es_coordinador_ua,
         "titulo_pagina": "Estudiante - NIVEC",
         "titulo": "Estudiantes",
-        "url_registrar": url_registrar_ctx,
+        "url_registrar": url_registrar_ctx if permisos["puede_registrar_estudiante"] else None,
         "texto_registrar": "Registrar",
         "url_volver": "panel_principal",
         "solo_lectura": usuario_es_solo_lectura(request.user),
+        "puede_modificar_estudiante": permisos["puede_modificar_estudiante"] and not usuario_es_solo_lectura(request.user),
+        "puede_eliminar_estudiante": permisos["puede_eliminar_estudiante"] and not usuario_es_solo_lectura(request.user),
+        "puede_retirar_estudiante": permisos["puede_retirar_estudiante"] and not usuario_es_solo_lectura(request.user),
+        "puede_anular_estudiante": permisos["puede_anular_estudiante"] and not usuario_es_solo_lectura(request.user),
+        "puede_reincorporar_estudiante": permisos["puede_reincorporar_estudiante"] and not usuario_es_solo_lectura(request.user),
+        "puede_registir_estudiante": permisos["puede_registrar_estudiante"] and not usuario_es_solo_lectura(request.user),
     })
 
 @requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN)

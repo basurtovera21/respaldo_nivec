@@ -21,11 +21,14 @@ def listar_periodos(request):
     rol = obtener_rol_usuario(request.user)
     solo_lectura = rol in (ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN, ROL_COORDINADOR_UA)
 
+    from academico.permisos import obtener_permisos_periodo
+    permisos = obtener_permisos_periodo(universidad_usuario)
+
     return render(request, "academico/listar_periodos.html", {
         "periodos": periodos,
         "titulo_pagina": "Periodo de nivelación - NIVEC",
         "titulo": "Periodos de nivelación",
-        "url_registrar": "registrar_periodo",
+        "url_registrar": "registrar_periodo" if permisos["puede_registrar_periodo"] and not solo_lectura else None,
         "texto_registrar": "Registrar",
         "url_volver": "panel_principal",
         "solo_lectura": solo_lectura,

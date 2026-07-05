@@ -70,6 +70,9 @@ def listar_unidades(request):
 
     solo_lectura = usuario_es_solo_lectura(request.user)
 
+    from academico.permisos import obtener_permisos_periodo
+    permisos = obtener_permisos_periodo(universidad_usuario)
+
     return render(request, "academico/listar_unidades.html", {
         "solo_lectura": solo_lectura,
         "unidades": unidades,
@@ -81,9 +84,12 @@ def listar_unidades(request):
         "es_coordinador_ua": es_coordinador_ua,
         "titulo_pagina": "Unidad curricular - NIVEC",
         "titulo": "Unidades curriculares",
-        "url_registrar": "registrar_unidad",
+        "url_registrar": "registrar_unidad" if permisos["puede_registrar_unidad"] and not solo_lectura else None,
         "texto_registrar": "Registrar",
-        "url_volver": "panel_principal"
+        "url_volver": "panel_principal",
+        "puede_modificar_unidad": permisos["puede_modificar_unidad"] and not solo_lectura,
+        "puede_eliminar_unidad": permisos["puede_eliminar_unidad"] and not solo_lectura,
+        "puede_registrar_unidad": permisos["puede_registrar_unidad"] and not solo_lectura,
     })
 
 @requiere_perfil(*ROLES_VISUALIZAN)
@@ -104,12 +110,14 @@ def listar_unidades_de_malla(request, malla_id):
     # Calcular indicador de horas sincrónicas semanales vs límite
     from poo.clases.franja_horaria import validar_malla_cabe_en_horario, SEMANAS_REFERENCIA_MINIMA, LIMITE_HORAS_SINCRONICAS_SEMANALES_MALLA
     from django.db.models import Sum
+    from academico.permisos import obtener_permisos_periodo
     import math
 
     total_sincronicas = unidades.aggregate(total=Sum("horas_sincronicas"))["total"] or 0.0
     horas_semanales = math.ceil(total_sincronicas / SEMANAS_REFERENCIA_MINIMA) if total_sincronicas > 0 else 0
     limite_semanal = LIMITE_HORAS_SINCRONICAS_SEMANALES_MALLA
     excede_limite = horas_semanales > limite_semanal
+    permisos = obtener_permisos_periodo(universidad_usuario)
 
     return render(request, "academico/listar_unidades.html", {
         "solo_lectura": usuario_es_solo_lectura(request.user),
@@ -120,9 +128,12 @@ def listar_unidades_de_malla(request, malla_id):
         "limite_semanal": limite_semanal,
         "semanas_referencia": SEMANAS_REFERENCIA_MINIMA,
         "excede_limite": excede_limite,
+        "puede_modificar_unidad": permisos["puede_modificar_unidad"] and not usuario_es_solo_lectura(request.user),
+        "puede_eliminar_unidad": permisos["puede_eliminar_unidad"] and not usuario_es_solo_lectura(request.user),
+        "puede_registrar_unidad": permisos["puede_registrar_unidad"] and not usuario_es_solo_lectura(request.user),
         "titulo_pagina": "Unidad curricular - NIVEC",
         "titulo": f"Unidades curriculares ({malla.nombre})",
-        "url_registrar": "registrar_unidad",
+        "url_registrar": "registrar_unidad" if permisos["puede_registrar_unidad"] and not usuario_es_solo_lectura(request.user) else None,
         "texto_registrar": "Registrar",
         "url_volver": "panel_principal"
     })

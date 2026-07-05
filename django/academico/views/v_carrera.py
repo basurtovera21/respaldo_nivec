@@ -42,6 +42,9 @@ def listar_carreras(request):
     rol = obtener_rol_usuario(request.user)
     solo_lectura = rol in (ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN)
 
+    from academico.permisos import obtener_permisos_periodo
+    permisos = obtener_permisos_periodo(universidad_usuario)
+
     return render(request, "entidades/listar_carreras.html", {
         "carreras": carreras,
         "campus_disponibles": campus_disponibles,
@@ -50,10 +53,12 @@ def listar_carreras(request):
         "tiene_registros": tiene_registros,
         "titulo_pagina": "Carrera - NIVEC",
         "titulo": "Carreras",
-        "url_registrar": "registrar_carrera",
+        "url_registrar": "registrar_carrera" if permisos["puede_registrar_carrera"] else None,
         "texto_registrar": "Registrar",
         "url_volver": "panel_principal",
         "solo_lectura": solo_lectura,
+        "puede_modificar_carrera": permisos["puede_modificar_carrera"] and not solo_lectura,
+        "puede_eliminar_carrera": permisos["puede_eliminar_carrera"] and not solo_lectura,
     })
 
 @requiere_perfil(ROL_DIRECTOR_DAN)

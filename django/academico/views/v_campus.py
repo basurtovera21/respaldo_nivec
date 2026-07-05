@@ -27,16 +27,21 @@ def listar_campus(request):
     rol = obtener_rol_usuario(request.user)
     solo_lectura = rol in (ROL_RECTOR, ROL_VICERRECTOR, ROL_COORDINADOR_DAN)
 
+    from academico.permisos import obtener_permisos_periodo
+    permisos = obtener_permisos_periodo(universidad_usuario)
+
     return render(request, "entidades/listar_campus.html", {
         "campus": campus,
         "busqueda": busqueda,
         "tiene_registros": tiene_registros,
         "titulo_pagina": "Campus - NIVEC",
         "titulo": "Campus",
-        "url_registrar": "registrar_campus",
+        "url_registrar": "registrar_campus" if permisos["puede_registrar_campus"] else None,
         "texto_registrar": "Registrar",
         "url_volver": "panel_principal",
         "solo_lectura": solo_lectura,
+        "puede_modificar_campus": permisos["puede_modificar_campus"] and not solo_lectura,
+        "puede_eliminar_campus": permisos["puede_eliminar_campus"] and not solo_lectura,
     })
     
 @requiere_perfil(ROL_DIRECTOR_DAN)

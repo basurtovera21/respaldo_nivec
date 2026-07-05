@@ -13,7 +13,7 @@
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Nombre</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Dirección física</th>
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Provincia</th>
-    {% if not solo_lectura %}
+    {% if puede_modificar_campus or puede_eliminar_campus %}
     <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
     {% endif %}
 {% endblock %}
@@ -25,19 +25,23 @@
         <td style="text-align: left;">{{ c.nombre }}</td>
         <td style="text-align: left;">{{ c.direccion_fisica }}</td>
         <td style="text-align: left;">{{ c.provincia }}</td>
-        {% if not solo_lectura %}
+        {% if puede_modificar_campus or puede_eliminar_campus %}
         <td style="text-align: left;">
+            {% if puede_modificar_campus %}
             <a href="{% url 'modificar_campus' c.id %}" class="etiqueta-accion etiqueta-modificar">Modificar</a>
+            {% endif %}
+            {% if puede_eliminar_campus %}
             <a href="{% url 'eliminar_campus' c.id %}" 
                onclick="return confirm('Confirmar acción');"
                class="etiqueta-accion etiqueta-eliminar">Eliminar</a>
+            {% endif %}
         </td>
         {% endif %}
     </tr>
     {% empty %}
     {% if not busqueda %}
     <tr>
-        <td colspan="{% if solo_lectura %}4{% else %}5{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
+        <td colspan="{% if puede_modificar_campus or puede_eliminar_campus %}5{% else %}4{% endif %}" style="text-align: center; color: #9db4c0; padding: 30px;">
             No existen registros actualmente
         </td>
     </tr>
