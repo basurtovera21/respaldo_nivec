@@ -238,7 +238,7 @@ def detalle_evaluacion(request, evaluacion_id):
 def editar_evaluacion(request, evaluacion_id):
     universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     evaluacion = get_object_or_404(EvaluacionAcademica, id=evaluacion_id)
@@ -273,7 +273,7 @@ def editar_evaluacion(request, evaluacion_id):
             p2 = float(request.POST.get("parcial_2", 0))
             asist = float(request.POST.get("asistencia", 0))
         except (ValueError, TypeError):
-            messages.error(request, "Los valores ingresados no son válidos")
+            messages.error(request, "Los valores especificados no son válidos")
             return redirect("editar_evaluacion", evaluacion_id=evaluacion.id)
 
         if not (0 <= p1 <= 10) or not (0 <= p2 <= 10):
@@ -306,8 +306,8 @@ def editar_evaluacion(request, evaluacion_id):
     return render(request, "academico/editar_evaluacion.html", {
         "evaluacion": evaluacion,
         "paralelo": paralelo,
-        "titulo_pagina": "Editar calificación - NIVEC",
-        "titulo": f"Editar calificación - {evaluacion.estudiante.usuario_de_sistema.apellidos} {evaluacion.estudiante.usuario_de_sistema.nombres}",
+        "titulo_pagina": "Calificación - NIVEC",
+        "titulo": f"Modificar calificación - {evaluacion.estudiante.usuario_de_sistema.apellidos} {evaluacion.estudiante.usuario_de_sistema.nombres}",
     })
 
 
@@ -426,8 +426,8 @@ def descargar_calificaciones_paralelo(request, paralelo_id):
             "Nombres",
             "Correo institucional",
             "Número de matrícula",
-            "Parcial 1",
-            "Parcial 2",
+            "Calificación parcial 1",
+            "Calificación parcial 2",
             "Nota final",
             "Porcentaje de asistencia",
             "Estado de aprobación",

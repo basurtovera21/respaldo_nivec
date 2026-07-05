@@ -1,12 +1,20 @@
 {% extends "base.html" %}
-{% block titulo %}Panel Estudiante — NIVEC{% endblock %}
+
+{% block titulo %}{{ titulo_pagina|default:"NIVEC" }}{% endblock %}
 
 {% block contenido %}
 <style>
     /* Estilos sincronizados para la tabla estándar */
-    .tarjeta table th, .tarjeta table td { 
-        padding: 12px 18px; 
+    .tarjeta table th { 
         white-space: nowrap; 
+        font-weight: bold; 
+        text-align: left; 
+        color: #5c6b73; 
+        padding: 12px 18px; 
+    }
+    .tarjeta table td { 
+        padding: 12px 18px; 
+        color: #1d1d1f;
         font-family: inherit;
     }
     .etiqueta-accion {
@@ -85,9 +93,9 @@
     <h2>{{ perfil_estudiante.usuario_de_sistema.apellidos }} {{ perfil_estudiante.usuario_de_sistema.nombres }} (Estudiante)</h2>
     
     <p style="color: #5c6b73; font-size: 13px; margin-bottom: 20px; font-family: inherit;">
-        <span style="font-weight: bold;">Indentificador institucional: {{ perfil_estudiante.identificador_institucional }}.
+        <span style="font-weight: bold;">Identificador institucional: {{ perfil_estudiante.identificador_institucional }}.
         {{ perfil_estudiante.campus_registrado.nombre }} ({{ perfil_estudiante.carrera_registrada.nombre }}).
-        {% if periodo %} <span style="font-weight: bold;">  Periodo de nivelación {{ periodo.periodo }} <span>{% endif %}
+        {% if periodo %} Periodo de nivelación {{ periodo.periodo }}<span>{% endif %}
     </p>
 
     {% if aviso_estado %}
@@ -106,66 +114,30 @@
         <table style="width: 100%;">
             <thead>
                 <tr>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Código</th>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Paralelo</th>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Unidad curricular</th>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Docente</th>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Jornada</th>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
+                    <th>Código</th>
+                    <th>Paralelo</th>
+                    <th>Unidad curricular</th>
+                    <th>Docente</th>
+                    <th>Jornada</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {% for m in matriculas %}
                 <tr>
-                    <td style="font-family: monospace; text-align: left; color: #1d1d1f;">{{ m.paralelo.codigo_de_paralelo }}</td>
-                    <td style="text-align: left; color: #1d1d1f;">{{ m.paralelo.nombre }}</td>
-                    <td style="text-align: left; color: #1d1d1f;">{{ m.paralelo.unidad_curricular.nombre }}</td>
-                    <td style="text-align: left; color: #1d1d1f;">
+                    <td style="font-family: monospace;">{{ m.paralelo.codigo_de_paralelo }}</td>
+                    <td>{{ m.paralelo.nombre }}</td>
+                    <td>{{ m.paralelo.unidad_curricular.nombre }}</td>
+                    <td>
                         {% if m.paralelo.docente_responsable %}
                             {{ m.paralelo.docente_responsable.usuario_de_sistema.apellidos }} {{ m.paralelo.docente_responsable.usuario_de_sistema.nombres }}
                         {% else %}
                             <span style="color: #9db4c0;">Sin designación</span>
                         {% endif %}
                     </td>
-                    <td style="text-align: left; color: #1d1d1f;">{{ m.paralelo.get_jornada_display }}</td>
-                    <td style="text-align: left; white-space: nowrap;">
+                    <td>{{ m.paralelo.get_jornada_display }}</td>
+                    <td style="white-space: nowrap;">
                         <a href="{% url 'listar_estudiantes_paralelo' m.paralelo.id %}" class="etiqueta-accion etiqueta-naranja">Estudiantes registrados</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% endif %}
-
-    {% if puede_ver_calificaciones and evaluaciones %}
-    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237; font-family: inherit;">Registro de calificaciones</h2>
-    <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold; font-family: inherit;">Resultado de nivelación</p>
-
-    <div class="tarjeta" style="margin-bottom: 20px; padding: 0; overflow-x: auto; font-family: inherit;">
-        <table style="width: 100%;">
-            <thead>
-                <tr>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Unidad curricular</th>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Parcial 1</th>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Parcial 2</th>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Nota final</th>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Asistencia</th>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Estado</th>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for e in evaluaciones %}
-                <tr>
-                    <td style="text-align: left; color: #1d1d1f;">{{ e.unidad_curricular.nombre }}</td>
-                    <td style="text-align: left; color: #1d1d1f;">{{ e.calificacion_parcial_1 }}</td>
-                    <td style="text-align: left; color: #1d1d1f;">{{ e.calificacion_parcial_2 }}</td>
-                    <td style="text-align: left; font-weight: bold; color: #253237;">{{ e.nota_final }}</td>
-                    <td style="text-align: left; color: #1d1d1f;">{{ e.porcentaje_asistencia }}%</td>
-                    <td style="text-align: left; font-weight: bold; color: {% if e.estado_de_aprobacion == 'Aprobado' %}#2e7d32{% elif e.estado_de_aprobacion == 'Reprobado' %}#c81e1e{% else %}#9db4c0{% endif %};">{{ e.estado_de_aprobacion }}</td>
-                    <td style="text-align: left;">
-                        <a href="{% url 'detalle_evaluacion' e.id %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Ver detalle</a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -207,7 +179,7 @@
                 {% endfor %}
             </tbody>
         </table>
-        
+
         {% if mapa_colores %}
         <div style="margin-top: 12px; display: flex; gap: 12px; flex-wrap: wrap;">
             {% for nombre, color in mapa_colores.items %}
@@ -225,21 +197,21 @@
         <table style="width: 100%;">
             <thead>
                 <tr>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Día</th>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Hora inicio</th>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Hora fin</th>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Unidad curricular</th>
-                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Espacio</th>
+                    <th>Día</th>
+                    <th>Hora inicio</th>
+                    <th>Hora fin</th>
+                    <th>Unidad curricular</th>
+                    <th>Espacio</th>
                 </tr>
             </thead>
             <tbody>
                 {% for h in horarios %}
                 <tr>
-                    <td style="text-align: left; color: #1d1d1f;">{{ h.get_dia_semana_display }}</td>
-                    <td style="text-align: left; color: #1d1d1f;">{{ h.hora_inicio }}</td>
-                    <td style="text-align: left; color: #1d1d1f;">{{ h.hora_fin }}</td>
-                    <td style="text-align: left; color: #1d1d1f;">{{ h.paralelo.unidad_curricular.nombre }}</td>
-                    <td style="text-align: left; color: #1d1d1f;">{{ h.espacio_de_imparticion|default:"—" }}</td>
+                    <td>{{ h.get_dia_semana_display }}</td>
+                    <td>{{ h.hora_inicio }}</td>
+                    <td>{{ h.hora_fin }}</td>
+                    <td>{{ h.paralelo.unidad_curricular.nombre }}</td>
+                    <td>{{ h.espacio_de_imparticion|default:"" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -255,5 +227,43 @@
         </p>
     </div>
     {% endif %}
+    {% if puede_ver_calificaciones and evaluaciones %}
+    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237; font-family: inherit;">Registro de calificaciones</h2>
+    <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold; font-family: inherit;">Resultado de nivelación</p>
+
+    <div class="tarjeta" style="margin-bottom: 20px; padding: 0; overflow-x: auto; font-family: inherit;">
+        <table style="width: 100%;">
+            <thead>
+                <tr>
+                    <th style="white-space: nowrap;">Unidad curricular</th>
+                    <th style="white-space: nowrap;">Calificación parcial 1</th>
+                    <th style="white-space: nowrap;">Calificación parcial 2</th>
+                    <th style="white-space: nowrap;">Nota final</th>
+                    <th style="white-space: nowrap;">Porcentaje de asistencia</th>
+                    <th style="white-space: nowrap;">Estado</th>
+                    <th style="white-space: nowrap;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in evaluaciones %}
+                <tr>
+                    <td style="white-space: nowrap;">{{ e.unidad_curricular.nombre }}</td>
+                    <td>{{ e.calificacion_parcial_1 }}</td>
+                    <td>{{ e.calificacion_parcial_2 }}</td>
+                    <td style="font-weight: bold;">{{ e.nota_final }}</td>
+                    <td>{{ e.porcentaje_asistencia }}%</td>
+                    <td style="font-weight: bold; color: {% if e.estado_de_aprobacion == 'Aprobado' %}#253237{% elif e.estado_de_aprobacion == 'Reprobado' %}#9db4c0{% else %}#5c6b73{% endif %};">
+                        {{ e.estado_de_aprobacion }}
+                    </td>
+                    <td style="white-space: nowrap;">
+                        <a href="{% url 'detalle_evaluacion' e.id %}" class="etiqueta-accion etiqueta-naranja">Ver información</a>
+                    </td>
+                </tr>
+                {% endfor %}
+        </tbody>
+        </table>
+    </div>
+{% endif %}
 </div>
+
 {% endblock %}

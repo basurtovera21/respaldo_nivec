@@ -1,30 +1,58 @@
 {% extends "base.html" %}
+{% load l10n %}  {# 1. Cargar etiqueta de localización #}
 
 {% block titulo %}{{ titulo_pagina|default:"NIVEC" }}{% endblock %}
 
 {% block contenido %}
-<h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
+<style>
+    .campo { margin-bottom: 16px; }
+    .campo label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: bold; color: #253237; }
+    .input-estandar {
+        padding: 10px 14px; 
+        border: 1px solid #DADBDB; 
+        border-radius: 8px; 
+        font-size: 13px; 
+        background: white; 
+        color: #1d1d1f; 
+        outline: none; 
+        font-family: inherit; 
+        width: 100%;
+        box-sizing: border-box;
+    }
+</style>
+
+<h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">{{ titulo }}</h2>
 <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 20px;">
-    {{ evaluacion.unidad_curricular.nombre }} — {{ evaluacion.estudiante.usuario_de_sistema.identificacion }}
+    {{ evaluacion.unidad_curricular.nombre }}
 </p>
 
-<div class="tarjeta" style="max-width: 520px;">
-    <form method="post" action="{% url 'editar_evaluacion' evaluacion.id %}">
+<div class="tarjeta" style="max-width: 500px; padding: 24px;">
+    <form method="post" action="{% url 'editar_evaluacion' evaluacion.id %}" novalidate>
         {% csrf_token %}
+        
         <div class="campo">
-            <label style="font-weight: bold;">Parcial 1 (0-10)</label>
-            <input type="number" name="parcial_1" step="0.01" min="0" max="10" value="{{ evaluacion.calificacion_parcial_1 }}" class="campo-input">
+            <label>Calificación parcial 1 (0-10)</label>
+            <input type="number" name="parcial_1" step="0.01" min="0" max="10" 
+                   value="{{ evaluacion.calificacion_parcial_1|unlocalize|floatformat:'-2' }}" 
+                   class="input-estandar" required>
         </div>
+        
         <div class="campo">
-            <label style="font-weight: bold;">Parcial 2 (0-10)</label>
-            <input type="number" name="parcial_2" step="0.01" min="0" max="10" value="{{ evaluacion.calificacion_parcial_2 }}" class="campo-input">
+            <label>Calificación parcial 2 (0-10)</label>
+            <input type="number" name="parcial_2" step="0.01" min="0" max="10" 
+                   value="{{ evaluacion.calificacion_parcial_2|unlocalize|floatformat:'-2' }}" 
+                   class="input-estandar" required>
         </div>
+        
         <div class="campo">
-            <label style="font-weight: bold;">Porcentaje de asistencia (0-100)</label>
-            <input type="number" name="asistencia" step="0.01" min="0" max="100" value="{{ evaluacion.porcentaje_asistencia }}" class="campo-input">
+            <label>Porcentaje de asistencia (0-100)</label>
+            <input type="number" name="asistencia" step="0.01" min="0" max="100" 
+                   value="{{ evaluacion.porcentaje_asistencia|unlocalize|floatformat:'-2' }}" 
+                   class="input-estandar" required>
         </div>
-        <div style="margin-top: 16px;">
-            <button type="submit" class="boton boton-primario">Guardar</button>
+        
+        <div style="margin-top: 30px; display: flex; gap: 15px;">
+            <button type="submit" class="boton boton-primario">Modificar</button>
             <a href="{% url 'listar_evaluaciones_paralelo' paralelo.id %}" class="boton boton-secundario">Cancelar</a>
         </div>
     </form>
