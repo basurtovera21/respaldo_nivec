@@ -89,38 +89,54 @@
 </div>
 {% endif %}
 
-{% if horarios %}
-<div class="tarjeta">
+{% if grilla %}
+<div class="tarjeta" style="margin-bottom: 20px;">
     <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">Horario semanal</h2>
-    <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Sesiones registradas</p>
+    <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Representación visual</p>
     <div style="overflow-x: auto;">
-    <table style="width: 100%;">
+    <table style="width: 100%; border-collapse: collapse;">
         <thead>
             <tr>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Día</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Hora inicio</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Hora fin</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Unidad curricular</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Espacio</th>
+                <th style="width: 60px; background: #F4F4F4; border: 1px solid #DADBDB; font-size: 12px; font-weight: bold; color: #253237; padding: 10px 8px; text-align: center;">Hora</th>
+                {% for d in dias_semana %}
+                <th style="background: #F4F4F4; border: 1px solid #DADBDB; font-size: 12px; font-weight: bold; color: #253237; padding: 10px 8px; text-align: center; min-width: 100px;">{{ d }}</th>
+                {% endfor %}
             </tr>
         </thead>
         <tbody>
-            {% for h in horarios %}
+            {% for fila in grilla %}
             <tr>
-                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ h.get_dia_semana_display }}</td>
-                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ h.hora_inicio }}</td>
-                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ h.hora_fin }}</td>
-                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ h.paralelo.unidad_curricular.nombre }}</td>
-                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ h.espacio_de_imparticion|default:"—" }}</td>
+                <td style="font-size: 11px; color: #5c6b73; padding: 4px 8px; text-align: right; border: 1px solid #DADBDB; font-weight: bold;">{{ fila.hora }}</td>
+                {% for celda in fila.celdas %}
+                <td style="padding: 2px; border: 1px solid #DADBDB; height: 48px; vertical-align: top; text-align: center;">
+                    {% if celda %}
+                    <div style="border-radius: 6px; padding: 6px 8px; margin: 2px; font-size: 11px; font-weight: bold; color: #253237; background: {{ celda.color }}; min-height: 40px; display: flex; flex-direction: column; justify-content: center; text-align: left; line-height: 1.3;">
+                        {{ celda.nombre }}
+                        <span style="font-size: 10px; font-weight: normal; color: #5c6b73; margin-top: 2px;">{{ celda.slot_inicio }} - {{ celda.slot_fin }}</span>
+                    </div>
+                    {% endif %}
+                </td>
+                {% endfor %}
             </tr>
             {% endfor %}
         </tbody>
     </table>
     </div>
+
+    {% if mapa_colores %}
+    <div style="margin-top: 12px; display: flex; gap: 12px; flex-wrap: wrap;">
+        {% for nombre, color in mapa_colores.items %}
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #253237; font-weight: bold;">
+            <span style="width: 14px; height: 14px; border-radius: 4px; background: {{ color }}; display: inline-block;"></span>
+            {{ nombre }}
+        </span>
+        {% endfor %}
+    </div>
+    {% endif %}
 </div>
 {% endif %}
 
-{% if not matriculas and not evaluaciones and not horarios %}
+{% if not matriculas and not evaluaciones and not grilla %}
 <p style="color: #5c6b73; font-size: 13px; font-weight: bold;">
     No tiene información académica registrada actualmente
 </p>
