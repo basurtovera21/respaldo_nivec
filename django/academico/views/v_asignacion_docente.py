@@ -25,7 +25,7 @@ def asignar_docente_paralelo(request, paralelo_id):
     perfil_admin = getattr(request.user, 'perfil_administrativo', None)
     universidad_usuario = perfil_admin.universidad if perfil_admin else None
     if not universidad_usuario:
-        messages.warning(request, "La universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     paralelo = get_object_or_404(
@@ -42,7 +42,7 @@ def asignar_docente_paralelo(request, paralelo_id):
         else:
             docente_id = request.POST.get("docente_id")
             if not docente_id:
-                messages.error(request, "Debe seleccionar un docente.")
+                messages.error(request, "Especifique un Docente")
             else:
                 from usuarios.models import PerfilDocente
                 docente = get_object_or_404(
@@ -67,7 +67,7 @@ def asignar_docente_paralelo(request, paralelo_id):
     horario_completo = horas_agendadas >= horas_requeridas
 
     if not horario_completo:
-        messages.warning(request, "Debe completar el horario de la Unidad curricular antes de asignar un Docente")
+        messages.warning(request, "El horario de la Unidad curricular debe estar completo antes de designar un Docente")
         return redirect("detalle_paralelo", paralelo_id=paralelo.id)
 
     return render(request, "academico/asignar_docente.html", {

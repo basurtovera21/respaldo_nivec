@@ -67,7 +67,7 @@
                     <form method="post" action="{% url 'agregar_estudiante' paralelo.id %}" style="margin: 0; font-family: inherit;">
                         {% csrf_token %}
                         <input type="hidden" name="estudiante" value="{{ e.id }}">
-                        <button type="submit" class="etiqueta-accion etiqueta-naranja">Agregar</button>
+                        <button type="submit" class="etiqueta-accion etiqueta-naranja">Incorporar</button>
                     </form>
                 </td>
             </tr>

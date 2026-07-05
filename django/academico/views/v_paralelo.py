@@ -189,7 +189,7 @@ def generar_paralelos(request):
         except (TypeError, ValueError):
             capacidad = 35
         if capacidad < 20 or capacidad > 50:
-            messages.error(request, "La capacidad máxima debe ser entre 20 y 50 estudiantes")
+            messages.error(request, "La capacidad máxima especificada no es válida")
             return redirect("generar_paralelos")
 
         resumen = servicio_generar_paralelos(periodo, capacidad)
@@ -244,6 +244,7 @@ def eliminar_paralelo(request, paralelo_id):
 @requiere_perfil(*ROLES_VISUALIZAN)
 def detalle_paralelo(request, paralelo_id):
     universidad_usuario = _obtener_universidad_usuario(request.user)
+    
     if not universidad_usuario:
         messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
@@ -256,7 +257,7 @@ def detalle_paralelo(request, paralelo_id):
     unidades = _paralelos_del_grupo(representativo).select_related(
         "unidad_curricular",
         "docente_responsable__usuario_de_sistema",
-    ).order_by("unidad_curricular__nombre")
+    ).order_by("unidad_curricular__codigo_de_unidad")
 
     # Check if horario exists for the paralelo group
     tiene_horario = Horario.objects.filter(
@@ -275,12 +276,12 @@ def detalle_paralelo(request, paralelo_id):
     if rol == ROL_COORDINADOR_UA:
         perfil_admin = getattr(request.user, 'perfil_administrativo', None)
         if perfil_admin and perfil_admin.carrera_asignada and carrera != perfil_admin.carrera_asignada:
-            messages.error(request, "No tiene acceso a este paralelo")
+            messages.error(request, "No tiene acceso a este Paralelo")
             return redirect("panel_principal")
     elif rol == ROL_DOCENTE:
         perfil_docente = getattr(request.user, 'perfil_docente', None)
         if perfil_docente and not unidades.filter(docente_responsable=perfil_docente).exists():
-            messages.error(request, "No tiene acceso a este paralelo")
+            messages.error(request, "No tiene acceso a este Paralelo")
             return redirect("panel_principal")
 
     return render(request, "academico/detalle_paralelo.html", {

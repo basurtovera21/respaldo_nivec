@@ -29,14 +29,19 @@
     .etiqueta-eliminar:hover { opacity: 0.85; }
 
     /* Estilos sincronizados de la grilla horaria */
-    .grilla-horario { width: 100%; border-collapse: collapse; font-family: inherit; }
+    .grilla-horario { 
+        width: 100%; 
+        border-collapse: collapse; 
+        font-family: inherit; 
+        table-layout: fixed; /* Fuerza a que las columnas se distribuyan equitativamente */
+    }
     .grilla-horario th, .grilla-horario td { 
         border: 1px solid #DADBDB; 
         text-align: center; 
         vertical-align: top; 
         padding: 0; 
         height: 48px; 
-        min-width: 120px; 
+        min-width: 120px; /* Ancho mínimo para los días */
     }
     .grilla-horario th { 
         background: #F4F4F4; 
@@ -48,7 +53,8 @@
     .grilla-hora { 
         font-size: 11px; 
         color: #5c6b73; 
-        width: 60px; 
+        width: 70px !important; 
+        min-width: 70px !important; /* Evita que herede los 120px */
         padding: 4px 8px !important; 
         text-align: right !important; 
         font-weight: bold;
@@ -67,6 +73,8 @@
         flex-direction: column; 
         justify-content: center;
         font-family: inherit;
+        word-wrap: break-word;
+        white-space: normal; /* Permite que el texto baje de línea si es muy largo */
     }
     .bloque-materia .bloque-hora-txt { 
         font-size: 10px; 
@@ -121,11 +129,11 @@
 
 {% if grilla %}
 <div class="tarjeta" style="padding: 12px; overflow-x: auto; margin-bottom: 20px; font-family: inherit;">
-    <h3 style="font-size: 14px; font-weight: bold; color: #253237; margin-bottom: 12px;">Representación visual</h3>
+    <h3 style="font-size: 14px; font-weight: bold; color: #1d1d1f; margin-bottom: 12px; font-family: inherit;">Representación visual</h3>
     <table class="grilla-horario">
         <thead>
             <tr>
-                <th style="width: 60px;">Hora</th>
+                <th style="width: 70px; min-width: 70px;">Hora</th>
                 {% for d in dias_semana %}
                 <th>{{ d }}</th>
                 {% endfor %}
@@ -153,7 +161,7 @@
     {% if mapa_colores %}
     <div style="margin-top: 12px; display: flex; gap: 12px; flex-wrap: wrap;">
         {% for nombre, color in mapa_colores.items %}
-        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #253237; font-weight: bold;">
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #1d1d1f; font-family: inherit;">
             <span style="width: 14px; height: 14px; border-radius: 4px; background: {{ color }}; display: inline-block;"></span>
             {{ nombre }}
         </span>

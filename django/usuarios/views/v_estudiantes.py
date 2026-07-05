@@ -103,6 +103,7 @@ def descargar_plantilla_estudiante(request):
     ws = wb.active
     ws.title = "Estudiantes"
     
+    # Mantiene las 9 columnas originales en el orden exacto que espera el servicio
     cabeceras = [
         "Tipo de identificación (Cédula, Pasaporte, Cédula extranjera)", 
         "Número de identificación", "Nombres", "Apellidos", "Correo institucional",
@@ -132,14 +133,12 @@ def registrar_estudiante(request):
         messages.warning(request, "No existen registros de Periodos de nivelación actualmente")
         return redirect("panel_principal")
 
-    # El periodo se toma del contexto (filtro del listado): GET al entrar, campo oculto al enviar.
     periodo_id = request.POST.get("periodo") or request.GET.get("periodo") or None
     periodos = PeriodoDeNivelacion.objects.filter(
         universidad=universidad_usuario
     ).order_by("-anio", "-numero_periodo")
     periodo = periodos.filter(id=periodo_id).first() if periodo_id else None
     if not periodo:
-        # Respaldo: si no llegó un periodo, usa el más reciente (nunca reinicia).
         periodo = periodos.first()
 
     url_registrar = f"{reverse('registrar_estudiante')}?periodo={periodo.id}"
@@ -152,13 +151,17 @@ def registrar_estudiante(request):
                 messages.error(request, "Documento con formato no válido")
                 return redirect(url_registrar)
 
+            # CORRECCIÓN: Se pasa periodo_de_nivelacion=None para activar el formato de 9 columnas
             resultado = servicio_estudiante_registrar_masivo_desde_excel(
-                archivo, universidad_usuario, periodo_de_nivelacion=periodo
+                archivo, universidad_usuario, periodo_de_nivelacion=None
             )
 
-            if resultado["error"]: messages.error(request, resultado["error"])
-            for adv in resultado["advertencias"]: messages.warning(request, adv)
-            if resultado["exitosos"] > 0: messages.success(request, f"{resultado['exitosos']} Estudiantes registrados correctamente")
+            if resultado["error"]: 
+                messages.error(request, resultado["error"])
+            for adv in resultado["advertencias"]: 
+                messages.warning(request, adv)
+            if resultado["exitosos"] > 0: 
+                messages.success(request, f"{resultado['exitosos']} Estudiantes registrados correctamente")
             return redirect(url_listar)
                 
         else:
