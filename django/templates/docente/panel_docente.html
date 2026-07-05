@@ -1,115 +1,191 @@
 {% extends "base.html" %}
-{% block titulo %}Panel Docente — NIVEC{% endblock %}
+{% block titulo %}{{ titulo_pagina|default:"NIVEC" }}{% endblock %}
 
 {% block contenido %}
-<h2 style="margin-bottom: 4px; color: #253237;">Panel Docente — {{ perfil_docente.usuario_de_sistema.apellidos }} {{ perfil_docente.usuario_de_sistema.nombres }}</h2>
-<p style="color: #5c6b73; font-size: 13px; margin-bottom: 4px;">
-    <span style="font-weight: bold;">Identificador:</span> {{ perfil_docente.identificador_institucional }}
-    — <span style="font-weight: bold;">Vinculación:</span> {{ perfil_docente.tipo_de_vinculacion }}
-    — <span style="font-weight: bold;">Dedicación:</span> {{ perfil_docente.tiempo_de_dedicacion }}
-</p>
-<p style="color: #5c6b73; font-size: 13px; margin-bottom: 20px;">
-    <span style="font-weight: bold;">Carga horaria máxima:</span> {{ perfil_docente.carga_horaria_maxima }} horas
-    {% if periodo_actual %} — <span style="font-weight: bold;">Periodo:</span> {{ periodo_actual.periodo }} ({{ periodo_actual.anio }}){% endif %}
-</p>
+<style>
+    /* Estilos sincronizados para la tabla estándar */
+    .tarjeta table th, .tarjeta table td { 
+        padding: 12px 18px; 
+        white-space: nowrap; 
+        font-family: inherit;
+    }
+    .etiqueta-accion {
+        padding: 6px 14px; 
+        border-radius: 6px; 
+        font-size: 12px; 
+        text-decoration: none;
+        display: inline-block; 
+        font-weight: bold; 
+        margin-right: 6px; 
+        transition: all 0.2s ease;
+        border: none; 
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .etiqueta-naranja { background: #9db4c0; color: white; border: none; }
+    .etiqueta-naranja:hover { opacity: 0.85; }
 
-{% if aviso_estado %}
-<p style="color: #253237; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
-    {{ aviso_estado }}
-</p>
-{% endif %}
+    /* Estilos sincronizados de la grilla horaria */
+    .grilla-horario { 
+        width: 100%; 
+        border-collapse: collapse; 
+        font-family: inherit; 
+        table-layout: fixed; 
+    }
+    .grilla-horario th, .grilla-horario td { 
+        border: 1px solid #DADBDB; 
+        text-align: center; 
+        vertical-align: top; 
+        padding: 0; 
+        height: 48px; 
+        min-width: 120px; 
+    }
+    .grilla-horario th { 
+        background: #F4F4F4; 
+        font-size: 12px; 
+        font-weight: bold; 
+        color: #253237; 
+        padding: 10px 8px; 
+    }
+    .grilla-hora { 
+        font-size: 11px; 
+        color: #5c6b73; 
+        width: 70px !important; 
+        min-width: 70px !important; 
+        padding: 4px 8px !important; 
+        text-align: right !important; 
+        font-weight: bold;
+    }
+    .bloque-materia {
+        border-radius: 6px; 
+        padding: 6px 8px; 
+        margin: 2px 4px;
+        font-size: 11px; 
+        font-weight: bold; 
+        color: #253237;
+        text-align: left; 
+        line-height: 1.3; 
+        min-height: 40px;
+        display: flex; 
+        flex-direction: column; 
+        justify-content: center;
+        font-family: inherit;
+        word-wrap: break-word;
+        white-space: normal; 
+    }
+    .bloque-materia .bloque-hora-txt { 
+        font-size: 10px; 
+        font-weight: normal; 
+        color: #5c6b73; 
+        margin-top: 2px; 
+    }
+</style>
 
-<div style="margin-bottom: 20px;">
-    <a href="{% url 'detalle_universidad' %}" class="boton boton-secundario">Información institucional</a>
-</div>
+<div style="font-family: inherit;">
+    <h2>{{ perfil_docente.usuario_de_sistema.apellidos }} {{ perfil_docente.usuario_de_sistema.nombres }} (Docente)</h2>
+    
+    <p style="color: #5c6b73; font-size: 13px; margin-bottom: 20px; font-family: inherit;">
+        <span style="font-weight: bold;">Identificador institucional: {{ perfil_docente.identificador_institucional }}<span>
+        {% if periodo_actual %} <span style="font-weight: bold;">Periodo de nivelación {{ periodo_actual.periodo }}<span>{% endif %}
+    </p>
 
-{% if paralelos %}
-<div class="tarjeta" style="margin-bottom: 20px;">
-    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">Paralelos asignados</h2>
-    <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Unidades curriculares a cargo</p>
-    <div style="overflow-x: auto;">
-    <table style="width: 100%;">
-        <thead>
-            <tr>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Código</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Paralelo</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Carrera</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Unidad curricular</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Jornada</th>
-                <th style="font-weight: bold; text-align: left; color: #5c6b73; padding: 12px 18px;">Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for p in paralelos %}
-            <tr>
-                <td style="font-family: monospace; text-align: left; padding: 12px 18px; color: #253237;">{{ p.codigo_de_paralelo }}</td>
-                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ p.nombre }}</td>
-                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ p.unidad_curricular.malla_curricular.carrera.nombre }}</td>
-                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ p.unidad_curricular.nombre }}</td>
-                <td style="text-align: left; padding: 12px 18px; color: #253237;">{{ p.get_jornada_display }}</td>
-                <td style="text-align: left; padding: 12px 18px; white-space: nowrap;">
-                    <a href="{% url 'listar_estudiantes_paralelo' p.id %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none; margin-right: 12px;">Estudiantes</a>
-                    {% if puede_ver_calificaciones %}
-                    <a href="{% url 'listar_evaluaciones_paralelo' p.id %}" style="color: #253237; font-size: 13px; font-weight: bold; text-decoration: none;">Calificaciones</a>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    {% if aviso_estado %}
+    <p style="color: #253237; font-size: 13px; font-weight: bold; margin-bottom: 16px; font-family: inherit;">{{ aviso_estado }}</p>
+    {% endif %}
+
+    <div style="margin-bottom: 20px; font-family: inherit;">
+        <a href="{% url 'detalle_universidad' %}" class="boton boton-secundario">Información institucional</a>
     </div>
-</div>
 
-{% if grilla %}
-<div class="tarjeta" style="margin-bottom: 20px;">
-    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">Horario semanal</h2>
-    <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Representación visual</p>
-    <div style="overflow-x: auto;">
-    <table style="width: 100%; border-collapse: collapse;">
-        <thead>
-            <tr>
-                <th style="width: 60px; background: #F4F4F4; border: 1px solid #DADBDB; font-size: 12px; font-weight: bold; color: #253237; padding: 10px 8px; text-align: center;">Hora</th>
-                {% for d in dias_semana %}
-                <th style="background: #F4F4F4; border: 1px solid #DADBDB; font-size: 12px; font-weight: bold; color: #253237; padding: 10px 8px; text-align: center; min-width: 100px;">{{ d }}</th>
+    {% if paralelos %}
+    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237; font-family: inherit;">Paralelos designados</h2>
+    <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold; font-family: inherit;">Especificación de Unidades curriculares</p>
+
+    <div class="tarjeta" style="margin-bottom: 20px; padding: 0; overflow-x: auto; font-family: inherit;">
+        <table style="width: 100%;">
+            <thead>
+                <tr>
+                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Código de Paralelo</th>
+                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Nombre</th>
+                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Carrera especificada</th>
+                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Unidad curricular</th>
+                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Jornada</th>
+                    <th style="font-weight: bold; text-align: left; color: #5c6b73">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in paralelos %}
+                <tr>
+                    <td style="font-family: monospace; text-align: left; color: #1d1d1f;">{{ p.codigo_de_paralelo }}</td>
+                    <td style="text-align: left; color: #1d1d1f;">{{ p.nombre }}</td>
+                    <td style="text-align: left; color: #1d1d1f;">{{ p.unidad_curricular.malla_curricular.carrera.nombre }}</td>
+                    <td style="text-align: left; color: #1d1d1f;">{{ p.unidad_curricular.nombre }}</td>
+                    <td style="text-align: left; color: #1d1d1f;">{{ p.get_jornada_display }}</td>
+                    <td style="text-align: left; white-space: nowrap;">
+                        <a href="{% url 'listar_estudiantes_paralelo' p.id %}" class="etiqueta-accion etiqueta-naranja">Estudiantes registrados</a>
+                        {% if puede_ver_calificaciones %}
+                        <a href="{% url 'listar_evaluaciones_paralelo' p.id %}" class="etiqueta-accion etiqueta-naranja">Registro de calificaciones</a>
+                        {% endif %}
+                    </td>
+                </tr>
                 {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for fila in grilla %}
-            <tr>
-                <td style="font-size: 11px; color: #5c6b73; padding: 4px 8px; text-align: right; border: 1px solid #DADBDB; font-weight: bold;">{{ fila.hora }}</td>
-                {% for celda in fila.celdas %}
-                <td style="padding: 2px; border: 1px solid #DADBDB; height: 48px; vertical-align: top; text-align: center;">
-                    {% if celda %}
-                    <div style="border-radius: 6px; padding: 6px 8px; margin: 2px; font-size: 11px; font-weight: bold; color: #253237; background: {{ celda.color }}; min-height: 40px; display: flex; flex-direction: column; justify-content: center; text-align: left; line-height: 1.3;">
-                        {{ celda.nombre }}
-                        <span style="font-size: 10px; font-weight: normal; color: #5c6b73; margin-top: 2px;">{{ celda.slot_inicio }} - {{ celda.slot_fin }}</span>
-                    </div>
-                    {% endif %}
-                </td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </tbody>
+        </table>
     </div>
 
-    {% if mapa_colores %}
-    <div style="margin-top: 12px; display: flex; gap: 12px; flex-wrap: wrap;">
-        {% for nombre, color in mapa_colores.items %}
-        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #253237; font-weight: bold;">
-            <span style="width: 14px; height: 14px; border-radius: 4px; background: {{ color }}; display: inline-block;"></span>
-            {{ nombre }}
-        </span>
-        {% endfor %}
+    {% if grilla %}
+    <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237; font-family: inherit;">Horario designado</h2>
+    
+    <div class="tarjeta" style="padding: 12px; overflow-x: auto; margin-bottom: 20px; font-family: inherit;">
+        <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold; font-family: inherit;">Representación visual</p>
+        
+        <table class="grilla-horario">
+            <thead>
+                <tr>
+                    <th style="width: 70px; min-width: 70px;">Hora</th>
+                    {% for d in dias_semana %}
+                    <th>{{ d }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in grilla %}
+                <tr>
+                    <td class="grilla-hora">{{ fila.hora }}</td>
+                    {% for celda in fila.celdas %}
+                    <td style="padding: 2px;">
+                        {% if celda %}
+                        <div class="bloque-materia" style="background: {{ celda.color }};">
+                            {{ celda.nombre }}
+                            <span class="bloque-hora-txt">{{ celda.slot_inicio }} - {{ celda.slot_fin }}</span>
+                        </div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if mapa_colores %}
+        <div style="margin-top: 12px; display: flex; gap: 12px; flex-wrap: wrap;">
+            {% for nombre, color in mapa_colores.items %}
+            <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #1d1d1f; font-weight: bold; font-family: inherit;">
+                <span style="width: 14px; height: 14px; border-radius: 4px; background: {{ color }}; display: inline-block;"></span>
+                {{ nombre }}
+            </span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="tarjeta" style="font-family: inherit;">
+        <p style="color: #9db4c0; font-size: 13px; font-weight: bold; margin: 0; text-align: center; padding: 20px;">
+            No se le ha designado ningún Paralelo actualmente
+        </p>
     </div>
     {% endif %}
 </div>
-{% endif %}
-
-{% else %}
-<p style="color: #5c6b73; font-size: 13px; font-weight: bold;">
-    No se le ha asignado ningún Paralelo actualmente
-</p>
-{% endif %}
 {% endblock %}
