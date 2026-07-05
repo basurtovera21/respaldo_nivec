@@ -11,14 +11,14 @@
     }
     .etiqueta-eliminar { background: #253237; color: white; border: none; }
     .campo-select-linea {
-        padding: 6px 10px; border: 1px solid #d2d2d7; border-radius: 8px;
-        font-size: 13px; background: white; color: #1d1d1f;
+        padding: 6px 10px; border: 1px solid #DADBDB; border-radius: 8px;
+        font-size: 13px; background: white; color: #253237;
     }
 </style>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
     <div>
-        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">{{ titulo }}</h2>
+        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">{{ titulo }}</h2>
         <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin: 0;">
             ({{ paralelo.periodo_de_nivelacion.periodo }}). {{ paralelo.unidad_curricular.malla_curricular.carrera.nombre }} ({{ paralelo.get_jornada_display }}) &middot; {{ ocupacion }}/{{ capacidad }} estudiantes
         </p>

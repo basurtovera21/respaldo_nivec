@@ -13,8 +13,8 @@
 </div>
 
 <div class="tarjeta" style="max-width: 520px;">
-    <p style="color: #9db4c0; font-size: 12px; margin-bottom: 12px;">
-        La sesión debe estar dentro de la franja {{ franja }} y durar 1, 2 o 3 horas.
+    <p style="color: #253237; font-size: 13px; font-weight: bold; margin-bottom: 12px;">
+        La sesión debe estar dentro de la franja {{ franja }} y durar 1, 2 o 3 horas exactas.
     </p>
     <form method="post" action="{% url 'editar_horario' horario.id %}">
         {% csrf_token %}
@@ -26,11 +26,15 @@
         </div>
         <div class="campo">
             <label style="font-weight: bold; color: #253237;">Hora de inicio</label>
-            <input type="time" name="hora_inicio" value="{{ horario.hora_inicio|time:'H:i' }}">
+            <select name="hora_inicio">
+                {% for h in horas_disponibles %}<option value="{{ h }}" {% if h == horario.hora_inicio|time:"H:i" %}selected{% endif %}>{{ h }}</option>{% endfor %}
+            </select>
         </div>
         <div class="campo">
             <label style="font-weight: bold; color: #253237;">Hora de finalización</label>
-            <input type="time" name="hora_fin" value="{{ horario.hora_fin|time:'H:i' }}">
+            <select name="hora_fin">
+                {% for h in horas_disponibles %}<option value="{{ h }}" {% if h == horario.hora_fin|time:"H:i" %}selected{% endif %}>{{ h }}</option>{% endfor %}
+            </select>
         </div>
         <div class="campo">
             <label style="font-weight: bold; color: #253237;">Espacio de impartición</label>

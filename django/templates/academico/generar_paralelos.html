@@ -6,7 +6,7 @@
 <div class="tarjeta">
     <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #253237;">{{ titulo }}</h2>
     <p style="color: #5c6b73; font-size: 13px; font-weight: bold; margin-bottom: 16px;">
-        Distribución por capacidad maxima definida
+        Distribución por capacidad máxima definida
     </p>
 
     <form method="post" novalidate style="max-width: 500px;">
@@ -24,8 +24,8 @@
 
         <div class="campo">
             <label for="capacidad" style="font-weight: bold; color: #253237;">Capacidad máxima especificada</label>
-            <input type="number" name="capacidad" id="capacidad" min="1" value="35">
-            <div class="ayuda">Número de Estudiantes (por defecto 35)</div>
+            <input type="number" name="capacidad" id="capacidad" min="20" max="50" value="35">
+            <div class="ayuda" style="font-weight: bold;">Mínimo 20 — Máximo 50 estudiantes por paralelo (por defecto 35)</div>
         </div>
 
         <div style="margin-top: 30px; display: flex; gap: 15px;">
