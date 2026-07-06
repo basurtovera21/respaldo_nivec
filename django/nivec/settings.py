@@ -55,13 +55,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "nivec.wsgi.application"
 
-DATABASES = {
-    "default": dj_database_url.config(
-        default=os.getenv("DATABASE_URL", "postgresql://neondb_owner:npg_EorWsV16BlXF@ep-divine-heart-apecnw8q-pooler.c-7.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"),
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 LANGUAGE_CODE = "es"
 TIME_ZONE = "America/Guayaquil"
