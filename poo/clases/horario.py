@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from datetime import time
+from typing import Optional
 
 #Enums
 from poo.clases.enums.dia_de_semana import DiaDeSemana
@@ -8,7 +11,7 @@ from poo.clases.interfaces.i_asignable_a_horario import IAsignableAHorario
 
 
 class Horario:
-    def __init__(self, dia_semana: DiaDeSemana, hora_inicio: time, hora_fin: time, espacio_de_imparticion: str = "", docente_responsable: IAsignableAHorario | None = None, **kwargs):
+    def __init__(self, dia_semana: DiaDeSemana, hora_inicio: time, hora_fin: time, espacio_de_imparticion: str = "", docente_responsable: Optional[IAsignableAHorario] = None, **kwargs):
         self.dia_semana = dia_semana
         self.hora_inicio = hora_inicio
         self.hora_fin = hora_fin

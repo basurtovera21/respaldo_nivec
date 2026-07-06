@@ -72,6 +72,24 @@ class UnidadCurricular(IUnidadEvaluable):
 
         return errores
 
+    def calcular_horas_sincronicas_semanales(self, semanas: int) -> int:
+        """
+        Calcula las horas sincrónicas semanales requeridas para esta unidad
+        dado un número de semanas de periodo.
+
+        Fórmula: ceil(horas_sincronicas / semanas)
+
+        Args:
+            semanas: Número de semanas del periodo académico
+
+        Returns:
+            Horas sincrónicas por semana (redondeado arriba)
+        """
+        import math
+        if not semanas or semanas <= 0:
+            return round(self.horas_sincronicas, 2)
+        return math.ceil(self.horas_sincronicas / semanas)
+
     def recuperar_informacion_de_unidad(self):
         return {
             "Código de unidad": self.codigo_de_unidad,
