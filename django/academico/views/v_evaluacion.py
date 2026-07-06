@@ -175,7 +175,8 @@ def descargar_plantilla_calificaciones(request, paralelo_id):
         ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 30
 
     response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    response["Content-Disposition"] = f'attachment; filename="calificaciones_{paralelo.nombre}_{paralelo.unidad_curricular.nombre}.xlsx"'.replace(" ", "_").lower()
+    nombre_archivo = f"calificaciones_{paralelo.nombre}_{paralelo.unidad_curricular.nombre}".replace(" ", "_").lower()
+    response["Content-Disposition"] = f'attachment; filename="{nombre_archivo}.xlsx"'
     wb.save(response)
     return response
 
