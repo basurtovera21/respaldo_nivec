@@ -28,6 +28,12 @@ from poo.clases.evaluacion_academica import EvaluacionAcademica as EvaluacionAca
 from poo.clases.horario import Horario as HorarioPOO
 
 
+
+
+# ══════════════════════════════════════════════════════════════
+# UTILIDADES
+# ══════════════════════════════════════════════════════════════
+
 def normalizar_texto(texto):
     if not texto:
         return ""
@@ -44,7 +50,12 @@ def obtener_enum_flexible(enum_class, valor_sucio):
             return opcion
     raise ValueError(f"'{valor_sucio}' registro no válido para {enum_class.__name__}")
 
-#Campus
+
+
+# ══════════════════════════════════════════════════════════════
+# CARGA MASIVA: CAMPUS
+# ══════════════════════════════════════════════════════════════
+
 def servicio_campus_registrar_masivo_desde_excel(archivo, universidad_usuario):
     from poo.clases.campus import Campus as CampusBase
 
@@ -106,7 +117,12 @@ def servicio_campus_registrar_masivo_desde_excel(archivo, universidad_usuario):
     return resultado
 
 
-#Carrera
+
+
+# ══════════════════════════════════════════════════════════════
+# CARGA MASIVA: CARRERAS
+# ══════════════════════════════════════════════════════════════
+
 def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
     resultado = {"exitosos": 0, "advertencias": [], "error": None}
     try:
@@ -188,7 +204,12 @@ def servicio_carrera_registrar_masivo_desde_excel(archivo, universidad_usuario):
 
 
 
-#PeriodoDeNivelacion 
+
+
+# ══════════════════════════════════════════════════════════════
+# PERIODOS DE NIVELACIÓN
+# ══════════════════════════════════════════════════════════════
+
 def _construir_periodo(periodo_db):
     return PeriodoDeNivelacionBase(
         codigo_periodo=periodo_db.codigo_periodo,
@@ -281,7 +302,12 @@ def servicio_finalizar_periodo_de_nivelacion(periodo_db):
     return (True, "El Periodo de nivelación ha finalizado")
 
 
-#Malla curricular
+
+
+# ══════════════════════════════════════════════════════════════
+# CARGA MASIVA: MALLAS CURRICULARES
+# ══════════════════════════════════════════════════════════════
+
 def servicio_malla_registrar_masivo_desde_excel(archivo, universidad_usuario):
     from poo.clases.malla_curricular import MallaCurricular as MallaCurricularBase
     from poo.clases.enums.estado_de_malla import EstadoDeMalla
@@ -655,7 +681,12 @@ def _exportar_txt(informe_django, evaluaciones):
     return documento
 
 
-#MallaCurricular
+
+
+# ══════════════════════════════════════════════════════════════
+# GESTIÓN DE MALLAS CURRICULARES
+# ══════════════════════════════════════════════════════════════
+
 def _construir_unidad_poo(unidad_db):
     from poo.clases.unidad_curricular import UnidadCurricular as UnidadCurricularBase
 
@@ -1214,9 +1245,11 @@ def servicio_agregar_estudiante_a_paralelo(estudiante_db, paralelo_db):
     return (True, "El Estudiante fue agregado al Paralelo correctamente")
 
 
-# ==========================================
-# B.2 - Horarios
-# ==========================================
+
+
+# ══════════════════════════════════════════════════════════════
+# HORARIOS
+# ══════════════════════════════════════════════════════════════
 def _construir_horario_poo(horario_db):
     return HorarioPOO(
         dia_semana=obtener_enum_flexible(DiaDeSemana, horario_db.dia_semana),
@@ -1800,9 +1833,11 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
 
 
 
-# ==========================================
-# Flujo de revisión de calificaciones
-# ==========================================
+
+
+# ══════════════════════════════════════════════════════════════
+# FLUJO DE REVISIÓN DE CALIFICACIONES
+# ══════════════════════════════════════════════════════════════
 def servicio_pasar_a_revision(paralelo_db):
     """Pasa todas las evaluaciones de un paralelo+unidad de Borrador a En revisión."""
     count = EvaluacionAcademica.objects.filter(
