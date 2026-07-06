@@ -1752,7 +1752,6 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
                 resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (el Estudiante no está registrado en el Paralelo)")
                 continue
 
-            # Calculate final grade and status using POO EvaluacionAcademica (Chain of Responsibility)
             from poo.clases.unidad_curricular import UnidadCurricular as UnidadCurricularPOO
             from poo.clases.evaluacion_academica import EvaluacionAcademica as EvaluacionAcademicaPOO_Local
             from poo.clases.usuarios.estudiante import Estudiante as EstudiantePOO
@@ -1769,7 +1768,6 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
                 criterio_de_aprobacion=criterio,
                 porcentaje_minimo_asistencia=porcentaje_minimo,
             )
-            # Construir estudiante POO mínimo para la evaluación
             est_usuario = estudiante.usuario_de_sistema
             estudiante_poo = EstudiantePOO(
                 tipo_de_identificacion=obtener_enum_flexible(TipoDeIdentificacion, est_usuario.tipo_de_identificacion),
@@ -1801,7 +1799,6 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
             estado_resultado = evaluacion_poo.verificar_aprobacion()
             estado = estado_resultado.value
 
-            # Check if already exists
             existing = EvaluacionAcademica.objects.filter(
                 estudiante=estudiante,
                 unidad_curricular=unidad_curricular_db,
@@ -1812,7 +1809,6 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
                 )
                 continue
 
-            # Create new
             EvaluacionAcademica.objects.create(
                 estudiante=estudiante,
                 unidad_curricular=unidad_curricular_db,

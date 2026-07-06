@@ -96,7 +96,7 @@ def panel_dan(request):
     tiene_paralelos = Paralelo.objects.filter(periodo_de_nivelacion__universidad=universidad).exists() if universidad else False
     tiene_horarios = Horario.objects.filter(paralelo__periodo_de_nivelacion__universidad=universidad).exists() if universidad else False
     tiene_consolidados = ConsolidadoAcademico.objects.filter(periodo_academico__universidad=universidad).exists() if universidad else False
-    # Informe solo disponible cuando periodo está cerrado Y al menos una carrera formalizada
+    # Informe solo disponible cuando periodo está cerrado y al menos una carrera formalizada
     from poo.clases.enums.estado_de_periodo import EstadoDePeriodo as EP
     periodo_cerrado = PeriodoDeNivelacion.objects.filter(universidad=universidad, estado=EP.CERRADO.value).exists() if universidad else False
     puede_ver_informe = periodo_cerrado and todas_calificaciones_formalizadas_por_carrera(universidad) if universidad else False
@@ -218,7 +218,7 @@ def panel_docente(request):
     
     universidad = perfil_docente.universidad
     
-    # Get active period (not closed) - priority: En Curso > Evaluación > Planificación
+    # Obtener periodo activo (no cerrado) - prioridad: En Curso > Evaluación > Planificación
     periodo_actual = None
     if universidad:
         for estado_buscar in [EstadoDePeriodo.EN_CURSO.value, EstadoDePeriodo.EVALUACION.value, EstadoDePeriodo.PLANIFICACION.value]:
@@ -227,7 +227,7 @@ def panel_docente(request):
                 periodo_actual = p
                 break
     
-    # Get paralelos where this docente is responsible in the active period
+    # Obtener paralelos donde este docente es responsable en el periodo activo
     paralelos = []
     tiene_horarios = False
     horarios_list = []
@@ -241,7 +241,7 @@ def panel_docente(request):
             docente_responsable=perfil_docente,
         ).select_related("unidad_curricular__malla_curricular__carrera").order_by("nombre", "unidad_curricular__nombre"))
 
-        # Build horario grid from paralelos assigned to this docente
+        # Construir grilla de horarios desde los paralelos asignados
         if paralelos:
             paralelo_ids = [p.id for p in paralelos]
             from django.db.models import Case, When, Value, IntegerField
@@ -263,7 +263,7 @@ def panel_docente(request):
             horarios_list = list(horarios)
 
             if tiene_horarios:
-                # Determine franja from the first paralelo's jornada
+                # Determinar franja desde la jornada del primer paralelo
                 try:
                     jornada_enum = Jornada(paralelos[0].jornada)
                     franja = obtener_franja(jornada_enum)
@@ -295,7 +295,7 @@ def panel_docente(request):
                             fila["celdas"].append(bloque)
                         grilla.append(fila)
 
-    # State notice
+    # Aviso de estado
     permisos = obtener_permisos_periodo(universidad) if universidad else {}
     estado = permisos.get("estado_periodo", "")
     aviso_estado = ""
@@ -335,7 +335,7 @@ def panel_estudiante(request):
     periodo = perfil_estudiante.periodo_de_nivelacion
     universidad = perfil_estudiante.carrera_registrada.campus.universidad if perfil_estudiante.carrera_registrada else None
     
-    # Get paralelo(s) where the student is enrolled
+    # Obtener paralelo(s) donde el estudiante está matriculado
     matriculas = MatriculaParalelo.objects.filter(
         estudiante=perfil_estudiante,
         paralelo__periodo_de_nivelacion=periodo,
@@ -344,13 +344,13 @@ def panel_estudiante(request):
         "paralelo__docente_responsable__usuario_de_sistema",
     ).order_by("paralelo__nombre", "paralelo__unidad_curricular__nombre") if periodo else MatriculaParalelo.objects.none()
 
-    # Get evaluaciones
+    # Obtener evaluaciones
     evaluaciones = EvaluacionAcademica.objects.filter(
         estudiante=perfil_estudiante,
         periodo_de_nivelacion=periodo,
     ).select_related("unidad_curricular").order_by("unidad_curricular__nombre") if periodo else EvaluacionAcademica.objects.none()
 
-    # Get horarios
+    # Obtener horarios
     paralelo_ids = [m.paralelo_id for m in matriculas]
     if paralelo_ids:
         from django.db.models import Case, When, Value, IntegerField
@@ -370,7 +370,7 @@ def panel_estudiante(request):
     else:
         horarios = Horario.objects.none()
 
-    # Build visual grid for the student's schedule
+    # Construir grilla visual del horario del estudiante
     from poo.clases.enums.dia_de_semana import DiaDeSemana
     from poo.clases.enums.jornada import Jornada
     from poo.clases.franja_horaria import obtener_franja
@@ -380,7 +380,7 @@ def panel_estudiante(request):
     mapa_colores = {}
 
     if horarios.exists():
-        # Determine franja from student's jornada
+        # Determinar franja desde la jornada del estudiante
         jornada_estudiante = perfil_estudiante.jornada
         try:
             jornada_enum = Jornada(jornada_estudiante)
@@ -414,7 +414,7 @@ def panel_estudiante(request):
                     fila["celdas"].append(bloque)
                 grilla.append(fila)
 
-    # State notice and permissions
+    # Aviso de estado and permissions
     permisos = obtener_permisos_periodo(universidad) if universidad else {}
     estado = permisos.get("estado_periodo", "")
     aviso_estado = ""

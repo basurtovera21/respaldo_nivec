@@ -103,7 +103,6 @@ def descargar_plantilla_estudiante(request):
     ws = wb.active
     ws.title = "Estudiantes"
     
-    # Mantiene las 9 columnas originales en el orden exacto que espera el servicio
     cabeceras = [
         "Tipo de identificación (Cédula, Pasaporte, Cédula extranjera)", 
         "Número de identificación", "Nombres", "Apellidos", "Correo institucional",
@@ -151,7 +150,6 @@ def registrar_estudiante(request):
                 messages.error(request, "Documento con formato no válido")
                 return redirect(url_registrar)
 
-            # CORRECCIÓN: Se pasa periodo_de_nivelacion=None para activar el formato de 9 columnas
             resultado = servicio_estudiante_registrar_masivo_desde_excel(
                 archivo, universidad_usuario, periodo_de_nivelacion=None
             )
@@ -281,7 +279,7 @@ def formalizar_matricula(request, estudiante_id):
     with transaction.atomic():
         est_db.estado_de_matricula = est_poo._estado_de_matricula.value
         est_db.save()
-        # Restore access
+        # Restaurar acceso
         usuario = est_db.usuario_de_sistema
         usuario.estado_de_usuario = "Activo"
         usuario.is_active = True
@@ -308,12 +306,12 @@ def anular_matricula(request, estudiante_id):
     with transaction.atomic():
         est_db.estado_de_matricula = est_poo._estado_de_matricula.value
         est_db.save()
-        # Block access
+        # Bloquear acceso
         usuario = est_db.usuario_de_sistema
         usuario.estado_de_usuario = "Bloqueado"
         usuario.is_active = False
         usuario.save()
-        # Set evaluaciones to Anulado
+        # Marcar evaluaciones como Anulado
         from academico.models import EvaluacionAcademica
         EvaluacionAcademica.objects.filter(
             estudiante=est_db, estado_de_aprobacion="Pendiente"
@@ -339,12 +337,12 @@ def solicitar_retiro(request, estudiante_id):
         with transaction.atomic():
             est_db.estado_de_matricula = est_poo._estado_de_matricula.value
             est_db.save()
-            # Block access
+            # Bloquear acceso
             usuario = est_db.usuario_de_sistema
             usuario.estado_de_usuario = "Bloqueado"
             usuario.is_active = False
             usuario.save()
-            # Set evaluaciones to Retirado
+            # Marcar evaluaciones como Retirado
             from academico.models import EvaluacionAcademica
             EvaluacionAcademica.objects.filter(
                 estudiante=est_db, estado_de_aprobacion="Pendiente"

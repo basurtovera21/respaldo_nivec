@@ -55,7 +55,7 @@ def listar_administrativos(request):
     if perfil_filtro:
         administrativos = administrativos.filter(perfil_administrativo=perfil_filtro)
 
-    # Order: Director DAN first, then by identificador_administrativo descending
+    # Orden: Director DAN primero, luego por identificador descendente
     from django.db.models import Case, When, Value, IntegerField
     administrativos = administrativos.annotate(
         es_director=Case(
