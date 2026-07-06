@@ -24,6 +24,12 @@ from poo.clases.enums.registro_de_cupo import RegistroDeCupo as EnumRegistroDeCu
 from poo.clases.enums.estado_de_matricula import EstadoDeMatricula as EnumEstadoDeMatricula
 
 
+
+
+# ══════════════════════════════════════════════════════════════
+# UTILIDADES
+# ══════════════════════════════════════════════════════════════
+
 def normalizar_texto(texto):
     if not texto:
         return ""
@@ -39,6 +45,12 @@ def obtener_enum_flexible(enum_class, valor_sucio):
         if normalizar_texto(opcion.value) == valor_normalizado:
             return opcion
     raise ValueError(f"'{valor_sucio}' registro no válido ({enum_class.__name__})")
+
+
+
+# ══════════════════════════════════════════════════════════════
+# AUTENTICACIÓN
+# ══════════════════════════════════════════════════════════════
 
 def servicio_iniciar_sesion(request, correo_institucional, contrasena):
     usuario_de_sistema_django = authenticate(request, username=correo_institucional, password=contrasena)
@@ -56,6 +68,12 @@ def servicio_iniciar_sesion(request, correo_institucional, contrasena):
 def servicio_cerrar_sesion(request):
     logout(request)
     
+
+
+# ══════════════════════════════════════════════════════════════
+# CARGA MASIVA: ADMINISTRATIVOS
+# ══════════════════════════════════════════════════════════════
+
 def servicio_administrativo_registrar_masivo_desde_excel(archivo, universidad_usuario):
     resultado = {"exitosos": 0, "advertencias": [], "error": None}
     try:
@@ -107,6 +125,12 @@ def servicio_administrativo_registrar_masivo_desde_excel(archivo, universidad_us
     return resultado
 
 
+
+
+# ══════════════════════════════════════════════════════════════
+# CARGA MASIVA: COORDINADORES DAN
+# ══════════════════════════════════════════════════════════════
+
 def servicio_coordinador_dan_registrar_masivo_desde_excel(archivo, universidad_usuario):
     resultado = {"exitosos": 0, "advertencias": [], "error": None}
     try:
@@ -139,6 +163,12 @@ def servicio_coordinador_dan_registrar_masivo_desde_excel(archivo, universidad_u
     except Exception:
         resultado["error"] = "Ha ocurrido un error al procesar el documento"
     return resultado
+
+
+
+# ══════════════════════════════════════════════════════════════
+# CARGA MASIVA: COORDINADORES UA
+# ══════════════════════════════════════════════════════════════
 
 def servicio_coordinador_ua_registrar_masivo_desde_excel(archivo, universidad_usuario):
     resultado = {"exitosos": 0, "advertencias": [], "error": None}
@@ -195,6 +225,12 @@ def servicio_coordinador_ua_registrar_masivo_desde_excel(archivo, universidad_us
     except Exception: resultado["error"] = "Ha ocurrido un error al procesar el documento"
     return resultado
 
+
+
+
+# ══════════════════════════════════════════════════════════════
+# CARGA MASIVA: DOCENTES
+# ══════════════════════════════════════════════════════════════
 
 def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
     resultado = {"exitosos": 0, "advertencias": [], "error": None}
@@ -284,6 +320,12 @@ def servicio_docente_registrar_masivo_desde_excel(archivo, universidad):
         resultado["error"] = "Ha ocurrido un error al procesar el documento"
         
     return resultado
+
+
+
+# ══════════════════════════════════════════════════════════════
+# CARGA MASIVA: ESTUDIANTES
+# ══════════════════════════════════════════════════════════════
 
 def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuario, periodo_de_nivelacion=None):
     from poo.clases.criterios_filtro.criterio_cedula_formato import CriterioCedulaFormato
@@ -415,6 +457,12 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
     resultado["observados"] = len(resultado["advertencias"])
     return resultado
 
+
+
+
+# ══════════════════════════════════════════════════════════════
+# CONSTRUCTORES DE OBJETOS POO
+# ══════════════════════════════════════════════════════════════
 
 def _crear_usuario_administrativo(perfil_administrativo: PerfilAdministrativo):
     usuario_de_sistema = perfil_administrativo.usuario_de_sistema

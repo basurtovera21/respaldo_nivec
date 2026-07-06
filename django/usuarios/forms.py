@@ -23,6 +23,12 @@ def validar_jornadas_continuas(jornadas):
         return "La especificación de la Jornada no es continua"
     return None
 
+
+
+# ══════════════════════════════════════════════════════════════
+# USUARIO DEL SISTEMA (REGISTRAR)
+# ══════════════════════════════════════════════════════════════
+
 class FormularioUsuarioDeSistema(forms.ModelForm):
     contrasena = forms.CharField(label="Contraseña predefinida", required=False, widget=forms.TextInput(attrs={'readonly': True, 'placeholder': 'Número de identificación registrado', 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'}))
     estado_de_usuario = forms.ChoiceField(choices=[(EstadoDeUsuario.ACTIVO.value, 'Activo')], label="Estado de usuario", required=False, widget=forms.Select(attrs={'class': 'campo-select', 'style': 'background-color: #f5f5f7; color: #86868b; pointer-events: none;'}))
@@ -57,6 +63,12 @@ class FormularioUsuarioDeSistema(forms.ModelForm):
                 
         if errores: raise forms.ValidationError(errores)
         return cleaned_data
+
+
+
+# ══════════════════════════════════════════════════════════════
+# USUARIO DEL SISTEMA (MODIFICAR)
+# ══════════════════════════════════════════════════════════════
 
 class FormularioModificarUsuarioDeSistema(forms.ModelForm):
     contrasena = forms.CharField(label="Nueva contraseña", widget=forms.PasswordInput(attrs={'class': 'campo-input'}), required=False, help_text="No realice cambios en este campo si no desea cambiar la contraseña")
@@ -97,6 +109,12 @@ class FormularioModificarUsuarioDeSistema(forms.ModelForm):
         if errores: raise forms.ValidationError(errores)
         return cleaned_data
 
+
+
+# ══════════════════════════════════════════════════════════════
+# ESTUDIANTE
+# ══════════════════════════════════════════════════════════════
+
 class FormularioPerfilEstudiante(forms.ModelForm):
     class Meta:
         model = PerfilEstudiante
@@ -127,6 +145,12 @@ class FormularioPerfilEstudiante(forms.ModelForm):
         self.fields['identificador_institucional'].required = False
         self.fields['numero_de_matricula'].required = False
 
+
+
+
+# ══════════════════════════════════════════════════════════════
+# DOCENTE
+# ══════════════════════════════════════════════════════════════
 
 class FormularioRegistrarDocente(forms.ModelForm):
     jornadas = forms.MultipleChoiceField(label="Jornada", required=False, choices=[(j.value, j.value) for j in Jornada], widget=forms.CheckboxSelectMultiple(attrs={'class': 'campo-checkbox'}), help_text=mark_safe("<strong>Registre jornadas continuas (de ser necesario)</strong>"))
@@ -177,6 +201,12 @@ class FormularioDatosDocenteUA(forms.ModelForm):
         if errores: raise forms.ValidationError(errores)
         return cleaned_data
 
+
+
+# ══════════════════════════════════════════════════════════════
+# ADMINISTRATIVO
+# ══════════════════════════════════════════════════════════════
+
 class FormularioPerfilAdministrativo(forms.ModelForm):
     CHOICES_ALL = [(e.value, e.value) for e in perfil_administrativo.PerfilAdministrativo]
     perfil_administrativo = forms.ChoiceField(choices=CHOICES_ALL, label="Perfil administrativo", widget=forms.Select(attrs={'class': 'campo-select'}))
@@ -209,6 +239,12 @@ class FormularioModificarPerfilAdministrativo(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values(): field.error_messages.update({'required': ''})
 
+
+
+# ══════════════════════════════════════════════════════════════
+# COORDINADOR DAN
+# ══════════════════════════════════════════════════════════════
+
 class FormularioRegistrarCoordinadorDAN(FormularioPerfilAdministrativo):
     class Meta(FormularioPerfilAdministrativo.Meta):
         fields = ("identificador_coordinador_dan",)
@@ -228,6 +264,12 @@ class FormularioModificarCoordinadorDAN(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values(): field.error_messages.update({'required': ''})
+
+
+
+# ══════════════════════════════════════════════════════════════
+# COORDINADOR UA
+# ══════════════════════════════════════════════════════════════
 
 class FormularioRegistrarCoordinadorUA(FormularioPerfilAdministrativo):
     class Meta(FormularioPerfilAdministrativo.Meta):
