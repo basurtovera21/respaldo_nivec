@@ -454,7 +454,7 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
             if self.instance.fecha_inicio:
                 self.fields['fecha_inicio'].widget.attrs['value'] = self.instance.fecha_inicio.strftime('%Y-%m-%d')
 
-            # If period is closed, disable all fields
+            # Si el periodo está cerrado, deshabilitar todos los campos
             estado_actual = str(self.instance.estado).upper()
             if 'CERRADO' in estado_actual or 'CIERRA' in estado_actual:
                 for name, field in self.fields.items():
@@ -488,11 +488,11 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
         numero_seleccionado = cleaned_data.get("numero_periodo")
         anio_calculado = fecha_de_inicio.year if fecha_de_inicio else None
 
-        # Validate numero_de_semanas range
+        # Validar rango de numero_de_semanas
         if numero_semanas is not None and numero_semanas not in range(8, 17):
             errores["numero_de_semanas"] = "Debe ser entre 8 y 16 semanas"
 
-        # Calculate fecha_fin for overlap validation
+        # Calcular fecha_fin para validación de solapamiento
         if fecha_de_inicio and numero_semanas:
             from datetime import timedelta
             fecha_de_finalizacion = fecha_de_inicio + timedelta(days=numero_semanas * 7)

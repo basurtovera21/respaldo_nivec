@@ -24,7 +24,7 @@ def _obtener_universidad_usuario(user):
     perfil_docente = getattr(user, 'perfil_docente', None)
     if perfil_docente:
         return perfil_docente.universidad
-    # For students
+    # Para estudiantes
     from usuarios.models import PerfilEstudiante
     perfil_est = PerfilEstudiante.objects.filter(usuario_de_sistema=user).select_related("carrera_registrada__campus__universidad").first()
     if perfil_est and perfil_est.carrera_registrada:
@@ -64,25 +64,25 @@ def listar_evaluaciones_paralelo(request, paralelo_id):
     es_coordinador_o_director = rol in (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
     es_administrativo = rol in (ROL_RECTOR, ROL_VICERRECTOR)
 
-    # Determine calificaciones state
+    # Determinar estado de calificaciones
     todas_en_revision = evaluaciones.exists() and not evaluaciones.filter(estado_revision="Borrador").exists()
     todas_formalizadas = evaluaciones.exists() and not evaluaciones.exclude(estado_revision="Formalizado").exists()
     hay_en_revision = evaluaciones.filter(estado_revision="En revisión").exists()
 
-    # Role-based permissions for calificaciones actions
+    # Permisos por rol para acciones de calificaciones
     ya_tiene_calificaciones = evaluaciones.exists()
     
-    # Point 1: Hide cargar once calificaciones have been processed (evaluaciones exist)
+    # Ocultar carga si ya existen evaluaciones
     puede_cargar = es_evaluacion and (es_docente or es_coordinador_ua) and not ya_tiene_calificaciones
     
-    # Point 2: Docente can only pass to revisión if evaluaciones are in Borrador and exist
+    # Docente solo puede pasar a revisión si están en Borrador
     puede_pasar_revision = es_evaluacion and es_docente and ya_tiene_calificaciones and not todas_en_revision and not todas_formalizadas
     
-    # Coordinador UA can formalizar if evaluaciones exist and not all formalized
+    # Coordinador UA puede formalizar si no todas están formalizadas
     puede_formalizar = es_evaluacion and es_coordinador_ua and ya_tiene_calificaciones and not todas_formalizadas
     
-    # Docente can edit only in Borrador; Coordinador UA can edit in Borrador and En revisión (not Formalizado)
-    # If coordinador UA uploaded (todas_en_revision without docente passing), docente can't edit
+    # Docente edita en Borrador; Coordinador UA edita en Borrador y En revisión
+    # Si Coordinador UA subió calificaciones directamente, Docente no puede editar
     puede_editar_calificacion = es_evaluacion and (
         (es_docente and ya_tiene_calificaciones and not todas_en_revision and not todas_formalizadas) or
         (es_coordinador_ua and ya_tiene_calificaciones and not todas_formalizadas)
@@ -162,7 +162,7 @@ def descargar_plantilla_calificaciones(request, paralelo_id):
     ws.title = "Calificaciones"
     ws.append(["Número de identificación", "Apellidos", "Nombres", "Correo institucional", "Número de matrícula", "Calificación parcial 1 (0-10)", "Calificación parcial 2 (0-10)", "Porcentaje de asistencia (0-100)"])
 
-    # Pre-fill with student data
+    # Pre-cargar datos del estudiante
     matriculas = MatriculaParalelo.objects.filter(
         paralelo=paralelo
     ).select_related("estudiante__usuario_de_sistema").order_by(
@@ -267,7 +267,7 @@ def editar_evaluacion(request, evaluacion_id):
         messages.error(request, "Las calificaciones formalizadas no se pueden editar")
         return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
 
-    # Docentes can only edit Borrador; Coordinador UA can edit Borrador and En revisión
+    # Docente edita Borrador; Coordinador UA edita Borrador y En revisión
     rol = obtener_rol_usuario(request.user)
     if rol == ROL_DOCENTE and evaluacion.estado_revision != "Borrador":
         messages.error(request, "Las calificaciones en revisión no se pueden editar")
@@ -343,7 +343,7 @@ def pasar_a_revision(request, paralelo_id):
     if request.method != "POST":
         return redirect("listar_evaluaciones_paralelo", paralelo_id=paralelo.id)
 
-    # Check there are evaluations in Borrador
+    # Verificar que existan evaluaciones en Borrador
     from academico.models import EvaluacionAcademica as EA
     borradores = EA.objects.filter(
         unidad_curricular=paralelo.unidad_curricular,
@@ -415,7 +415,7 @@ def descargar_calificaciones_paralelo(request, paralelo_id):
     carrera = paralelo.unidad_curricular.malla_curricular.carrera
     periodo = paralelo.periodo_de_nivelacion
 
-    # Get all paralelos of this logical group
+    # Obtener todos los paralelos del grupo lógico
     unidades_rows = Paralelo.objects.filter(
         periodo_de_nivelacion=periodo,
         jornada=paralelo.jornada,

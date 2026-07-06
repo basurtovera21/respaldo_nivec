@@ -49,7 +49,7 @@ def registrar_periodo(request):
             nuevo_periodo.codigo_periodo = generar_identificador_siguiente(PeriodoDeNivelacion, 'PNV', 'codigo_periodo')
             nuevo_periodo.anio = nuevo_periodo.fecha_inicio.year
             nuevo_periodo.periodo = f"{nuevo_periodo.anio}-{nuevo_periodo.numero_periodo}"
-            # Calculate fecha_fin from fecha_inicio + semanas
+            # Calcular fecha_fin desde fecha_inicio + semanas
             from datetime import timedelta
             nuevo_periodo.fecha_fin = nuevo_periodo.fecha_inicio + timedelta(days=nuevo_periodo.numero_de_semanas * 7)
             nuevo_periodo.save()

@@ -224,7 +224,7 @@ def _construir_periodo(periodo_db):
 def servicio_iniciar_periodo_de_nivelacion(periodo_db):
     from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
 
-    # Validate only 1 periodo can be "En curso" at a time
+    # Validar que solo 1 periodo puede estar "En curso" a la vez
     periodos_en_curso = PeriodoDeNivelacion.objects.filter(
         universidad=periodo_db.universidad,
         estado=EstadoDePeriodo.EN_CURSO.value
@@ -1027,18 +1027,18 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
 
                 estudiantes_restantes = estudiantes[indice_pendiente:]
                 if estudiantes_restantes:
-                    # Calculate the next letter index based on the highest existing name
-                    # to avoid repeating codes when paralelos are deleted.
+                    # Calcular el siguiente índice de letra basado en el nombre más alto existente
+                    # para evitar repetir códigos cuando se eliminan paralelos.
                     nombres_existentes = list(
                         Paralelo.objects.filter(
                             periodo_de_nivelacion=periodo_db,
                             unidad_curricular__malla_curricular__carrera=carrera,
                         ).values_list("nombre", flat=True).distinct()
                     )
-                    # Find the highest index from existing names
+                    # Encontrar el índice más alto de los nombres existentes
                     indice_base = 0
                     for nombre_existente in nombres_existentes:
-                        # Parse "Paralelo X" where X is a letter like A, B, ..., Z, A1, B1...
+                        # Parsear "Paralelo X" donde X es una letra como A, B, ..., Z, A1, B1...
                         nombre_limpio = nombre_existente.replace("Paralelo ", "").strip()
                         if len(nombre_limpio) == 1 and nombre_limpio.isalpha():
                             idx = ord(nombre_limpio.upper()) - ord('A') + 1
@@ -1700,7 +1700,7 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
 
     for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
         try:
-            # Columns: ID, Apellidos, Nombres, Correo, Matricula, P1, P2, Asistencia
+            # Columnas: ID, Apellidos, Nombres, Correo, Matrícula, P1, P2, Asistencia
             identificacion = fila[0]
             parcial_1 = fila[5] if len(fila) > 5 else None
             parcial_2 = fila[6] if len(fila) > 6 else None
@@ -1709,12 +1709,12 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
                 continue
             identificacion_str = str(identificacion).strip()
 
-            # Validate non-empty identification
+            # Validar identificación no vacía
             if not identificacion_str:
                 resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (número de identificación vacía)")
                 continue
 
-            # Validate that at least one grade is provided
+            # Validar que al menos una calificación esté registrada
             if parcial_1 is None and parcial_2 is None and asistencia is None:
                 resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitida (sin registro de calificaciones)")
                 continue
