@@ -67,7 +67,7 @@ def asignar_docente_paralelo(request, paralelo_id):
     horario_completo = horas_agendadas >= horas_requeridas
 
     if not horario_completo:
-        messages.warning(request, "El horario de la Unidad curricular debe estar completo antes de designar un Docente")
+        messages.warning(request, "El Horario de la Unidad curricular debe estar completado antes de designar un Docente")
         return redirect("detalle_paralelo", paralelo_id=paralelo.id)
 
     return render(request, "academico/asignar_docente.html", {

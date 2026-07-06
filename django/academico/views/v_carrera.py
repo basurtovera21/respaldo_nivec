@@ -26,7 +26,6 @@ def listar_carreras(request):
 
     campus_disponibles = Campus.objects.filter(universidad=universidad_usuario).order_by("nombre")
 
-    # Filtro por campus
     campus_filtro = request.GET.get("campus", "")
     if campus_filtro:
         carreras = carreras.filter(campus_id=campus_filtro)
