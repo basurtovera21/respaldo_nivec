@@ -1,6 +1,17 @@
 from django import forms
-from .models import (Universidad, Campus, Carrera, MallaCurricular, UnidadCurricular, PeriodoDeNivelacion, Paralelo, Horario, CohorteDeMatricula, MatriculaParalelo, ConsolidadoAcademico, EvaluacionAcademica, IncidenciaAcademica, EvaluacionDeDesempeno, InformeGeneral)
+from .models import (
+    Universidad, Campus, Carrera, MallaCurricular, UnidadCurricular,
+    PeriodoDeNivelacion, Paralelo, Horario, CohorteDeMatricula,
+    MatriculaParalelo, ConsolidadoAcademico, EvaluacionAcademica,
+    IncidenciaAcademica, EvaluacionDeDesempeno, InformeGeneral
+)
 from poo.clases.carrera import Carrera as CarreraBase
+
+
+
+# ══════════════════════════════════════════════════════════════
+# BASE
+# ══════════════════════════════════════════════════════════════
 
 class BaseModelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -9,6 +20,12 @@ class BaseModelForm(forms.ModelForm):
             field.widget.attrs.update({'class': 'input-estilo'})
             
             
+
+
+# ══════════════════════════════════════════════════════════════
+# UNIVERSIDAD
+# ══════════════════════════════════════════════════════════════
+
 class FormularioUniversidad(BaseModelForm):
     class Meta:
         model = Universidad
@@ -63,6 +80,12 @@ class FormularioUniversidad(BaseModelForm):
 
 
 
+
+
+# ══════════════════════════════════════════════════════════════
+# CAMPUS
+# ══════════════════════════════════════════════════════════════
+
 class FormularioCampus(forms.ModelForm):
     class Meta:
         model = Campus
@@ -116,6 +139,12 @@ class FormularioCampus(forms.ModelForm):
 
         return cleaned_data
 
+
+
+
+# ══════════════════════════════════════════════════════════════
+# CARRERA
+# ══════════════════════════════════════════════════════════════
 
 class FormularioCarrera(forms.ModelForm):
     class Meta:
@@ -185,6 +214,12 @@ class FormularioCarrera(forms.ModelForm):
         return cleaned_data
 
 
+
+
+# ══════════════════════════════════════════════════════════════
+# MALLA CURRICULAR
+# ══════════════════════════════════════════════════════════════
+
 class FormularioMallaCurricular(forms.ModelForm):
     class Meta:
         model = MallaCurricular
@@ -245,7 +280,11 @@ class FormularioMallaCurricular(forms.ModelForm):
         return cleaned_data
 
 
-# Reemplazar FormularioUnidadCurricular en django/academico/forms.py
+
+
+# ══════════════════════════════════════════════════════════════
+# UNIDAD CURRICULAR
+# ══════════════════════════════════════════════════════════════
 
 class FormularioUnidadCurricular(forms.ModelForm):
 
@@ -371,6 +410,12 @@ class FormularioUnidadCurricular(forms.ModelForm):
 from poo.clases.enums.modalidad import Modalidad
 from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
 
+
+
+# ══════════════════════════════════════════════════════════════
+# PERIODO DE NIVELACIÓN
+# ══════════════════════════════════════════════════════════════
+
 class FormularioPeriodoDeNivelacion(forms.ModelForm):
     class Meta:
         model = PeriodoDeNivelacion
@@ -485,6 +530,12 @@ class FormularioPeriodoDeNivelacion(forms.ModelForm):
         return cleaned_data
 
     
+
+
+# ══════════════════════════════════════════════════════════════
+# PARALELO
+# ══════════════════════════════════════════════════════════════
+
 class FormularioParalelo(forms.ModelForm):
     class Meta:
         model = Paralelo
@@ -573,6 +624,12 @@ class FormularioParalelo(forms.ModelForm):
         return cleaned_data
 
 
+
+
+# ══════════════════════════════════════════════════════════════
+# HORARIO
+# ══════════════════════════════════════════════════════════════
+
 class FormularioHorario(forms.ModelForm):
     class Meta:
         model = Horario
@@ -586,6 +643,12 @@ class FormularioHorario(forms.ModelForm):
         }
         widgets = {"hora_inicio": forms.TimeInput(attrs={"type": "time"}), "hora_fin": forms.TimeInput(attrs={"type": "time"})}
 
+
+
+
+# ══════════════════════════════════════════════════════════════
+# PROCESOS ACADÉMICOS
+# ══════════════════════════════════════════════════════════════
 
 class FormularioCohorteDeMatricula(forms.ModelForm):
     class Meta:
@@ -641,6 +704,12 @@ class FormularioConsolidadoAcademico(forms.ModelForm):
         }
 
 
+
+
+# ══════════════════════════════════════════════════════════════
+# EVALUACIÓN ACADÉMICA
+# ══════════════════════════════════════════════════════════════
+
 class FormularioEvaluacionAcademica(forms.ModelForm):
     class Meta:
         model = EvaluacionAcademica
@@ -680,6 +749,12 @@ class FormularioEvaluacionAcademica(forms.ModelForm):
         return porcentaje
 
 
+
+
+# ══════════════════════════════════════════════════════════════
+# INCIDENCIAS Y DESEMPEÑO
+# ══════════════════════════════════════════════════════════════
+
 class FormularioIncidenciaAcademica(forms.ModelForm):
     class Meta:
         model = IncidenciaAcademica
@@ -713,6 +788,12 @@ class FormularioEvaluacionDeDesempeno(forms.ModelForm):
             "puntaje_final": forms.NumberInput(attrs={'readonly': True}),
         }
 
+
+
+
+# ══════════════════════════════════════════════════════════════
+# INFORMES
+# ══════════════════════════════════════════════════════════════
 
 class FormularioInformeGeneral(forms.ModelForm):
     class Meta:
