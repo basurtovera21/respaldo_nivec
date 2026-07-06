@@ -1,3 +1,31 @@
+"""
+Módulo de configuración normativa de franjas horarias.
+
+Define las constantes, reglas y funciones de validación que regulan
+la distribución de horarios académicos en el sistema de nivelación.
+
+Este módulo actúa como un repositorio centralizado de reglas normativas
+(no es una clase porque representa configuración estática, no una entidad
+con estado). Las funciones son puras (sin efectos secundarios).
+
+Contenido:
+    - Constantes de configuración (franjas por jornada, duraciones, días hábiles)
+    - Límite de horas sincrónicas semanales por malla
+    - Funciones de consulta de franjas
+    - Funciones de validación de horas
+
+Principios:
+    - SRP: Solo define reglas normativas de horario
+    - OCP: Nuevas jornadas o reglas se agregan sin modificar funciones existentes
+    - Las funciones son invocadas por Paralelo, MallaCurricular y services.py
+
+Uso desde Django:
+    from poo.clases.franja_horaria import (
+        validar_malla_cabe_en_horario, sesion_dentro_de_franja,
+        SEMANAS_REFERENCIA_MINIMA, DURACIONES_VALIDAS
+    )
+"""
+
 import math
 from datetime import time
 
@@ -6,7 +34,7 @@ from poo.clases.enums.dia_de_semana import DiaDeSemana
 
 
 # ══════════════════════════════════════════════════════════════
-# CONSTANTES DE CONFIGURACIÓN DE HORARIOS
+# CONSTANTES DE CONFIGURACIÓN DE SESIONES
 # ══════════════════════════════════════════════════════════════
 
 # Duración mínima y máxima de una sesión (bloque) en un mismo día.
@@ -16,15 +44,25 @@ MAX_HORAS_POR_SESION = 3.0
 # Duraciones permitidas para una sesión (horas enteras).
 DURACIONES_VALIDAS = [1, 2, 3]
 
+
+# ══════════════════════════════════════════════════════════════
+# FRANJAS HORARIAS POR JORNADA
+# ══════════════════════════════════════════════════════════════
+
 # Franja horaria permitida por jornada (lunes a viernes).
 FRANJAS = {
-    Jornada.MATUTINA: (time(7, 0), time(13, 0)),
-    Jornada.VESPERTINA: (time(13, 0), time(19, 0)),
-    Jornada.NOCTURNA: (time(19, 0), time(23, 0)),
+    Jornada.MATUTINA: (time(7, 0), time(13, 0)),      # 6 horas/día
+    Jornada.VESPERTINA: (time(13, 0), time(19, 0)),   # 6 horas/día
+    Jornada.NOCTURNA: (time(19, 0), time(23, 0)),     # 4 horas/día
 }
 
 # Franja adicional del sábado para jornada nocturna (compensación).
 FRANJA_SABADO_NOCTURNA = (time(8, 0), time(13, 0))  # 5 horas
+
+
+# ══════════════════════════════════════════════════════════════
+# DÍAS HÁBILES
+# ══════════════════════════════════════════════════════════════
 
 # Días hábiles para la generación automática de horarios (lunes a viernes).
 DIAS_HABILES = [
@@ -35,23 +73,26 @@ DIAS_HABILES = [
     DiaDeSemana.VIERNES,
 ]
 
+
 # ══════════════════════════════════════════════════════════════
 # LÍMITE DE HORAS SINCRÓNICAS SEMANALES POR MALLA
 # ══════════════════════════════════════════════════════════════
+#
 # Este límite garantiza que TODAS las unidades de una malla puedan
 # tener sus sesiones sin solapamiento, en cualquier jornada posible.
 #
-# Cálculo:
-#   - Nocturna (la más restrictiva): 4h/día × 5 días + 5h sábado = 25h disponibles
+# Cálculo (basado en la jornada más restrictiva - Nocturna):
+#   - Nocturna: 4h/día × 5 días + 5h sábado = 25h disponibles
 #   - Margen de seguridad (~80%): 25h × 0.80 ≈ 20h
 #   - Resultado: 20h semanales como límite universal
 #
-# Con 8 semanas de periodo → máximo 160h sincrónicas totales por malla
-# Con 12 semanas de periodo → máximo 240h sincrónicas totales por malla
+# Ejemplos con distintos periodos:
+#   - Con 8 semanas → máximo 160h sincrónicas totales por malla
+#   - Con 12 semanas → máximo 240h sincrónicas totales por malla
 
 LIMITE_HORAS_SINCRONICAS_SEMANALES_MALLA = 20
 
-# Número mínimo de semanas para el cálculo del límite (referencia estándar)
+# Número mínimo de semanas para el cálculo del límite (referencia estándar).
 SEMANAS_REFERENCIA_MINIMA = 8
 
 
@@ -60,31 +101,57 @@ SEMANAS_REFERENCIA_MINIMA = 8
 # ══════════════════════════════════════════════════════════════
 
 def obtener_franja(jornada: Jornada):
-    """Retorna la tupla (hora_inicio, hora_fin) de la franja de la jornada."""
+    """
+    Retorna la tupla (hora_inicio, hora_fin) de la franja de la jornada.
+
+    Args:
+        jornada: Instancia de Jornada (MATUTINA, VESPERTINA, NOCTURNA)
+
+    Returns:
+        Tupla (time, time) o None si la jornada no tiene franja definida
+    """
     return FRANJAS.get(jornada)
 
 
-def obtener_dias_habiles():
+def obtener_dias_habiles() -> list:
     """Retorna los días hábiles disponibles para generación de horarios (lunes a viernes)."""
     return list(DIAS_HABILES)
 
 
 def sesion_dentro_de_franja(jornada: Jornada, hora_inicio: time, hora_fin: time) -> bool:
-    """Verifica si una sesión cabe dentro de la franja horaria de la jornada."""
+    """
+    Verifica si una sesión cabe dentro de la franja horaria de la jornada.
+
+    Para jornada NOCTURNA, también se permite en la franja del sábado.
+
+    Args:
+        jornada: Jornada del paralelo
+        hora_inicio: Hora de inicio de la sesión
+        hora_fin: Hora de fin de la sesión
+
+    Returns:
+        True si la sesión está dentro de la franja permitida
+    """
     franja = FRANJAS.get(jornada)
     if not franja:
         return True
     inicio, fin = franja
+
     # Para nocturna, también se permite en el sábado
     if jornada == Jornada.NOCTURNA:
         sab_inicio, sab_fin = FRANJA_SABADO_NOCTURNA
         if hora_inicio >= sab_inicio and hora_fin <= sab_fin:
             return True
+
     return hora_inicio >= inicio and hora_fin <= fin
 
 
 def texto_franja(jornada: Jornada) -> str:
-    """Retorna texto legible de la franja horaria."""
+    """
+    Retorna texto legible de la franja horaria para mensajes de error.
+
+    Ejemplo: "07:00 - 13:00" o "19:00 - 23:00 (Sábado: 08:00 - 13:00)"
+    """
     franja = FRANJAS.get(jornada)
     if not franja:
         return ""
@@ -97,13 +164,16 @@ def texto_franja(jornada: Jornada) -> str:
 
 
 # ══════════════════════════════════════════════════════════════
-# FUNCIONES DE VALIDACIÓN DE HORAS
+# FUNCIONES DE CÁLCULO DE DISPONIBILIDAD
 # ══════════════════════════════════════════════════════════════
 
 def calcular_horas_disponibles_semana(jornada: Jornada) -> float:
     """
     Calcula el total de horas disponibles en una semana para una jornada,
     incluyendo sábado para nocturna.
+
+    Returns:
+        Total de horas disponibles (ej: Matutina = 30h, Nocturna = 25h)
     """
     franja = FRANJAS.get(jornada)
     if not franja:
@@ -121,6 +191,9 @@ def calcular_horas_maximas_semanales(jornada: Jornada) -> float:
     """
     Calcula el máximo de horas semanales que una SOLA unidad puede ocupar,
     considerando el límite de MAX_HORAS_POR_SESION por día.
+
+    Returns:
+        Máximo de horas por unidad (ej: 3h/día × 5 días = 15h + sábado)
     """
     franja = FRANJAS.get(jornada)
     if not franja:
@@ -129,9 +202,16 @@ def calcular_horas_maximas_semanales(jornada: Jornada) -> float:
     dias = len(DIAS_HABILES)
     total = horas_efectivas_por_dia * dias
     if jornada == Jornada.NOCTURNA:
-        total += min(FRANJA_SABADO_NOCTURNA[1].hour - FRANJA_SABADO_NOCTURNA[0].hour, MAX_HORAS_POR_SESION)
+        total += min(
+            FRANJA_SABADO_NOCTURNA[1].hour - FRANJA_SABADO_NOCTURNA[0].hour,
+            MAX_HORAS_POR_SESION
+        )
     return float(total)
 
+
+# ══════════════════════════════════════════════════════════════
+# FUNCIONES DE VALIDACIÓN DE MALLA
+# ══════════════════════════════════════════════════════════════
 
 def calcular_limite_horas_totales_malla(semanas: int) -> float:
     """
@@ -140,6 +220,12 @@ def calcular_limite_horas_totales_malla(semanas: int) -> float:
 
     Fórmula: LIMITE_SEMANAL × semanas
     Ejemplo: 20h × 8 semanas = 160h máximo total
+
+    Args:
+        semanas: Número de semanas del periodo
+
+    Returns:
+        Máximo de horas totales permitidas
     """
     if semanas <= 0:
         semanas = SEMANAS_REFERENCIA_MINIMA
@@ -148,8 +234,16 @@ def calcular_limite_horas_totales_malla(semanas: int) -> float:
 
 def calcular_horas_semanales_malla(total_horas_sincronicas: float, semanas: int) -> float:
     """
-    Calcula cuántas horas sincrónicas semanales requiere una malla
-    (suma de todas sus unidades dividida entre las semanas del periodo).
+    Calcula cuántas horas sincrónicas semanales requiere una malla.
+
+    Fórmula: ceil(total_sincrónicas / semanas)
+
+    Args:
+        total_horas_sincronicas: Suma de horas sincrónicas de todas las unidades
+        semanas: Número de semanas del periodo
+
+    Returns:
+        Horas sincrónicas semanales requeridas (redondeado arriba)
     """
     if semanas <= 0:
         semanas = SEMANAS_REFERENCIA_MINIMA
@@ -162,12 +256,12 @@ def validar_malla_cabe_en_horario(total_horas_sincronicas: float, semanas: int) 
     límite semanal establecido (20h/semana).
 
     Args:
-        total_horas_sincronicas: Suma de horas sincrónicas de todas las unidades de la malla
+        total_horas_sincronicas: Suma de horas sincrónicas de todas las unidades
         semanas: Número de semanas del periodo (referencia)
 
     Returns:
-        {"ok": True} si cabe
-        {"ok": False, "motivo": str, "horas_semanales": float, "limite": int} si no cabe
+        {"ok": True, "horas_semanales": int, "limite": int} si cabe
+        {"ok": False, "motivo": str, "horas_semanales": int, "limite": int} si no cabe
     """
     if semanas <= 0:
         semanas = SEMANAS_REFERENCIA_MINIMA
@@ -194,6 +288,14 @@ def validar_horas_semanales_unidad(horas_semanales: float, jornada: Jornada) -> 
     """
     Valida si las horas sincrónicas semanales de una unidad individual caben
     dentro de la franja de la jornada.
+
+    Args:
+        horas_semanales: Horas sincrónicas semanales de la unidad
+        jornada: Jornada del paralelo
+
+    Returns:
+        {"ok": True} si cabe
+        {"ok": False, "motivo": str, "maximo": float} si no cabe
     """
     maximo = calcular_horas_maximas_semanales(jornada)
     if horas_semanales <= maximo:
