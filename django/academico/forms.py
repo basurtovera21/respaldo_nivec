@@ -1,7 +1,6 @@
 from django import forms
 from .models import (Universidad, Campus, Carrera, MallaCurricular, UnidadCurricular, PeriodoDeNivelacion, Paralelo, Horario, CohorteDeMatricula, MatriculaParalelo, ConsolidadoAcademico, EvaluacionAcademica, IncidenciaAcademica, EvaluacionDeDesempeno, InformeGeneral)
 from poo.clases.carrera import Carrera as CarreraBase
-from poo.clases.enums.modalidad import Modalidad as EnumModalidad
 
 class BaseModelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -369,9 +368,6 @@ class FormularioUnidadCurricular(forms.ModelForm):
 
         return cleaned_data
 
-
-from django.db.models import Q
-from poo.clases.periodo_de_nivelacion import PeriodoDeNivelacion as PeriodoDeNivelacionBase
 from poo.clases.enums.modalidad import Modalidad
 from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
 
