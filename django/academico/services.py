@@ -4,7 +4,10 @@ from datetime import date, datetime
 from django.db import transaction
 from django.http import HttpResponse
 
-from academico.models import Campus, Carrera, PeriodoDeNivelacion, Paralelo, EvaluacionAcademica, CohorteDeMatricula, InformeGeneral, ConsolidadoAcademico, MatriculaParalelo, Horario, MallaCurricular
+from academico.models import (
+    Campus, Carrera, PeriodoDeNivelacion, Paralelo, EvaluacionAcademica,
+    CohorteDeMatricula, InformeGeneral, ConsolidadoAcademico, MatriculaParalelo,
+    Horario, MallaCurricular, UnidadCurricular)
 from usuarios.models import PerfilEstudiante
 from usuarios.utils import generar_identificador_siguiente
 
@@ -12,27 +15,17 @@ from usuarios.utils import generar_identificador_siguiente
 from poo.clases.enums.estado_de_matricula import EstadoDeMatricula
 from poo.clases.enums.estado_de_aprobacion import EstadoDeAprobacion
 from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
-from poo.clases.enums.formato_de_exportacion import FormatoDeExportacion
 from poo.clases.enums.modalidad import Modalidad
 from poo.clases.enums.jornada import Jornada
 from poo.clases.enums.tipo_de_cohorte import TipoDeCohorte
 from poo.clases.enums.dia_de_semana import DiaDeSemana
+from poo.clases.enums.estado_de_malla import EstadoDeMalla
+
 # POO
 from poo.clases.carrera import Carrera as CarreraBase
 from poo.clases.periodo_de_nivelacion import PeriodoDeNivelacion as PeriodoDeNivelacionBase
-from poo.clases.evaluacion_academica import EvaluacionAcademica as EvaluacionAcademicaPOO # Evitar choque de nombres
-from poo.clases.informe_general import InformeGeneral as InformeGeneralPOO
-from poo.clases.servicios.procesador_de_informe import ProcesadorDeInforme
-from poo.clases.cohorte_de_matricula import CohorteDeMatricula as CohorteDeMatriculaPOO
+from poo.clases.evaluacion_academica import EvaluacionAcademica as EvaluacionAcademicaPOO
 from poo.clases.horario import Horario as HorarioPOO
-from poo.clases.consolidado_academico import ConsolidadoAcademico as ConsolidadoAcademicoPOO
-
-from academico.models import (
-    Campus, Carrera, PeriodoDeNivelacion, Paralelo, EvaluacionAcademica,
-    CohorteDeMatricula, InformeGeneral, ConsolidadoAcademico, MatriculaParalelo,
-    Horario, MallaCurricular, UnidadCurricular )
-
-from poo.clases.enums.estado_de_malla import EstadoDeMalla
 
 
 def normalizar_texto(texto):
