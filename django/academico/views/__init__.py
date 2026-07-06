@@ -1,5 +1,3 @@
-from academico.views_old import *
-
 from .v_universidad import *
 from .v_campus import *
 from .v_carrera import *
@@ -11,3 +9,4 @@ from .v_paralelo import *
 from .v_horario import *
 from .v_asignacion_docente import *
 from .v_evaluacion import *
+from .v_procesos_academicos import *
