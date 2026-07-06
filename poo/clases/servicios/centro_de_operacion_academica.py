@@ -196,11 +196,3 @@ class CentroDeOperacionAcademica:
         Delega al ProcesadorDeInforme.
         """
         return self._procesador.exportar_consolidado(informe, formato)
-
-    def consolidar_estadisticas(self, informe: InformeGeneral, evaluaciones: list):
-        """Consolida las estadísticas institucionales del informe."""
-        return informe.consolidar_estadisticas_institucionales(evaluaciones)
-
-    def estimar_tasas(self, informe: InformeGeneral, evaluaciones: list):
-        """Estima las tasas de aprobación del periodo."""
-        return informe.estimar_tasas_de_aprobacion(evaluaciones)
