@@ -78,17 +78,6 @@ class Docente(UsuarioAcademico, IAsignableAHorario):
             return False
         return True
 
-    def visualizar_carga_academica(self):
-        horas_disponibles = self.carga_horaria_maxima - self._carga_horaria_actual
-        
-        return {
-            "Docente": f"{self.nombres} {self.apellidos}",
-            "Universidad": str(self.universidad),
-            "Carga horaria actual": self._carga_horaria_actual,
-            "Carga horaria máxima": self.carga_horaria_maxima,
-            "Horas disponibles": horas_disponibles,
-        }
-
     def inhabilitar(self):
         self._estado_de_vinculacion = EstadoDeVinculacion.INACTIVO
         

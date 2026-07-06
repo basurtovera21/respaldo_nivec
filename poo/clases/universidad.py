@@ -86,18 +86,6 @@ class Universidad:
 
     # ── Comportamiento de dominio ──
 
-    def recuperar_informacion_institucional(self) -> dict:
-        """
-        Retorna un resumen estructurado de los datos institucionales.
-        Útil para reportes, informes y visualización.
-        """
-        return {
-            "Nombre": self._nombre,
-            "Abreviatura": self._abreviatura,
-            "Código SNIESE": self._codigo_sniese,
-            "Dirección de matriz": self._direccion_matriz,
-        }
-
     # ── Utilidades ──
 
     @staticmethod

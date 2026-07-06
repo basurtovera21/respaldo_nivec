@@ -61,11 +61,3 @@ class EvaluacionDeDesempeno:
         )
         return self._puntaje_final
 
-    def obtener_resumen_de_desempeno(self) -> dict:
-        return {
-            "Cumplimiento de carga horaria": f"{self._porcentaje_de_horas_cumplidas}%",
-            "Entrega oportuna de calificaciones": "Sí" if self._entrega_oportuna_de_calificaciones else "No",
-            "Aprobación del paralelo": f"{self._porcentaje_de_aprobacion_paralelo}%",
-            "Evaluación estudiantil": f"{self._resultado_de_evaluacion_estudiantil}/100.0",
-            "Puntaje final": self._puntaje_final,
-        }

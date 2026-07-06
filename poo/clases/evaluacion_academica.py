@@ -204,22 +204,6 @@ class EvaluacionAcademica(ISujetoDeEvaluacion):
 
     # ── Comportamiento de dominio ──
 
-    def obtener_resumen_de_evaluacion(self) -> dict:
-        """
-        Retorna un resumen estructurado de la evaluación académica.
-        Útil para reportes, informes y actas de paralelo.
-        """
-        return {
-            "Estudiante": f"{self._estudiante.nombres} {self._estudiante.apellidos}",
-            "Unidad_curricular": self._unidad_curricular.nombre,
-            "Calificación parcial 1": self._calificacion_parcial_1,
-            "Calificación parcial 2": self._calificacion_parcial_2,
-            "Nota final": self._nota_final,
-            "Porcentaje de asistencia": self._porcentaje_asistencia,
-            "Estado de aprobación": self._estado_de_aprobacion.value,
-            "Observación": self._observacion,
-        }
-
     def esta_aprobado(self) -> bool:
         """Indica si el estudiante aprobó la unidad curricular."""
         return self._estado_de_aprobacion == EstadoDeAprobacion.APROBADO
@@ -230,21 +214,3 @@ class EvaluacionAcademica(ISujetoDeEvaluacion):
 
     # ── Método de clase ──
 
-    @classmethod
-    def registrar_evaluacion_de_paralelo(cls, evaluaciones_academicas: list) -> list:
-        """
-        Genera el acta de evaluación de un paralelo completo.
-
-        Args:
-            evaluaciones_academicas: Lista de instancias de EvaluacionAcademica
-
-        Returns:
-            Lista de resúmenes (diccionarios) de cada evaluación
-        """
-        evaluacion_de_paralelo = []
-
-        for evaluacion_academica in evaluaciones_academicas:
-            resumen_de_estudiante = evaluacion_academica.obtener_resumen_de_evaluacion()
-            evaluacion_de_paralelo.append(resumen_de_estudiante)
-
-        return evaluacion_de_paralelo
