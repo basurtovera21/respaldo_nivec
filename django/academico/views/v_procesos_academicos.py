@@ -1,27 +1,21 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-import openpyxl
 from django.http import HttpResponse
-from usuarios.utils import generar_identificador_siguiente
+from datetime import date
 
-from .models import (Universidad, Campus, Carrera, MallaCurricular, UnidadCurricular,
-                     PeriodoDeNivelacion, Paralelo, Horario, CohorteDeMatricula,
-                     MatriculaParalelo, ConsolidadoAcademico, EvaluacionAcademica,
-                     IncidenciaAcademica, EvaluacionDeDesempeno, InformeGeneral)
-from .forms import (FormularioUniversidad, FormularioCampus, FormularioCarrera,
-                    FormularioMallaCurricular, FormularioUnidadCurricular,
-                    FormularioPeriodoDeNivelacion, FormularioParalelo, FormularioHorario,
-                    FormularioCohorteDeMatricula, FormularioMatriculaParalelo,
-                    FormularioConsolidadoAcademico, FormularioEvaluacionAcademica,
-                    FormularioIncidenciaAcademica, FormularioEvaluacionDeDesempeno,
-                    FormularioInformeGeneral)
-from . import services
-from datetime import datetime, date
+from academico.models import (CohorteDeMatricula, EvaluacionAcademica,
+                     IncidenciaAcademica, InformeGeneral)
+from academico.forms import (FormularioCohorteDeMatricula, FormularioMatriculaParalelo,
+                    FormularioEvaluacionAcademica, FormularioIncidenciaAcademica,
+                    FormularioEvaluacionDeDesempeno, FormularioInformeGeneral)
+from academico import services
 
 
+# ═══════════════════════════════════════════════════════════
+# PROCESOS ACADÉMICOS
+# ═══════════════════════════════════════════════════════════
 
-#Procesos académicos
 @login_required
 def listar_cohortes(request):
     cohortes = CohorteDeMatricula.objects.all().select_related(
@@ -62,7 +56,9 @@ def registrar_matricula(request):
     })
 
 
-
+# ═══════════════════════════════════════════════════════════
+# EVALUACIONES
+# ═══════════════════════════════════════════════════════════
 
 @login_required
 def listar_evaluaciones(request):
@@ -71,6 +67,7 @@ def listar_evaluaciones(request):
     )
     return render(request, "academico/listar_evaluaciones.html", {"evaluaciones": evaluaciones})
 
+
 @login_required
 def registrar_evaluacion(request):
     if request.method == "POST":
@@ -78,7 +75,7 @@ def registrar_evaluacion(request):
         if formulario.is_valid():
             evaluacion = formulario.save(commit=False)
             evaluacion.save()
-            services.servicio_registrar_evaluacion(evaluacion)
+            services.servicio_registrar_evaluacion_academica(evaluacion)
             messages.success(request, "Evaluación registrada correctamente.")
             return redirect("listar_evaluaciones")
     else:
@@ -89,12 +86,17 @@ def registrar_evaluacion(request):
     })
 
 
+# ═══════════════════════════════════════════════════════════
+# INCIDENCIAS
+# ═══════════════════════════════════════════════════════════
+
 @login_required
 def listar_incidencias(request):
     incidencias = IncidenciaAcademica.objects.all().select_related(
         "docente_implicado", "responsable_autorizacion"
     )
     return render(request, "academico/listar_incidencias.html", {"incidencias": incidencias})
+
 
 @login_required
 def registrar_incidencia(request):
@@ -112,26 +114,30 @@ def registrar_incidencia(request):
     })
 
 
+# ═══════════════════════════════════════════════════════════
+# DESEMPEÑO DOCENTE
+# ═══════════════════════════════════════════════════════════
+
 @login_required
 def registrar_desempeno(request):
     if request.method == "POST":
         formulario = FormularioEvaluacionDeDesempeno(request.POST)
         if formulario.is_valid():
             evaluacion = formulario.save(commit=False)
-            from poo.servicios.estrategia_de_evaluacion_estandar import EstrategiaDeEvaluacionEstandar
+            from poo.clases.servicios.estrategia_de_evaluacion_estandar import EstrategiaDeEvaluacionEstandar
             estrategia = EstrategiaDeEvaluacionEstandar(
-                porcentaje_horas = 0.25,
-                porcentaje_notas = 0.25,
-                porcentaje_aprobacion = 0.25,
-                porcentaje_evaluacion_estudiantil = 0.25
+                porcentaje_horas=0.25,
+                porcentaje_notas=0.25,
+                porcentaje_aprobacion=0.25,
+                porcentaje_evaluacion_estudiantil=0.25
             )
             from poo.clases.evaluacion_de_desempeno import EvaluacionDeDesempeno as EvaluacionDeDesempenoPOO
             evaluacion_poo = EvaluacionDeDesempenoPOO(
-                docente_responsable = None,
-                porcentaje_de_horas_cumplidas = evaluacion.porcentaje_de_horas_cumplidas,
-                entrega_oportuna_de_calificaciones = evaluacion.entrega_oportuna_de_calificaciones,
-                porcentaje_de_aprobacion_paralelo = evaluacion.porcentaje_de_aprobacion_paralelo,
-                resultado_de_evaluacion_estudiantil = evaluacion.resultado_de_evaluacion_estudiantil
+                docente_responsable=None,
+                porcentaje_de_horas_cumplidas=evaluacion.porcentaje_de_horas_cumplidas,
+                entrega_oportuna_de_calificaciones=evaluacion.entrega_oportuna_de_calificaciones,
+                porcentaje_de_aprobacion_paralelo=evaluacion.porcentaje_de_aprobacion_paralelo,
+                resultado_de_evaluacion_estudiantil=evaluacion.resultado_de_evaluacion_estudiantil
             )
             evaluacion.puntaje_final = evaluacion_poo.procesar_evaluacion(estrategia)
             evaluacion.save()
@@ -145,7 +151,10 @@ def registrar_desempeno(request):
     })
 
 
-#Informes
+# ═══════════════════════════════════════════════════════════
+# INFORMES
+# ═══════════════════════════════════════════════════════════
+
 @login_required
 def listar_informes(request):
     informes = InformeGeneral.objects.all().select_related("periodo_academico")
@@ -174,29 +183,25 @@ def emitir_informe(request, informe_id):
     from poo.clases.informe_general import InformeGeneral as InformeGeneralPOO
     from poo.clases.enums.tipo_de_informe import TipoDeInforme
     from poo.clases.periodo_de_nivelacion import PeriodoDeNivelacion as PeriodoDeNivelacionBase
-    from poo.clases.enums.modalidad import Modalidad
+    from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
 
     periodo_poo = PeriodoDeNivelacionBase(
-        codigo_periodo = informe.periodo_academico.codigo_periodo,
-        anio = informe.periodo_academico.anio,
-        periodo = informe.periodo_academico.periodo,
-        fecha_inicio = informe.periodo_academico.fecha_inicio,
-        fecha_fin = informe.periodo_academico.fecha_fin,
-        modalidad = Modalidad(informe.periodo_academico.modalidad),
-        numero_periodo = informe.periodo_academico.numero_periodo
+        codigo_periodo=informe.periodo_academico.codigo_periodo,
+        anio=informe.periodo_academico.anio,
+        periodo=informe.periodo_academico.periodo,
+        fecha_inicio=informe.periodo_academico.fecha_inicio,
+        fecha_fin=informe.periodo_academico.fecha_fin,
+        numero_periodo=informe.periodo_academico.numero_periodo,
+        estado=EstadoDePeriodo(informe.periodo_academico.estado)
     )
-    periodo_poo._estado = __import__(
-        'poo.clases.enums.estado_de_periodo', fromlist=['EstadoDePeriodo']
-    ).EstadoDePeriodo(informe.periodo_academico.estado)
 
     informe_poo = InformeGeneralPOO(
-        codigo_de_informe = informe.codigo_de_informe,
-        periodo_academico = periodo_poo,
-        tipo_de_informe = TipoDeInforme(informe.tipo_de_informe)
+        codigo_de_informe=informe.codigo_de_informe,
+        periodo_academico=periodo_poo,
+        tipo_de_informe=TipoDeInforme(informe.tipo_de_informe)
     )
     resultado = informe_poo.emitir_informe_de_nivelacion()
     if resultado:
-        from datetime import date
         informe.estado_de_informe = "Revisión"
         informe.fecha_de_emision = date.today()
         informe.save()
