@@ -308,3 +308,81 @@ def validar_horas_semanales_unidad(horas_semanales: float, jornada: Jornada) -> 
         ),
         "maximo": maximo,
     }
+
+
+
+# ══════════════════════════════════════════════════════════════
+# FUNCIONES DE GENERACIÓN AUTOMÁTICA DE HORARIOS
+# ══════════════════════════════════════════════════════════════
+
+def distribucion_simetrica(horas: float, max_dias: int = 5, min_h: int = 1, max_h: int = 3) -> list:
+    """
+    Reparte un total de horas en bloques de HORAS ENTERAS lo más iguales posible,
+    uno por día, cada bloque entre min_h y max_h, usando hasta max_dias días.
+
+    Algoritmo:
+        1. Redondea horas al entero más cercano
+        2. Calcula cuántos días se necesitan (min para cubrir con max_h por día)
+        3. Distribuye equitativamente con un bloque extra para los primeros días
+
+    Args:
+        horas: Total de horas a distribuir
+        max_dias: Máximo de días disponibles (default: 5, lunes a viernes)
+        min_h: Mínimo de horas por sesión (default: 1)
+        max_h: Máximo de horas por sesión (default: 3)
+
+    Returns:
+        Lista de enteros representando horas por día (ej: [2, 2, 1] para 5h en 3 días)
+    """
+    h = int(round(horas))
+    if h < min_h:
+        return []
+    dias = min(max_dias, h)
+    dias = max(dias, math.ceil(h / max_h))
+    dias = min(dias, max_dias)
+    dias = max(dias, 1)
+    base = h // dias
+    extra = h % dias
+    return [min(base + (1 if i < extra else 0), max_h) for i in range(dias)]
+
+
+def sugerir_bloque_libre(dia_poo, franja_inicio: time, franja_fin: time,
+                          bloque_horas: int, ocupados: list):
+    """
+    Busca un bloque horario libre dentro de una franja para un día específico.
+
+    Algoritmo:
+        Recorre la franja en pasos de 1 hora buscando un slot donde el bloque
+        no entre en conflicto con ningún horario ocupado.
+
+    Args:
+        dia_poo: Instancia de DiaDeSemana para el día buscado
+        franja_inicio: Hora de inicio de la franja permitida
+        franja_fin: Hora de fin de la franja permitida
+        bloque_horas: Duración del bloque a ubicar (en horas)
+        ocupados: Lista de instancias Horario que ya están reservadas
+
+    Returns:
+        Tupla (hora_inicio, hora_fin) del slot libre encontrado, o None si no hay espacio
+    """
+    from datetime import datetime, timedelta
+    from poo.clases.horario import Horario as HorarioPOO
+
+    base = datetime(2000, 1, 1, franja_inicio.hour, franja_inicio.minute)
+    tope = datetime(2000, 1, 1, franja_fin.hour, franja_fin.minute)
+    dur = timedelta(hours=bloque_horas)
+    paso = timedelta(minutes=60)
+    actual = base
+
+    while actual + dur <= tope:
+        h_ini = actual.time()
+        h_fin = (actual + dur).time()
+        candidato = HorarioPOO(
+            dia_semana=dia_poo, hora_inicio=h_ini, hora_fin=h_fin,
+            espacio_de_imparticion="",
+        )
+        if not any(candidato.verificar_conflicto_horario(o) for o in ocupados):
+            return (h_ini, h_fin)
+        actual += paso
+
+    return None

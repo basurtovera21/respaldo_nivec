@@ -105,3 +105,36 @@ class PeriodoDeNivelacion:
         if semanas > 12:
             return "El periodo no puede exceder las 12 semanas"
         return ""
+
+    # ── Consultas de estado (usadas por Django services.py) ──
+
+    def esta_en_planificacion(self) -> bool:
+        """Indica si el periodo está en estado de planificación."""
+        return self._estado == EstadoDePeriodo.PLANIFICACION
+
+    def esta_en_curso(self) -> bool:
+        """Indica si el periodo está en curso."""
+        return self._estado == EstadoDePeriodo.EN_CURSO
+
+    def esta_en_evaluacion(self) -> bool:
+        """Indica si el periodo está en fase de evaluación."""
+        return self._estado == EstadoDePeriodo.EVALUACION
+
+    def esta_cerrado(self) -> bool:
+        """Indica si el periodo está cerrado/finalizado."""
+        return self._estado == EstadoDePeriodo.CERRADO
+
+    def permite_gestion_matriculas(self) -> bool:
+        """
+        Indica si el periodo permite gestionar matrículas manualmente.
+        Solo en Planificación o En Curso.
+        """
+        return self._estado in (EstadoDePeriodo.PLANIFICACION, EstadoDePeriodo.EN_CURSO)
+
+    def permite_configurar_horarios(self) -> bool:
+        """Indica si se pueden crear/editar horarios (solo en Planificación)."""
+        return self._estado == EstadoDePeriodo.PLANIFICACION
+
+    def permite_evaluacion(self) -> bool:
+        """Indica si se pueden gestionar calificaciones (solo en Evaluación)."""
+        return self._estado == EstadoDePeriodo.EVALUACION

@@ -11,24 +11,7 @@ from poo.clases.interfaces.i_asignable_a_horario import IAsignableAHorario
 
 
 class Horario:
-    """
-    Entidad que representa una sesión de horario (bloque de tiempo) asignada
-    a un paralelo en un día y rango horario específico.
-
-    Responsabilidades:
-        - Encapsular los datos de una sesión de clase
-        - Calcular la duración en horas de la sesión
-        - Detectar conflictos horarios con otras sesiones (mismo día y solapamiento)
-        - Validar integridad de datos para registro
-
-    Principios:
-        - SRP: Solo gestiona la lógica de un bloque horario
-        - Usa IAsignableAHorario para referenciar al docente (ISP)
-    """
-
-    def __init__(self, dia_semana: DiaDeSemana, hora_inicio: time, hora_fin: time,
-                 espacio_de_imparticion: str = "",
-                 docente_responsable: Optional[IAsignableAHorario] = None, **kwargs):
+    def __init__(self, dia_semana: DiaDeSemana, hora_inicio: time, hora_fin: time, espacio_de_imparticion: str = "", docente_responsable: Optional[IAsignableAHorario] = None, **kwargs):
         self.dia_semana = dia_semana
         self.hora_inicio = hora_inicio
         self.hora_fin = hora_fin

@@ -858,13 +858,9 @@ def servicio_recalcular_cohorte_de_carrera(periodo_db, carrera):
 
 
 def _nombre_paralelo_letra(indice):
-    # 0->Paralelo A, 1->Paralelo B, ..., 25->Paralelo Z, 26->Paralelo A1...
-    letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    if indice < 26:
-        return f"Paralelo {letras[indice]}"
-    ciclo = (indice - 26) // 26 + 1
-    pos = (indice - 26) % 26
-    return f"Paralelo {letras[pos]}{ciclo}"
+    """Delega al método estático de la clase POO Paralelo."""
+    from poo.clases.paralelo import Paralelo as ParaleloBase
+    return ParaleloBase.generar_nombre_por_indice(indice)
 
 
 def servicio_generar_paralelos(periodo_db, capacidad=35):
@@ -1153,8 +1149,9 @@ def _paralelos_del_grupo_de_estudiantes(paralelo_db):
 
 
 def periodo_permite_gestion_matriculas(periodo_db):
-    # La matrícula manual solo se puede gestionar en Planificación o En curso.
-    return periodo_db.estado in (EstadoDePeriodo.PLANIFICACION.value, EstadoDePeriodo.EN_CURSO.value)
+    """Delega la consulta de estado al objeto POO PeriodoDeNivelacion."""
+    periodo_poo = _construir_periodo(periodo_db)
+    return periodo_poo.permite_gestion_matriculas()
 
 
 def servicio_retirar_estudiante_de_paralelo(estudiante_db, paralelo_db):
@@ -1277,8 +1274,9 @@ def _horarios_externos_para_paralelo(paralelo_db):
     return horarios_db
 
 def periodo_en_planificacion(periodo_db):
-    from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
-    return periodo_db.estado == EstadoDePeriodo.PLANIFICACION.value
+    """Delega la consulta de estado al objeto POO PeriodoDeNivelacion."""
+    periodo_poo = _construir_periodo(periodo_db)
+    return periodo_poo.esta_en_planificacion()
 
 def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, espacio):
     from poo.clases.franja_horaria import sesion_dentro_de_franja, DURACIONES_VALIDAS, texto_franja
@@ -1344,39 +1342,15 @@ def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, e
 
 
 def _sugerir_bloque_libre(dia_poo, franja_inicio, franja_fin, bloque_horas, ocupados):
-    from datetime import datetime, timedelta
-    base = datetime(2000, 1, 1, franja_inicio.hour, franja_inicio.minute)
-    tope = datetime(2000, 1, 1, franja_fin.hour, franja_fin.minute)
-    dur = timedelta(hours=bloque_horas)
-    paso = timedelta(minutes=60)
-    actual = base
-    while actual + dur <= tope:
-        h_ini = actual.time()
-        h_fin = (actual + dur).time()
-        candidato = HorarioPOO(
-            dia_semana=dia_poo, hora_inicio=h_ini, hora_fin=h_fin,
-            espacio_de_imparticion="",
-        )
-        if not any(candidato.verificar_conflicto_horario(o) for o in ocupados):
-            return (h_ini, h_fin)
-        actual += paso
-    return None
+    """Delega al módulo POO franja_horaria."""
+    from poo.clases.franja_horaria import sugerir_bloque_libre
+    return sugerir_bloque_libre(dia_poo, franja_inicio, franja_fin, bloque_horas, ocupados)
 
 
 def _distribucion_simetrica(horas, max_dias=5, min_h=1, max_h=3):
-    # Reparte 'horas' en bloques de HORAS ENTERAS lo más iguales posible, uno por día,
-    # cada bloque entre min_h y max_h, usando hasta max_dias días (lunes a viernes).
-    import math
-    h = int(round(horas))
-    if h < min_h:
-        return []
-    dias = min(max_dias, h)
-    dias = max(dias, math.ceil(h / max_h))
-    dias = min(dias, max_dias)
-    dias = max(dias, 1)
-    base = h // dias
-    extra = h % dias
-    return [min(base + (1 if i < extra else 0), max_h) for i in range(dias)]
+    """Delega al módulo POO franja_horaria."""
+    from poo.clases.franja_horaria import distribucion_simetrica
+    return distribucion_simetrica(horas, max_dias, min_h, max_h)
 
 
 def _generar_horario_para_unidad(paralelo_unidad_db):
@@ -1527,8 +1501,13 @@ def _semanas_de_periodo(periodo_db):
 
 
 def _horas_sincronicas_semanales(unidad, periodo_db):
-    import math
+    """Delega el cálculo a la clase POO UnidadCurricular."""
     semanas = periodo_db.numero_de_semanas if hasattr(periodo_db, 'numero_de_semanas') and periodo_db.numero_de_semanas else _semanas_de_periodo(periodo_db)
+    # Si unidad es un objeto Django (model), acceder a horas_sincronicas directamente
+    # Si es un objeto POO, usar el método calcular_horas_sincronicas_semanales
+    if hasattr(unidad, 'calcular_horas_sincronicas_semanales'):
+        return unidad.calcular_horas_sincronicas_semanales(semanas)
+    import math
     if semanas <= 0:
         return round(unidad.horas_sincronicas, 2)
     return math.ceil(unidad.horas_sincronicas / semanas)
@@ -1747,14 +1726,54 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
                 resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (el Estudiante no está registrado en el Paralelo)")
                 continue
 
-            # Calculate final grade and status
-            nota_final = round((p1 + p2) / 2, 2)
-            if asist < porcentaje_minimo:
-                estado = EstadoDeAprobacion.REPROBADO.value
-            elif nota_final >= criterio:
-                estado = EstadoDeAprobacion.APROBADO.value
-            else:
-                estado = EstadoDeAprobacion.REPROBADO.value
+            # Calculate final grade and status using POO EvaluacionAcademica (Chain of Responsibility)
+            from poo.clases.unidad_curricular import UnidadCurricular as UnidadCurricularPOO
+            from poo.clases.evaluacion_academica import EvaluacionAcademica as EvaluacionAcademicaPOO_Local
+            from poo.clases.usuarios.estudiante import Estudiante as EstudiantePOO
+            from poo.clases.enums.tipo_de_identificacion import TipoDeIdentificacion
+            from poo.clases.enums.jornada import Jornada as JornadaPOO
+            from poo.clases.enums.registro_de_cupo import RegistroDeCupo as RegistroDeCupoPOO
+
+            unidad_poo = UnidadCurricularPOO(
+                codigo_de_unidad=unidad_curricular_db.codigo_de_unidad,
+                nombre=unidad_curricular_db.nombre,
+                horas_totales=unidad_curricular_db.horas_totales,
+                horas_sincronicas=unidad_curricular_db.horas_sincronicas,
+                horas_asincronicas=unidad_curricular_db.horas_asincronicas,
+                criterio_de_aprobacion=criterio,
+                porcentaje_minimo_asistencia=porcentaje_minimo,
+            )
+            # Construir estudiante POO mínimo para la evaluación
+            est_usuario = estudiante.usuario_de_sistema
+            estudiante_poo = EstudiantePOO(
+                tipo_de_identificacion=obtener_enum_flexible(TipoDeIdentificacion, est_usuario.tipo_de_identificacion),
+                identificacion=est_usuario.identificacion,
+                nombres=est_usuario.nombres,
+                apellidos=est_usuario.apellidos,
+                correo_institucional=est_usuario.correo_institucional,
+                contrasena="temporal",
+                fecha_de_nacimiento=None,
+                sexo=est_usuario.sexo or "No especificado",
+                etnia=est_usuario.etnia or "No especificado",
+                porcentaje_de_discapacidad=0.0,
+                celular=est_usuario.celular or "",
+                direccion=est_usuario.direccion or "",
+                identificador_institucional=estudiante.identificador_institucional,
+                numero_de_matricula=estudiante.numero_de_matricula,
+                jornada=obtener_enum_flexible(JornadaPOO, estudiante.jornada),
+                registro_de_cupo=obtener_enum_flexible(RegistroDeCupoPOO, estudiante.registro_de_cupo),
+                carrera_registrada=estudiante.carrera_registrada,
+                campus_registrado=estudiante.campus_registrado,
+                estado_de_matricula=obtener_enum_flexible(EstadoDeMatricula, estudiante.estado_de_matricula),
+            )
+
+            evaluacion_poo = EvaluacionAcademicaPOO_Local(estudiante_poo, unidad_poo)
+            evaluacion_poo.registrar_calificacion(1, p1)
+            evaluacion_poo.registrar_calificacion(2, p2)
+            evaluacion_poo.registrar_asistencia_final(asist)
+            nota_final = evaluacion_poo.calcular_nota_final()
+            estado_resultado = evaluacion_poo.verificar_aprobacion()
+            estado = estado_resultado.value
 
             # Check if already exists
             existing = EvaluacionAcademica.objects.filter(
