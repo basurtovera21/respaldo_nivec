@@ -111,7 +111,7 @@ def listar_paralelos(request):
         perfil_admin = getattr(request.user, 'perfil_administrativo', None)
         if perfil_admin and perfil_admin.carrera_asignada:
             paralelos = paralelos.filter(unidad_curricular__malla_curricular__carrera=perfil_admin.carrera_asignada)
-            # Pre-load campus and carrera filters for coordinador UA
+            # Pre-cargar filtros de campus y carrera para Coordinador UA
             if not campus_filtro and perfil_admin.carrera_asignada.campus:
                 campus_filtro = str(perfil_admin.carrera_asignada.campus.id)
             if not carrera_id:
@@ -265,12 +265,12 @@ def detalle_paralelo(request, paralelo_id):
         "docente_responsable__usuario_de_sistema",
     ).order_by("unidad_curricular__codigo_de_unidad")
 
-    # Check if horario exists for the paralelo group
+    # Verificar si existe horario para el grupo de paralelos
     tiene_horario = Horario.objects.filter(
         paralelo__in=unidades
     ).exists()
 
-    # Check period state for conditional buttons
+    # Verificar estado del periodo para botones condicionales
     from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
     periodo = representativo.periodo_de_nivelacion
     es_evaluacion_o_cerrado = periodo.estado in (
@@ -366,7 +366,7 @@ def listar_estudiantes_paralelo(request, paralelo_id):
             "lleno": ocupacion_destino >= rep.capacidad_maxima,
         })
 
-    # Check if there are students available to add
+    # Verificar si hay estudiantes disponibles para agregar
     hay_estudiantes_disponibles = PerfilEstudiante.objects.filter(
         carrera_registrada=carrera,
         jornada=paralelo.jornada,
@@ -377,7 +377,7 @@ def listar_estudiantes_paralelo(request, paralelo_id):
         estudiantes_matriculados__paralelo__periodo_de_nivelacion=periodo
     ).exists()
 
-    # Determine if this user can manage students (reasignar/retirar)
+    # Determinar si el usuario puede gestionar estudiantes
     rol = obtener_rol_usuario(request.user)
     puede_gestionar_estudiantes = puede_gestionar and rol not in (ROL_DOCENTE, "ESTUDIANTE")
 

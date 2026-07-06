@@ -5,7 +5,7 @@ from academico.forms import FormularioUniversidad
 
 @requiere_perfil(ROL_DIRECTOR_DAN, ROL_COORDINADOR_DAN, ROL_COORDINADOR_UA, ROL_RECTOR, ROL_VICERRECTOR, ROL_DOCENTE, ROL_ESTUDIANTE)
 def detalle_universidad(request):
-    # Get universidad from any profile type
+    # Obtener universidad desde cualquier tipo de perfil
     perfil_admin = getattr(request.user, 'perfil_administrativo', None)
     perfil_docente = getattr(request.user, 'perfil_docente', None)
     
