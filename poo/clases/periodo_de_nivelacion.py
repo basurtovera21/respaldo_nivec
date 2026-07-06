@@ -84,15 +84,6 @@ class PeriodoDeNivelacion:
         diferencia_tiempo = self._fecha_fin - self._fecha_inicio
         return diferencia_tiempo.days // 7
 
-    def obtener_resumen_de_planificacion(self) -> dict:
-        return {
-            "Periodo": self._periodo,
-            "Fecha de inicio": self._fecha_inicio,
-            "Fecha de finalización": self._fecha_fin,
-            "Duración (en semanas)": self.calcular_duracion_semanas(),
-            "Estado": self._estado.value,
-        }
-
     @staticmethod
     def validar_unico_en_curso(periodos_en_curso_count: int) -> bool:
         return periodos_en_curso_count == 0

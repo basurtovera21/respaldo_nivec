@@ -78,10 +78,6 @@ class CentroDeOperacionAcademica:
         """Habilita a un docente previamente inhabilitado (INACTIVO → ACTIVO)."""
         docente.habilitar()
 
-    def obtener_carga_academica(self, docente: Docente) -> dict:
-        """Retorna el resumen de carga académica del docente."""
-        return docente.visualizar_carga_academica()
-
     def verificar_disponibilidad_horaria(self, docente: Docente, horario) -> bool:
         """Verifica si el docente tiene disponibilidad para un horario específico."""
         return docente.verificar_disponibilidad_horaria(horario)
@@ -140,18 +136,6 @@ class CentroDeOperacionAcademica:
         evaluacion.registrar_asistencia_final(porcentaje_asistencia)
         evaluacion.calcular_nota_final()
         return evaluacion.verificar_aprobacion()
-
-    def obtener_acta_de_paralelo(self, evaluaciones: list) -> list:
-        """
-        Genera el acta de evaluación de un paralelo completo.
-
-        Args:
-            evaluaciones: Lista de instancias EvaluacionAcademica
-
-        Returns:
-            Lista de resúmenes (diccionarios) por estudiante
-        """
-        return EvaluacionAcademica.registrar_evaluacion_de_paralelo(evaluaciones)
 
     # ══════════════════════════════════════════════════════════
     # SUBSISTEMA 5: PERIODOS DE NIVELACIÓN

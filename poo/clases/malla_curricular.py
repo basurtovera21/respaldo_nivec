@@ -252,45 +252,7 @@ class MallaCurricular(IClonable):
             total += unidad.obtener_horas_totales()
         return total
 
-    def calcular_total_horas_sincronicas(self) -> float:
-        """Suma de horas sincrónicas de todas las unidades curriculares."""
-        total = 0.0
-        for unidad in self._unidades_curriculares:
-            total += unidad.horas_sincronicas
-        return total
-
-    def validar_compatibilidad_horaria(self, semanas: int) -> dict:
-        """
-        Valida si la malla puede generar un horario viable dado un número de semanas.
-        Utiliza el límite de horas sincrónicas semanales definido en franja_horaria.
-
-        Args:
-            semanas: Número de semanas del periodo de referencia
-
-        Returns:
-            {"ok": True/False, "horas_semanales": float, "limite": int, ...}
-        """
-        from poo.clases.franja_horaria import validar_malla_cabe_en_horario
-
-        total_sincronicas = self.calcular_total_horas_sincronicas()
-        return validar_malla_cabe_en_horario(total_sincronicas, semanas)
-
     # ── Comportamiento de dominio ──
-
-    def recuperar_informacion_de_malla(self) -> dict:
-        """
-        Retorna un resumen estructurado de la malla curricular.
-        Útil para reportes e informes.
-        """
-        return {
-            "Código de malla": self._codigo_de_malla,
-            "Nombre": self._nombre,
-            "Versión": self._version_de_malla,
-            "Estado": self._estado.value,
-            "Total horas nivelación": self._total_horas_nivelacion,
-            "Unidades curriculares": len(self._unidades_curriculares),
-            "Editable": self.puede_editar_estructura(),
-        }
 
     def __str__(self):
         return f"{self._codigo_de_malla} ({self._nombre} - {self._version_de_malla})"

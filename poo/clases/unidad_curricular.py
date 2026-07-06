@@ -198,17 +198,5 @@ class UnidadCurricular(IUnidadEvaluable):
             return round(self.horas_sincronicas, 2)
         return math.ceil(self.horas_sincronicas / semanas)
 
-    def recuperar_informacion_de_unidad(self):
-        return {
-            "Código de unidad": self._codigo_de_unidad,
-            "Unidad curricular": self._nombre,
-            "Horas totales": self._horas_totales,
-            "Horas sincrónicas": self._horas_sincronicas,
-            "Horas asincrónicas": self._horas_asincronicas,
-            "Criterio de aprobación": self._criterio_de_aprobacion,
-            "Porcentaje mínimo de asistencia": self._porcentaje_minimo_asistencia,
-            "Distribución válida": self.validar_distribucion_de_horas_totales(),
-        }
-
     def __str__(self):
         return f"{self._codigo_de_unidad} ({self._nombre})"
