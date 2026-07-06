@@ -26,12 +26,6 @@ class ConsolidadoAcademico:
             if cedula:
                 self._indice_de_identificaciones[cedula] = registro
 
-
-    def verificar_aceptacion_cupo(self, identificacion: str):
-        #Verificación en los registros válidos de la MTN
-        return identificacion in self._indice_de_identificaciones
-    
-    
     def obtener_estadisticas_de_consolidado(self):
         if self.total_de_cupos_aceptados > 0:
             porcentaje_valido = (self._registros_validos / self.total_de_cupos_aceptados) * 100

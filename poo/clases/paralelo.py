@@ -277,36 +277,6 @@ class Paralelo:
 
     # ── Comportamiento de dominio ──
 
-    def obtener_resumen_horario(self) -> list:
-        """Retorna la lista de resúmenes de cada sesión de horario del paralelo."""
-        lista_de_resumenes_horarios = []
-
-        for horario in self._horarios:
-            resumen_de_la_sesion = horario.obtener_resumen_de_sesion()
-            lista_de_resumenes_horarios.append(resumen_de_la_sesion)
-
-        return lista_de_resumenes_horarios
-
-    def obtener_resumen(self) -> dict:
-        """
-        Retorna un resumen estructurado del paralelo.
-        Útil para reportes, paneles e informes.
-        """
-        return {
-            "Código de paralelo": self._codigo_de_paralelo,
-            "Nombre": self._nombre,
-            "Jornada": self._jornada.value if isinstance(self._jornada, Jornada) else str(self._jornada),
-            "Modalidad": self._modalidad.value if isinstance(self._modalidad, Modalidad) else str(self._modalidad),
-            "Capacidad máxima": self._capacidad_maxima,
-            "Estudiantes matriculados": self.total_estudiantes_matriculados,
-            "Cupos disponibles": self.cupos_disponibles,
-            "Horas agendadas": self.calcular_horas_agendadas(),
-            "Docente responsable": (
-                f"{self._docente_responsable.nombres} {self._docente_responsable.apellidos}"
-                if self._docente_responsable else "Sin asignar"
-            ),
-        }
-
     @staticmethod
     def generar_nombre_por_indice(indice: int) -> str:
         """

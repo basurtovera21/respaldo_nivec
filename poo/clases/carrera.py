@@ -97,19 +97,6 @@ class Carrera:
 
     # ── Comportamiento de dominio ──
 
-    def recuperar_informacion_de_carrera(self) -> dict:
-        """
-        Retorna un resumen estructurado de los datos de la carrera.
-        Útil para reportes, informes y visualización.
-        """
-        return {
-            "Código de carrera": self._codigo_de_carrera,
-            "Nombre": self._nombre,
-            "Vigencia SNIESE": self._vigencia_sniese,
-            "Estado": "Vigente" if self.esta_activa() else "Expirada",
-            "Días restantes": self.calcular_dias_restantes_vigencia(),
-        }
-
     # ── Utilidades ──
 
     @staticmethod

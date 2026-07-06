@@ -40,9 +40,6 @@ class ObservadorInformeGeneral(IObservadorDeEvaluacion):
 
     def actualizar(self, evaluacion_academica):
         if evaluacion_academica._estado_de_aprobacion != EstadoDeAprobacion.PENDIENTE:
-            resumen = evaluacion_academica.obtener_resumen_de_evaluacion()
             print(
-                f"[Observer/Informe] Estudiante: {resumen['Estudiante']}. "
-                f"Nota Final: {resumen['Nota final']}. "
-                f"Estado: {resumen['Estado de aprobación']}"
+                f"[Observer/Informe] Estado: {evaluacion_academica._estado_de_aprobacion.value}"
             )

@@ -16,16 +16,6 @@ class Horario:
         self.espacio_de_imparticion = espacio_de_imparticion
         self.docente_responsable = docente_responsable
 
-    def obtener_resumen_de_sesion(self):
-        return {
-            "Día de semana": self.dia_semana.value,
-            "Hora de inicio": str(self.hora_inicio),
-            "Hora de finalización": str(self.hora_fin),
-            "Duracion (en horas)": self.determinar_duracion_horas(),
-            "Espacio de impartición": self.espacio_de_imparticion,
-            "Docente responsable": f"{self.docente_responsable.nombres} {self.docente_responsable.apellidos}" if self.docente_responsable else "Sin asignar",
-        }
-
     def determinar_duracion_horas(self):
         inicio = self.hora_inicio.hour + self.hora_inicio.minute / 60
         fin = self.hora_fin.hour + self.hora_fin.minute / 60

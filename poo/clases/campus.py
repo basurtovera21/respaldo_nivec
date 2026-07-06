@@ -102,18 +102,6 @@ class Campus:
 
     # ── Comportamiento de dominio ──
 
-    def recuperar_informacion_de_campus(self) -> dict:
-        """
-        Retorna un resumen estructurado de los datos del campus.
-        Útil para reportes, informes y visualización.
-        """
-        return {
-            "Código de campus": self._codigo_de_campus,
-            "Nombre": self._nombre,
-            "Dirección física": self._direccion_fisica,
-            "Provincia": self._provincia,
-        }
-
     # ── Utilidades ──
 
     @staticmethod
