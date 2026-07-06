@@ -17,14 +17,12 @@ ROLES_VER = (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN, ROL_RECTOR, ROL_VICERRECTOR,
 
 
 def _obtener_universidad_usuario(user):
-    """Get universidad from perfil_administrativo, perfil_docente, or perfil_estudiante."""
     perfil_admin = getattr(user, 'perfil_administrativo', None)
     if perfil_admin:
         return perfil_admin.universidad
     perfil_docente = getattr(user, 'perfil_docente', None)
     if perfil_docente:
         return perfil_docente.universidad
-    # Para estudiantes
     from usuarios.models import PerfilEstudiante
     perfil_est = PerfilEstudiante.objects.filter(usuario_de_sistema=user).select_related("carrera_registrada__campus__universidad").first()
     if perfil_est and perfil_est.carrera_registrada:
@@ -36,7 +34,7 @@ def _obtener_universidad_usuario(user):
 def listar_evaluaciones_paralelo(request, paralelo_id):
     universidad_usuario = _obtener_universidad_usuario(request.user)
     if not universidad_usuario:
-        messages.warning(request, "La Universidad no ha sido registrada actualmente")
+        messages.warning(request, "La Institución no ha sido registrada actualmente")
         return redirect("panel_principal")
 
     paralelo = get_object_or_404(
@@ -45,7 +43,7 @@ def listar_evaluaciones_paralelo(request, paralelo_id):
     periodo = paralelo.periodo_de_nivelacion
 
     if periodo.estado not in (EstadoDePeriodo.EVALUACION.value, EstadoDePeriodo.CERRADO.value):
-        messages.warning(request, "Las calificaciones solo están disponibles cuando el Periodo está en evaluación o cerrado")
+        messages.warning(request, "Calificaciones no disponibles")
         return redirect("detalle_paralelo", paralelo_id=paralelo.id)
 
     evaluaciones = EvaluacionAcademica.objects.filter(
@@ -64,25 +62,18 @@ def listar_evaluaciones_paralelo(request, paralelo_id):
     es_coordinador_o_director = rol in (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
     es_administrativo = rol in (ROL_RECTOR, ROL_VICERRECTOR)
 
-    # Determinar estado de calificaciones
     todas_en_revision = evaluaciones.exists() and not evaluaciones.filter(estado_revision="Borrador").exists()
     todas_formalizadas = evaluaciones.exists() and not evaluaciones.exclude(estado_revision="Formalizado").exists()
     hay_en_revision = evaluaciones.filter(estado_revision="En revisión").exists()
 
-    # Permisos por rol para acciones de calificaciones
     ya_tiene_calificaciones = evaluaciones.exists()
     
-    # Ocultar carga si ya existen evaluaciones
     puede_cargar = es_evaluacion and (es_docente or es_coordinador_ua) and not ya_tiene_calificaciones
     
-    # Docente solo puede pasar a revisión si están en Borrador
     puede_pasar_revision = es_evaluacion and es_docente and ya_tiene_calificaciones and not todas_en_revision and not todas_formalizadas
-    
-    # Coordinador UA puede formalizar si no todas están formalizadas
+ 
     puede_formalizar = es_evaluacion and es_coordinador_ua and ya_tiene_calificaciones and not todas_formalizadas
     
-    # Docente edita en Borrador; Coordinador UA edita en Borrador y En revisión
-    # Si Coordinador UA subió calificaciones directamente, Docente no puede editar
     puede_editar_calificacion = es_evaluacion and (
         (es_docente and ya_tiene_calificaciones and not todas_en_revision and not todas_formalizadas) or
         (es_coordinador_ua and ya_tiene_calificaciones and not todas_formalizadas)
