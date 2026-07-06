@@ -1,4 +1,4 @@
-from .v_autentication import *
+from .v_autenticacion import *
 from .v_estudiantes import *
 from .v_administrativos import *
 from .v_coordinadores_dan import *
