@@ -1,6 +1,6 @@
 from django import forms
 from django.utils.safestring import mark_safe
-from academico.models import Campus, Carrera, PeriodoDeNivelacion
+from academico.models import Carrera, PeriodoDeNivelacion
 from .models import UsuarioDeSistema, PerfilDocente, PerfilEstudiante, PerfilAdministrativo
 from poo.clases.usuarios.usuario_de_sistema import UsuarioDeSistema as UsuarioDeSistemaBase
 from poo.clases.enums.estado_de_usuario import EstadoDeUsuario

@@ -4,7 +4,7 @@ from django.db import transaction
 from django.contrib.auth import authenticate, login, logout
 
 from usuarios.models import UsuarioDeSistema, PerfilDocente, PerfilAdministrativo, PerfilEstudiante
-from academico.models import Carrera, Campus
+from academico.models import Carrera
 
 from usuarios.utils import generar_identificador_siguiente
 
