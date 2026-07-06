@@ -60,7 +60,7 @@ def panel_director_dan(request):
     if perfil and perfil.universidad:
         tiene_universidad = True
 
-    from academico.models import Campus, Carrera, PeriodoDeNivelacion, MallaCurricular, UnidadCurricular, Paralelo, Horario
+    from academico.models import Campus, Carrera, PeriodoDeNivelacion, MallaCurricular, UnidadCurricular, Paralelo, Horario, ConsolidadoAcademico
     tiene_campus = Campus.objects.filter(universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
     tiene_carreras = Carrera.objects.filter(campus__universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
     tiene_periodos = PeriodoDeNivelacion.objects.filter(universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
@@ -68,6 +68,7 @@ def panel_director_dan(request):
     tiene_unidades = UnidadCurricular.objects.filter(malla_curricular__carrera__campus__universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
     tiene_paralelos = Paralelo.objects.filter(periodo_de_nivelacion__universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
     tiene_horarios = Horario.objects.filter(paralelo__periodo_de_nivelacion__universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
+    tiene_consolidados = ConsolidadoAcademico.objects.filter(periodo_academico__universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
 
     return render(request, "administrativo/panel_director_dan.html", {
         "tiene_universidad": tiene_universidad,
@@ -78,6 +79,7 @@ def panel_director_dan(request):
         "tiene_unidades": tiene_unidades,
         "tiene_paralelos": tiene_paralelos,
         "tiene_horarios": tiene_horarios,
+        "tiene_consolidados": tiene_consolidados,
     })
 
 @login_required
