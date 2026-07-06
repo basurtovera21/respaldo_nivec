@@ -20,7 +20,6 @@ def permisos_periodo(request):
     if not request.user.is_authenticated:
         return {}
 
-    # Obtener universidad del usuario
     perfil_admin = getattr(request.user, 'perfil_administrativo', None)
     if perfil_admin:
         universidad = perfil_admin.universidad

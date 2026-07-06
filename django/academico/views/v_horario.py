@@ -81,7 +81,7 @@ def listar_horarios_paralelo(request, paralelo_id):
             "completo": completo,
         })
 
-    # Validate if required hours exceed what's possible in the franja
+    # Validar si las horas requeridas exceden lo posible en la franja
     from poo.clases.franja_horaria import validar_horas_semanales_unidad, obtener_dias_habiles
     jornada_enum = Jornada(representativo.jornada)
     tiene_docente_asignado = False
@@ -93,7 +93,7 @@ def listar_horarios_paralelo(request, paralelo_id):
             u["maximo_disponible"] = validacion["maximo"]
         else:
             u["excede_maximo"] = False
-        # Check if docente is assigned to any unidad
+        # Verificar si el docente está asignado a alguna unidad
         if u["docente"]:
             tiene_docente_asignado = True
 
@@ -122,7 +122,7 @@ def listar_horarios_paralelo(request, paralelo_id):
             slots_hora_sabado.append(h_sab)
             h_sab += 1
 
-    # Colores de la paleta de la aplicación por unidad (tonos claros legibles)
+    # Colores por unidad curricular
     _COLORES_UNIDAD = [
         "#e8e8ed", "#d2e4ea", "#dce8d4", "#f0e6d2", "#e2d8ef",
         "#d8eef0", "#f5e0d8", "#d4e8e0", "#ede4d0", "#dfe0f5",
@@ -130,16 +130,16 @@ def listar_horarios_paralelo(request, paralelo_id):
     nombres_unidades = sorted(set(h.paralelo.unidad_curricular.nombre for h in horarios))
     mapa_colores = {nombre: _COLORES_UNIDAD[i % len(_COLORES_UNIDAD)] for i, nombre in enumerate(nombres_unidades)}
 
-    # Días para la grilla: lunes a domingo (todos los días para visualización completa)
+    # Días para la grilla (lunes a domingo)
     dias_habiles = obtener_dias_habiles()
     dias_grilla = [d.value for d in DiaDeSemana]  # Lunes a Domingo
 
-    # Días disponibles para el selector de agregar sesión (solo hábiles + sábado nocturna)
+    # Días disponibles para el selector de sesión
     dias_selector = [d.value for d in dias_habiles]
     if es_nocturna:
         dias_selector.append(DiaDeSemana.SABADO.value)
 
-    # Grilla: render all days uniformly using the main franja slots
+    # Grilla: renderizar todos los días usando los slots de la franja principal
     grilla = []
     for slot in slots_hora:
         fila = {"hora": f"{slot:02d}:00", "celdas": []}
@@ -159,7 +159,7 @@ def listar_horarios_paralelo(request, paralelo_id):
             fila["celdas"].append(bloque)
         grilla.append(fila)
 
-    # For nocturna, also add sábado morning slots if there are sessions there
+    # Para nocturna, agregar slots del sábado si hay sesiones
     if es_nocturna and slots_hora_sabado:
         for slot_sab in slots_hora_sabado:
             if slot_sab not in slots_hora:
@@ -181,14 +181,14 @@ def listar_horarios_paralelo(request, paralelo_id):
                     fila["celdas"].append(bloque)
                 grilla.append(fila)
 
-    # Generate integer hour options for the session form
+    # Generar opciones de hora para el formulario de sesión
     horas_disponibles = []
     if franja:
         h_opt = franja[0].hour
         while h_opt <= franja[1].hour:
             horas_disponibles.append(f"{h_opt:02d}:00")
             h_opt += 1
-    # For nocturna, also include sábado morning hours
+    # Para nocturna, incluir horas del sábado
     if es_nocturna:
         from poo.clases.franja_horaria import FRANJA_SABADO_NOCTURNA
         h_sab_opt = FRANJA_SABADO_NOCTURNA[0].hour
@@ -287,14 +287,14 @@ def editar_horario(request, horario_id):
     jornada_enum = Jornada(paralelo.jornada)
     es_nocturna = (jornada_enum == Jornada.NOCTURNA)
 
-    # Días disponibles: L-V + Sábado para nocturna (sin Domingo)
+    # Días disponibles: L-V + Sábado para nocturna
     from poo.clases.franja_horaria import obtener_dias_habiles, FRANJA_SABADO_NOCTURNA
     dias_habiles = obtener_dias_habiles()
     dias_disponibles = [d.value for d in dias_habiles]
     if es_nocturna:
         dias_disponibles.append(DiaDeSemana.SABADO.value)
 
-    # Integer hours for select
+    # Horas para el selector
     franja = obtener_franja(jornada_enum)
     horas_disponibles = []
     if franja:
@@ -375,7 +375,7 @@ def matriz_horarios(request):
     jornada_filtro = request.GET.get("jornada") or None
     paralelo_id = request.GET.get("paralelo") or None
 
-    # Role-based: Coordinador UA gets carrera pre-loaded
+    # Coordinador UA: carrera precargada
     from usuarios.utils import obtener_rol_usuario, ROL_COORDINADOR_UA
     rol = obtener_rol_usuario(request.user)
     es_coordinador_ua = (rol == ROL_COORDINADOR_UA)
@@ -400,7 +400,7 @@ def matriz_horarios(request):
     if carrera_id:
         carrera_seleccionada = carreras.filter(id=carrera_id).first()
 
-    # Build paralelo groups based on filters
+    # Construir grupos de paralelos según filtros
     if periodo_seleccionado:
         paralelos_qs = Paralelo.objects.filter(
             periodo_de_nivelacion=periodo_seleccionado
@@ -427,7 +427,7 @@ def matriz_horarios(request):
                 }
         grupos = sorted(grupos_vistos.values(), key=lambda g: (g["carrera"], g["nombre"]))
 
-        # If a paralelo is selected, build grilla
+        # Si hay un paralelo seleccionado, construir grilla
         if paralelo_id:
             paralelo_seleccionado = Paralelo.objects.filter(
                 id=paralelo_id, periodo_de_nivelacion=periodo_seleccionado
@@ -520,7 +520,7 @@ def descargar_horarios_excel(request):
         unidad_curricular__malla_curricular__carrera=carrera,
     ).select_related("unidad_curricular").order_by("jornada", "nombre")
 
-    # Group by jornada
+    # Agrupar por jornada
     jornadas_dict = {}
     for p in paralelos:
         jornadas_dict.setdefault(p.jornada, []).append(p)
@@ -537,7 +537,7 @@ def descargar_horarios_excel(request):
         ws = wb.create_sheet(title=str(jornada_nombre)[:31])
         ws.append(["Código de Paralelo", "Nombre", "Unidad curricular", "Día", "Hora de inicio", "Hora de finalización", "Espacio de impartición"])
 
-        # Orden personalizado de días para ordenar Lunes primero
+        # Orden de días (Lunes primero)
         _ORDEN_DIA = {"Lunes": 1, "Martes": 2, "Miércoles": 3, "Jueves": 4, "Viernes": 5, "Sábado": 6, "Domingo": 7}
 
         horarios = list(Horario.objects.filter(
@@ -602,7 +602,7 @@ def horario_consolidado_docente(request):
             paralelo__in=paralelos_docente
         ).select_related("paralelo__unidad_curricular").order_by("dia_semana", "hora_inicio")
 
-        # Build grid covering the widest franja the docente has sessions in
+        # Construir grilla cubriendo la franja más amplia del docente
         if horarios.exists():
             min_hora = min(h.hora_inicio.hour for h in horarios)
             max_hora = max(h.hora_fin.hour for h in horarios)

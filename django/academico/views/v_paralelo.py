@@ -34,7 +34,7 @@ def _obtener_universidad_usuario(user):
     perfil_docente = getattr(user, 'perfil_docente', None)
     if perfil_docente:
         return perfil_docente.universidad
-    # For students, get from their carrera's campus
+    # Para estudiantes, obtener desde el campus de su carrera
     from usuarios.models import PerfilEstudiante
     perfil_est = PerfilEstudiante.objects.filter(usuario_de_sistema=user).select_related("carrera_registrada__campus__universidad").first()
     if perfil_est and perfil_est.carrera_registrada:

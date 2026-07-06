@@ -91,20 +91,16 @@ def servicio_administrativo_registrar_masivo_desde_excel(archivo, universidad_us
                 tipo_id_str, identificacion_str = str(tipo_id).strip().capitalize(), str(identificacion).strip()
                 correo_str = str(correo).strip()
 
-                # Validar perfil via POO
                 perfil_exacto = UsuarioAdministrativoBase.obtener_perfil_exacto(perfil_str, perfiles_permitidos)
                 if not perfil_exacto:
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (perfil no válido)"); continue
 
-                # Validar identificación via POO
                 try: UsuarioDeSistemaBase.validar_contrasena(identificacion_str)
                 except ValueError as e: resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido ({str(e)})"); continue
 
-                # Validar correo via POO
                 if not UsuarioDeSistemaBase.validar_correo_institucional(correo_str):
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (correo institucional no válido)"); continue
 
-                # Verificar duplicados
                 if UsuarioDeSistema.objects.filter(identificacion=identificacion_str).exists():
                     resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (el Administrativo ya ha sido registrado)"); continue
                 if UsuarioDeSistema.objects.filter(correo_institucional__iexact=correo_str).exists():
@@ -350,11 +346,9 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
             row_data = list(fila) + [None] * 4  # pad safely
 
             if periodo_de_nivelacion is not None:
-                # MTN format: 8 columns (tipo_id, ident, nom, ape, corr, jor, cupo, cod_carr)
                 tipo_id, ident, nom, ape, corr, jor, cupo, cod_carr = row_data[:8]
                 cod_periodo = None
             else:
-                # Student bulk format: 9 columns (tipo_id, ident, nom, ape, corr, cod_periodo, cod_carr, jor, cupo)
                 tipo_id, ident, nom, ape, corr, cod_periodo, cod_carr, jor, cupo = row_data[:9]
 
             if not any([tipo_id, ident, nom, ape, corr, jor, cupo, cod_carr]):
@@ -392,7 +386,6 @@ def servicio_estudiante_registrar_masivo_desde_excel(archivo, universidad_usuari
                     )
                     continue
 
-                # Determinar periodo: primero desde Excel, luego parámetro
                 periodo_asignado = None
                 if registro["codigo_periodo"]:
                     periodo_asignado = PeriodoDB.objects.filter(

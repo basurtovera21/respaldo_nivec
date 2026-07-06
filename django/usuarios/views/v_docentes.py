@@ -198,7 +198,6 @@ def inhabilitar_docente(request, docente_id):
 
     docente_db = get_object_or_404(PerfilDocente, id=docente_id, universidad=universidad_usuario)
     
-    # La decisión de inhabilitar pasa por el Facade (subsistema POO)
     docente_poo = _crear_docente(docente_db)
     facade = CentroDeOperacionAcademica()
     facade.inhabilitar_docente(docente_poo)
@@ -207,7 +206,7 @@ def inhabilitar_docente(request, docente_id):
         docente_db.estado_de_vinculacion = EnumEstadoDeVinculacion.INACTIVO.value
         docente_db.save()
         usuario = docente_db.usuario_de_sistema
-        # Only block login if the user is NOT also a Coordinador UA
+        # Solo bloquear login si NO es también Coordinador UA
         es_coordinador_ua = hasattr(usuario, 'perfil_administrativo') and usuario.perfil_administrativo.perfil_administrativo == "Coordinador de unidad académica"
         if not es_coordinador_ua:
             usuario.estado_de_usuario = EnumEstadoDeUsuario.INACTIVO.value
@@ -234,7 +233,7 @@ def habilitar_docente(request, docente_id):
         docente_db.estado_de_vinculacion = EnumEstadoDeVinculacion.ACTIVO.value
         docente_db.save()
         usuario = docente_db.usuario_de_sistema
-        # Restore login regardless (safe to do)
+        # Restaurar acceso al sistema
         if usuario.estado_de_usuario != EnumEstadoDeUsuario.ACTIVO.value:
             usuario.estado_de_usuario = EnumEstadoDeUsuario.ACTIVO.value
             usuario.is_active = True

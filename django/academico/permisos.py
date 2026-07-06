@@ -180,7 +180,7 @@ def todas_calificaciones_formalizadas_por_carrera(universidad, carrera=None):
     if not universidad:
         return False
     
-    # Get active period in evaluación or cerrado
+    # Obtener periodo activo en evaluación o cerrado
     periodo = PeriodoDeNivelacion.objects.filter(
         universidad=universidad,
         estado__in=[EstadoDePeriodo.EVALUACION.value, EstadoDePeriodo.CERRADO.value]
@@ -199,6 +199,6 @@ def todas_calificaciones_formalizadas_por_carrera(universidad, carrera=None):
     if not evaluaciones.exists():
         return False
     
-    # Check if any are NOT formalized
+    # Verificar si alguna NO está formalizada
     no_formalizadas = evaluaciones.exclude(estado_revision="Formalizado").exists()
     return not no_formalizadas
