@@ -309,5 +309,24 @@ class Paralelo:
             ),
         }
 
-    def __str__(self):
-        return f"{self._nombre} ({self._jornada.value if isinstance(self._jornada, Jornada) else self._jornada})"
+    @staticmethod
+    def generar_nombre_por_indice(indice: int) -> str:
+        """
+        Genera el nombre de un paralelo basado en un índice secuencial.
+
+        Nomenclatura:
+            0 → "Paralelo A", 1 → "Paralelo B", ..., 25 → "Paralelo Z"
+            26 → "Paralelo A1", 27 → "Paralelo B1", ...
+
+        Args:
+            indice: Índice base-0 del paralelo
+
+        Returns:
+            Nombre generado (ej: "Paralelo A", "Paralelo C1")
+        """
+        letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        if indice < 26:
+            return f"Paralelo {letras[indice]}"
+        ciclo = (indice - 26) // 26 + 1
+        pos = (indice - 26) % 26
+        return f"Paralelo {letras[pos]}{ciclo}"
