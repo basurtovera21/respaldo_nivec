@@ -57,29 +57,21 @@ def obtener_permisos_periodo(universidad):
     """
     estado = _obtener_estado_periodo_activo(universidad)
 
-    # Estados que permiten gestión completa de estructura
     es_editable = estado in ("SIN_PERIODO", "PLANIFICACION", "SOLO_CERRADOS")
 
-    # Estados que permiten gestión de estudiantes y docentes
     es_gestionable = estado in ("SIN_PERIODO", "PLANIFICACION", "EN_CURSO", "SOLO_CERRADOS")
 
-    # Estado específicamente en planificación (para paralelos/horarios)
     es_planificacion = estado == "PLANIFICACION"
 
-    # Periodo en curso
     es_en_curso = estado == "EN_CURSO"
 
-    # Evaluación
     es_evaluacion = estado == "EVALUACION"
 
-    # Cerrado
     es_cerrado = estado == "CERRADO"
 
-    # Planificación o en curso (para reasignación de estudiantes)
     es_planificacion_o_en_curso = estado in ("PLANIFICACION", "EN_CURSO")
 
     return {
-        # Estado actual (para referencia)
         "estado_periodo": estado,
 
         # ── UNIVERSIDAD ──

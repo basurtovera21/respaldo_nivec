@@ -1,4 +1,3 @@
-# Interfaz
 from poo.clases.interfaces.i_unidad_evaluable import IUnidadEvaluable
 
 

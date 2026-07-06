@@ -1,8 +1,6 @@
-# Enums
 from poo.clases.enums.jornada import Jornada
 from poo.clases.enums.modalidad import Modalidad
 
-# Usuarios
 from poo.clases.usuarios.docente import Docente
 from poo.clases.usuarios.estudiante import Estudiante
 

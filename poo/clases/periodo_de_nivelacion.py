@@ -1,6 +1,5 @@
 from datetime import date
 
-# Enums
 from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
 
 

@@ -1,4 +1,3 @@
-#Malla curricular
 from enum import Enum
 
 

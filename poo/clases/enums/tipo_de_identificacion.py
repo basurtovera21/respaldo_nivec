@@ -1,4 +1,3 @@
-#Usuario de sistema
 from enum import Enum
 
 

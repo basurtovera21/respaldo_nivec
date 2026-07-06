@@ -1,8 +1,6 @@
-#Enums
 from poo.clases.enums.tipo_de_identificacion import TipoDeIdentificacion
 from poo.clases.enums.estado_de_usuario import EstadoDeUsuario
 
-#Clase abstracta
 from abc import ABCMeta
 from abc import abstractmethod
 

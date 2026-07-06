@@ -1,4 +1,3 @@
-#Horario
 from enum import Enum
 
 

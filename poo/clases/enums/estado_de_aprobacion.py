@@ -1,4 +1,3 @@
-#Evaluación académica
 from enum import Enum
 
 

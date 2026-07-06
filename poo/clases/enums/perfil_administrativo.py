@@ -1,4 +1,3 @@
-#Usuario administrativo
 from enum import Enum
 
 

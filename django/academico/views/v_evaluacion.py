@@ -192,15 +192,12 @@ def detalle_evaluacion(request, evaluacion_id):
     estudiante = evaluacion.estudiante
     usuario = estudiante.usuario_de_sistema
 
-    # Métricas de aprobación definidas
     criterio_nota = unidad.criterio_de_aprobacion
     criterio_asistencia = unidad.porcentaje_minimo_asistencia
 
-    # Métricas actuales del estudiante
     nota_actual = evaluacion.nota_final
     asistencia_actual = evaluacion.porcentaje_asistencia
 
-    # Motivo detallado
     cumple_nota = nota_actual >= criterio_nota
     cumple_asistencia = asistencia_actual >= criterio_asistencia
 

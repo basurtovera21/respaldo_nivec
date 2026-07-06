@@ -41,11 +41,9 @@ class FormularioUniversidad(BaseModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Required fields
         self.fields['nombre'].required = False
         self.fields['abreviatura'].required = False
         self.fields['codigo_sniese'].required = False
-        # Optional fields
         self.fields['direccion_matriz'].required = False
         self.fields['identificador_visual'].required = False
 
@@ -725,7 +723,6 @@ class FormularioEvaluacionAcademica(forms.ModelForm):
             "observacion": "Observación",
         }
         widgets = {
-            #Deshabilitar
             "nota_final": forms.NumberInput(attrs={'readonly': True}),
             "estado_de_aprobacion": forms.TextInput(attrs={'readonly': True}),
         }

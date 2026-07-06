@@ -1,9 +1,7 @@
-#Enums
 from poo.clases.enums.jornada import Jornada
 from poo.clases.enums.registro_de_cupo import RegistroDeCupo
 from poo.clases.enums.estado_de_matricula import EstadoDeMatricula
 
-#Herencia
 from poo.clases.usuarios.usuario_academico import UsuarioAcademico
 
 
@@ -32,7 +30,6 @@ class Estudiante(UsuarioAcademico):
         self._campus_registrado = campus_registrado
         self._estado_de_matricula = EstadoDeMatricula.MATRICULADO #Instancia de Enum
 
-    # --- Propiedades (encapsulación) ---
 
     @property
     def numero_de_matricula(self):
@@ -58,7 +55,6 @@ class Estudiante(UsuarioAcademico):
     def estado_de_matricula(self):
         return self._estado_de_matricula
 
-    # --- Métodos de validación ---
 
     def validar_datos_de_registro(self) -> dict:
         errores = {}
@@ -70,7 +66,6 @@ class Estudiante(UsuarioAcademico):
             errores["carrera_registrada"] = "Información requerida"
         return errores
 
-    # --- Métodos de negocio ---
 
     def iniciar_sesion(self):
         if self._estado_de_matricula in (EstadoDeMatricula.RETIRADO, EstadoDeMatricula.ANULADO):

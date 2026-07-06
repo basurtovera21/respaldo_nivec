@@ -1,4 +1,3 @@
-#Unidad curricular
 from enum import Enum
 
 

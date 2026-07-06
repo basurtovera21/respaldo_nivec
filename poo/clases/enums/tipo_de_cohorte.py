@@ -1,4 +1,3 @@
-#Cohorte de matrícula
 from enum import Enum
 
 

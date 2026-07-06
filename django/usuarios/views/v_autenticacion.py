@@ -414,7 +414,7 @@ def panel_estudiante(request):
                     fila["celdas"].append(bloque)
                 grilla.append(fila)
 
-    # Aviso de estado and permissions
+    # Aviso de estado y permisos
     permisos = obtener_permisos_periodo(universidad) if universidad else {}
     estado = permisos.get("estado_periodo", "")
     aviso_estado = ""
