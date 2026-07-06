@@ -221,22 +221,47 @@ def _construir_periodo(periodo_db):
 
 def servicio_iniciar_periodo_de_nivelacion(periodo_db):
     from poo.clases.servicios.centro_de_operacion_academica import CentroDeOperacionAcademica
+    from academico.models import Paralelo, MatriculaParalelo
+    from academico.services import _horas_sincronicas_semanales, servicio_horas_agendadas_paralelo
 
-    # Validar que solo 1 periodo puede estar "En curso" a la vez
+    if periodo_db.estado != EstadoDePeriodo.PLANIFICACION.value:
+        return (False, "El Periodo de nivelación no se encuentra en planificación")
+
     periodos_en_curso = PeriodoDeNivelacion.objects.filter(
         universidad=periodo_db.universidad,
         estado=EstadoDePeriodo.EN_CURSO.value
     ).exclude(pk=periodo_db.pk)
     if periodos_en_curso.exists():
-        return False
+        return (False, "Ya existe un Periodo de nivelación en curso")
+
+    paralelos = Paralelo.objects.filter(periodo_de_nivelacion=periodo_db)
+    if not paralelos.exists():
+        return (False, "No existen Paralelos creados para este Periodo")
+
+    sin_docente = paralelos.filter(docente_responsable__isnull=True)
+    if sin_docente.exists():
+        return (False, "Todos los Paralelos deben tener un Docente designado para iniciar el Periodo")
+
+    for paralelo in paralelos:
+        agendadas = servicio_horas_agendadas_paralelo(paralelo)
+        requeridas = _horas_sincronicas_semanales(paralelo.unidad_curricular, periodo_db)
+        if agendadas < requeridas:
+            return (False, f"El Paralelo {paralelo.nombre} ({paralelo.unidad_curricular.nombre}) no tiene el Horario completo")
+
+    tiene_estudiantes = MatriculaParalelo.objects.filter(
+        paralelo__periodo_de_nivelacion=periodo_db
+    ).exists()
+    if not tiene_estudiantes:
+        return (False, "No existen Estudiantes matriculados en los Paralelos")
 
     periodo_poo = _construir_periodo(periodo_db)
     facade = CentroDeOperacionAcademica()
     if facade.iniciar_periodo(periodo_poo):
         periodo_db.estado = periodo_poo.estado.value
         periodo_db.save()
-        return True
-    return False
+        return (True, f"El Periodo de nivelación {periodo_db.periodo} ha iniciado")
+
+    return (False, "No se ha podido iniciar el Periodo de nivelación")
 
 def servicio_pasar_a_evaluacion(periodo_db):
     if periodo_db.estado != EstadoDePeriodo.EN_CURSO.value:

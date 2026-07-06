@@ -123,11 +123,8 @@ def eliminar_periodo(request, periodo_id):
 def iniciar_periodo(request, periodo_id):
     universidad_usuario = request.user.perfil_administrativo.universidad
     periodo_db = get_object_or_404(PeriodoDeNivelacion, pk=periodo_id, universidad=universidad_usuario)
-    if services.servicio_iniciar_periodo_de_nivelacion(periodo_db):
-        messages.success(request, f"El Periodo de nivelación {periodo_db.periodo} ha iniciado")
-    else:
-        messages.error(request, "No se ha podido iniciar el Periodo de nivelación (Periodo de nivelación activo)")
-        
+    ok, mensaje = services.servicio_iniciar_periodo_de_nivelacion(periodo_db)
+    (messages.success if ok else messages.error)(request, mensaje)
     return redirect("listar_periodos")
 
 @requiere_perfil(ROL_DIRECTOR_DAN)
