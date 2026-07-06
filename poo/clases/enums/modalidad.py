@@ -1,4 +1,3 @@
-#Periodo de nivelación
 from enum import Enum
 
 

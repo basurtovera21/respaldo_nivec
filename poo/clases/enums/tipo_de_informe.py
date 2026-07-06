@@ -1,4 +1,3 @@
-#Informe institucional
 from enum import Enum
 
 

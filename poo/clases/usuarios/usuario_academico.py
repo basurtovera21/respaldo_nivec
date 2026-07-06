@@ -1,4 +1,3 @@
-#Herencia
 from poo.clases.usuarios.usuario_de_sistema import UsuarioDeSistema
 
 

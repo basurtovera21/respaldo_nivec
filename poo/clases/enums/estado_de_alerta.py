@@ -1,4 +1,3 @@
-#Monitor normativo
 from enum import Enum
 
 

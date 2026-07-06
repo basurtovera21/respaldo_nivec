@@ -1,6 +1,5 @@
 from datetime import date
 
-#Usuarios
 from poo.clases.usuarios.docente import Docente
 from poo.clases.usuarios.usuario_administrativo import UsuarioAdministrativo
 

@@ -3,10 +3,8 @@ from __future__ import annotations
 from datetime import time
 from typing import Optional
 
-#Enums
 from poo.clases.enums.dia_de_semana import DiaDeSemana
 
-#Interfaz
 from poo.clases.interfaces.i_asignable_a_horario import IAsignableAHorario
 
 

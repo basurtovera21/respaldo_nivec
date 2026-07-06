@@ -1,13 +1,11 @@
 from datetime import date
 
-#Enums
 from poo.clases.enums.tipo_de_informe import TipoDeInforme
 from poo.clases.enums.estado_de_informe import EstadoDeInforme
 from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
 from poo.clases.enums.estado_de_aprobacion import EstadoDeAprobacion
 from poo.clases.enums.estado_de_matricula import EstadoDeMatricula
 
-#Interface
 from poo.clases.interfaces.i_informe_institucional import IInformeInstitucional
 
 from poo.clases.periodo_de_nivelacion import PeriodoDeNivelacion

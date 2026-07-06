@@ -102,7 +102,7 @@ def listar_paralelos(request):
     if jornada_filtro:
         paralelos = paralelos.filter(jornada=jornada_filtro)
 
-    # Role-based filtering
+    # Filtrar por rol
     rol = obtener_rol_usuario(request.user)
     es_coordinador_ua = (rol == ROL_COORDINADOR_UA)
     puede_distribuir = rol in (ROL_COORDINADOR_DAN, ROL_DIRECTOR_DAN)
@@ -277,7 +277,7 @@ def detalle_paralelo(request, paralelo_id):
         EstadoDePeriodo.EVALUACION.value, EstadoDePeriodo.CERRADO.value
     )
 
-    # Role-based access control
+    # Control de acceso por rol
     rol = obtener_rol_usuario(request.user)
     if rol == ROL_COORDINADOR_UA:
         perfil_admin = getattr(request.user, 'perfil_administrativo', None)
@@ -313,7 +313,7 @@ def listar_estudiantes_paralelo(request, paralelo_id):
     )
     carrera = paralelo.unidad_curricular.malla_curricular.carrera
 
-    # Role-based access control
+    # Control de acceso por rol
     rol = obtener_rol_usuario(request.user)
     if rol == ROL_DOCENTE:
         perfil_docente = getattr(request.user, 'perfil_docente', None)

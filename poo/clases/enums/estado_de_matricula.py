@@ -1,4 +1,3 @@
-# estado_de_matricula.py
 from enum import Enum
 
 class EstadoDeMatricula(Enum):

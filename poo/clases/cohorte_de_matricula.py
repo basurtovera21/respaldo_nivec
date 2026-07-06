@@ -1,6 +1,5 @@
 from datetime import date
 
-#Enums
 from poo.clases.enums.estado_de_cohorte import EstadoDeCohorte
 from poo.clases.enums.tipo_de_cohorte import TipoDeCohorte
 from poo.clases.enums.registro_de_cupo import RegistroDeCupo

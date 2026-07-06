@@ -1,10 +1,7 @@
-# Patrón creacional: Prototype
 import copy
 
-# Enums
 from poo.clases.enums.estado_de_malla import EstadoDeMalla
 
-# Interfaces
 from poo.clases.interfaces.i_unidad_evaluable import IUnidadEvaluable
 from poo.clases.interfaces.i_clonable import IClonable
 

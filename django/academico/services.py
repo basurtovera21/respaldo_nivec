@@ -11,7 +11,6 @@ from academico.models import (
 from usuarios.models import PerfilEstudiante
 from usuarios.utils import generar_identificador_siguiente
 
-# Enums
 from poo.clases.enums.estado_de_matricula import EstadoDeMatricula
 from poo.clases.enums.estado_de_aprobacion import EstadoDeAprobacion
 from poo.clases.enums.estado_de_periodo import EstadoDePeriodo
@@ -21,7 +20,6 @@ from poo.clases.enums.tipo_de_cohorte import TipoDeCohorte
 from poo.clases.enums.dia_de_semana import DiaDeSemana
 from poo.clases.enums.estado_de_malla import EstadoDeMalla
 
-# POO
 from poo.clases.carrera import Carrera as CarreraBase
 from poo.clases.periodo_de_nivelacion import PeriodoDeNivelacion as PeriodoDeNivelacionBase
 from poo.clases.evaluacion_academica import EvaluacionAcademica as EvaluacionAcademicaPOO
@@ -247,24 +245,20 @@ def servicio_pasar_a_evaluacion(periodo_db):
     from academico.models import Paralelo, Horario, MatriculaParalelo
     from academico.services import _horas_sincronicas_semanales, servicio_horas_agendadas_paralelo
     
-    # Validar que existan paralelos
     paralelos = Paralelo.objects.filter(periodo_de_nivelacion=periodo_db)
     if not paralelos.exists():
         return (False, "No existen Paralelos creados para este Periodo")
     
-    # Validar que todos los paralelos tengan docente asignado
     sin_docente = paralelos.filter(docente_responsable__isnull=True)
     if sin_docente.exists():
         return (False, "Todos los Paralelos deben tener un Docente designado para pasar a evaluación")
     
-    # Validar que todos los paralelos tengan horario completo
     for paralelo in paralelos:
         agendadas = servicio_horas_agendadas_paralelo(paralelo)
         requeridas = _horas_sincronicas_semanales(paralelo.unidad_curricular, periodo_db)
         if agendadas < requeridas:
             return (False, f"El Paralelo {paralelo.nombre} ({paralelo.unidad_curricular.nombre}) no tiene el Horario completo")
     
-    # Validar que haya estudiantes matriculados
     tiene_estudiantes = MatriculaParalelo.objects.filter(
         paralelo__periodo_de_nivelacion=periodo_db
     ).exists()
@@ -280,7 +274,6 @@ def servicio_finalizar_periodo_de_nivelacion(periodo_db):
     if periodo_db.estado != EstadoDePeriodo.EVALUACION.value:
         return (False, "El Periodo de nivelación debe estar en evaluación para poder finalizarlo")
     
-    # Verificar que al menos una carrera tenga todas sus calificaciones formalizadas
     from academico.models import Carrera
     carreras = Carrera.objects.filter(campus__universidad=periodo_db.universidad)
     
@@ -1067,7 +1060,6 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                         if not miembros:
                             continue
                         nombre_nuevo = _nombre_paralelo_letra(indice_base + indice - 1)
-                        # Un solo código para todo el paralelo lógico (todas sus unidades).
                         contador_codigo += 1
                         codigo_nuevo = f"PAR{contador_codigo:03d}"
                         for unidad in unidades:
@@ -1090,7 +1082,6 @@ def servicio_generar_paralelos(periodo_db, capacidad=35):
                         resumen["grupos_creados"] += 1
                         estudiantes_a_contar.extend(miembros)
 
-                # El conteo por tipo de cupo vive en la POO CohorteDeMatricula.
                 cohorte_poo = CohorteDeMatriculaPOO(
                     codigo_de_registro=cohorte.codigo_de_registro,
                     nombre_cohorte=cohorte.nombre_cohorte,
@@ -1162,7 +1153,6 @@ def servicio_mover_estudiante(estudiante_db, paralelo_destino_db):
 
 
 def _paralelos_del_grupo_de_estudiantes(paralelo_db):
-    # Todas las filas Paralelo (una por unidad) del mismo paralelo lógico.
     carrera = paralelo_db.unidad_curricular.malla_curricular.carrera
     return Paralelo.objects.filter(
         periodo_de_nivelacion=paralelo_db.periodo_de_nivelacion,
@@ -1192,7 +1182,6 @@ def servicio_retirar_estudiante_de_paralelo(estudiante_db, paralelo_db):
 
     with transaction.atomic():
         matriculas.delete()
-        # Cambiar estado de matrícula del estudiante a Retirado
         estudiante_db.estado_de_matricula = EstadoDeMatricula.RETIRADO.value
         estudiante_db.save(update_fields=["estado_de_matricula"])
 
@@ -1207,17 +1196,14 @@ def servicio_agregar_estudiante_a_paralelo(estudiante_db, paralelo_db):
     if not periodo_permite_gestion_matriculas(periodo):
         return (False, "No se ha podido administrar la matrícula")
 
-    # Coherencia: mismo periodo, misma carrera y misma jornada.
     if (estudiante_db.periodo_de_nivelacion_id != periodo.id
             or estudiante_db.carrera_registrada_id != carrera.id
             or estudiante_db.jornada != paralelo_db.jornada):
         return (False, "El Estudiante no es compatible con el Paralelo")
 
-    # Solo estudiantes que no estén retirados ni anulados.
     if estudiante_db.estado_de_matricula in (EstadoDeMatricula.RETIRADO.value, EstadoDeMatricula.ANULADO.value):
         return (False, "El Estudiante no tiene una matrícula activa")
 
-    # No debe estar ya asignado a ningún paralelo del periodo.
     if MatriculaParalelo.objects.filter(estudiante=estudiante_db, paralelo__periodo_de_nivelacion=periodo).exists():
         return (False, "El Estudiante ya se encuentra asignado a un Paralelo")
 
@@ -1315,7 +1301,6 @@ def servicio_registrar_horario(paralelo_db, dia_semana, hora_inicio, hora_fin, e
     except ValueError:
         return (False, "Registro no válido")
 
-    # Una sola sesión de la misma unidad por día.
     if Horario.objects.filter(paralelo=paralelo_db, dia_semana=dia_semana).exists():
         return (False, "La Unidad curricular ya cuenta con una sesión en el día especificado")
 
@@ -1463,7 +1448,6 @@ def servicio_editar_horario(horario_db, dia_semana, hora_inicio, hora_fin, espac
     except ValueError:
         return (False, "Registro de día no válido")
 
-    # Una sola sesión de la misma unidad por día (excluyendo la sesión editada).
     if Horario.objects.filter(paralelo=paralelo_db, dia_semana=dia_semana).exclude(id=horario_db.id).exists():
         return (False, "La Unidad curricular ya cuenta con una sesión en el día especificado")
 
@@ -1529,8 +1513,6 @@ def _semanas_de_periodo(periodo_db):
 def _horas_sincronicas_semanales(unidad, periodo_db):
     """Delega el cálculo a la clase POO UnidadCurricular."""
     semanas = periodo_db.numero_de_semanas if hasattr(periodo_db, 'numero_de_semanas') and periodo_db.numero_de_semanas else _semanas_de_periodo(periodo_db)
-    # Si unidad es un objeto Django (model), acceder a horas_sincronicas directamente
-    # Si es un objeto POO, usar el método calcular_horas_sincronicas_semanales
     if hasattr(unidad, 'calcular_horas_sincronicas_semanales'):
         return unidad.calcular_horas_sincronicas_semanales(semanas)
     import math
@@ -1597,7 +1579,6 @@ def servicio_evaluar_docentes_para_paralelo(paralelo_db):
 
     evaluaciones = []
     for docente_db in docentes:
-        # Solo se listan los docentes COMPATIBLES CON LA JORNADA del paralelo.
         if paralelo_db.jornada not in (docente_db.jornadas or []):
             continue
         docente_poo, carga_actual = _construir_docente_poo_para_periodo(
@@ -1605,7 +1586,6 @@ def servicio_evaluar_docentes_para_paralelo(paralelo_db):
         )
         es_actual = paralelo_db.docente_responsable_id == docente_db.id
 
-        # Filtrar docentes con conflicto horario (no se muestran).
         if not es_actual:
             paralelo_poo = _construir_paralelo_poo_con_horarios(paralelo_db)
             tiene_conflicto = False
@@ -1640,7 +1620,6 @@ def servicio_asignar_docente(paralelo_db, docente_db):
     if not Horario.objects.filter(paralelo=paralelo_db).exists():
         return (False, "No existen Horarios de la Unidad curricular", None)
 
-    # Exigir que el horario esté COMPLETO (horas agendadas >= horas semanales requeridas).
     horas_agendadas = servicio_horas_agendadas_paralelo(paralelo_db)
     if horas_agendadas < horas_unidad:
         return (False, f"El Horario de la Unidad curricular no ha sido completado", None)
@@ -1700,7 +1679,6 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
 
     for numero_fila, fila in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
         try:
-            # Columnas: ID, Apellidos, Nombres, Correo, Matrícula, P1, P2, Asistencia
             identificacion = fila[0]
             parcial_1 = fila[5] if len(fila) > 5 else None
             parcial_2 = fila[6] if len(fila) > 6 else None
@@ -1709,12 +1687,10 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
                 continue
             identificacion_str = str(identificacion).strip()
 
-            # Validar identificación no vacía
             if not identificacion_str:
                 resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitido (número de identificación vacía)")
                 continue
 
-            # Validar que al menos una calificación esté registrada
             if parcial_1 is None and parcial_2 is None and asistencia is None:
                 resultado["advertencias"].append(f"El registro de la fila {numero_fila} fue omitida (sin registro de calificaciones)")
                 continue
@@ -1724,7 +1700,6 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
                 p2 = float(parcial_2) if parcial_2 is not None else 0.0
                 asist = float(asistencia) if asistencia is not None else 0.0
             except (ValueError, TypeError):
-                # Invalid numeric values default to 0
                 p1 = 0.0
                 p2 = 0.0
                 asist = 0.0
@@ -1732,7 +1707,6 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
                     f"El registro de la fila {numero_fila} tiene valores no válidos (se registrarán en 0)"
                 )
 
-            # Out-of-range values default to 0
             if not (0 <= p1 <= 10):
                 resultado["advertencias"].append(f"El registro de la fila {numero_fila}: Calificación parcial 1 fuera de rango (0)")
                 p1 = 0.0
@@ -1743,7 +1717,6 @@ def servicio_cargar_calificaciones_desde_excel(archivo, paralelo_db, unidad_curr
                 resultado["advertencias"].append(f"El registro de la fila {numero_fila}: Porcentaje de asistencia fuera de rango (0)")
                 asist = 0.0
 
-            # Find student
             estudiante = PerfilEstudiante.objects.filter(
                 usuario_de_sistema__identificacion=identificacion_str,
                 estudiantes_matriculados__paralelo=paralelo_db,

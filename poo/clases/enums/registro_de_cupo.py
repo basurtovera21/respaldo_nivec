@@ -1,4 +1,3 @@
-# registro_de_cupo.py
 from enum import Enum
 
 class RegistroDeCupo(Enum):

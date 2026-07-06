@@ -19,11 +19,9 @@ Principios:
     - DIP: Depende de abstracciones (interfaces), no de implementaciones concretas
 """
 
-# Servicios internos
 from poo.clases.servicios.distribuidor_de_estudiantes import DistribuidorDeEstudiantes
 from poo.clases.servicios.procesador_de_informe import ProcesadorDeInforme
 
-# Clases de dominio
 from poo.clases.usuarios.estudiante import Estudiante
 from poo.clases.usuarios.docente import Docente
 from poo.clases.periodo_de_nivelacion import PeriodoDeNivelacion
@@ -31,7 +29,6 @@ from poo.clases.evaluacion_academica import EvaluacionAcademica
 from poo.clases.informe_general import InformeGeneral
 from poo.clases.cohorte_de_matricula import CohorteDeMatricula
 
-# Enums
 from poo.clases.enums.formato_de_exportacion import FormatoDeExportacion
 
 

@@ -1,4 +1,3 @@
-#Usuario
 from poo.clases.usuarios.docente import Docente
 
 from poo.clases.interfaces.i_estrategia_de_evaluacion import IEstrategiaDeEvaluacion

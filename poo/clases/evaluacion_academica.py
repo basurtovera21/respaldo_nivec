@@ -1,13 +1,9 @@
-# Enum
 from poo.clases.enums.estado_de_aprobacion import EstadoDeAprobacion
 
-# Usuario
 from poo.clases.usuarios.estudiante import Estudiante
 
-# Unidad Curricular
 from poo.clases.unidad_curricular import UnidadCurricular
 
-# Interfaces y Servicios (Patrones de Diseño)
 from poo.clases.interfaces.i_sujeto_de_evaluacion import ISujetoDeEvaluacion
 from poo.clases.servicios.manejadores_de_aprobacion import ManejadorEstadoInactivo, ManejadorAsistencia, ManejadorCalificacion
 
