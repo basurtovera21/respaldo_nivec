@@ -1,13 +1,22 @@
+import re
 from functools import wraps
 
 from django.db.models import Max
 from django.contrib import messages
 from django.shortcuts import redirect
-import re
 
 from poo.clases.enums.perfil_administrativo import PerfilAdministrativo as EnumPerfilAdministrativo
 
+
+# ══════════════════════════════════════════════════════════════
+# GENERADOR DE IDENTIFICADORES
+# ══════════════════════════════════════════════════════════════
+
 def generar_identificador_siguiente(modelo, prefijo, nombre_campo):
+    """
+    Genera el siguiente identificador secuencial para un modelo.
+    Formato: {prefijo}{correlativo:03d} (ej: CAM001, CAR002, ES015)
+    """
     resultado_agregado = modelo.objects.filter(
         **{f"{nombre_campo}__startswith": prefijo}
     ).aggregate(Max(nombre_campo))
@@ -22,6 +31,11 @@ def generar_identificador_siguiente(modelo, prefijo, nombre_campo):
 
     return f"{prefijo}{siguiente_correlativo:03d}"
 
+
+# ══════════════════════════════════════════════════════════════
+# CONSTANTES DE ROLES
+# ══════════════════════════════════════════════════════════════
+
 ROL_RECTOR = EnumPerfilAdministrativo.RECTOR.value
 ROL_VICERRECTOR = EnumPerfilAdministrativo.VICERRECTOR_ACADEMICO.value
 ROL_DIRECTOR_DAN = EnumPerfilAdministrativo.DIRECTOR_DAN.value
@@ -29,15 +43,24 @@ ROL_COORDINADOR_DAN = EnumPerfilAdministrativo.COORDINADOR_DAN.value
 ROL_COORDINADOR_UA = EnumPerfilAdministrativo.COORDINADOR_UA.value
 ROL_DOCENTE = "DOCENTE"
 ROL_ESTUDIANTE = "ESTUDIANTE"
+
 ROLES_SOLO_LECTURA = (ROL_RECTOR, ROL_VICERRECTOR)
 
+
+# ══════════════════════════════════════════════════════════════
+# RESOLUCIÓN DE ROL
+# ══════════════════════════════════════════════════════════════
+
 def obtener_rol_usuario(usuario):
+    """Determina el rol del usuario autenticado según su perfil registrado."""
     from usuarios.models import PerfilAdministrativo, PerfilDocente, PerfilEstudiante
 
     if not usuario or not usuario.is_authenticated:
         return None
 
-    perfil_administrativo = PerfilAdministrativo.objects.filter(usuario_de_sistema=usuario).first()
+    perfil_administrativo = PerfilAdministrativo.objects.filter(
+        usuario_de_sistema=usuario
+    ).first()
     if perfil_administrativo:
         return perfil_administrativo.perfil_administrativo
 
@@ -49,10 +72,21 @@ def obtener_rol_usuario(usuario):
 
     return None
 
+
 def usuario_es_solo_lectura(usuario):
+    """Indica si el usuario tiene un rol de solo lectura (Rector, Vicerrector)."""
     return obtener_rol_usuario(usuario) in ROLES_SOLO_LECTURA
 
+
+# ══════════════════════════════════════════════════════════════
+# DECORADOR DE PERMISOS
+# ══════════════════════════════════════════════════════════════
+
 def requiere_perfil(*roles_permitidos):
+    """
+    Decorador que restringe el acceso a una vista según el rol del usuario.
+    Redirige a iniciar_sesion si no está autenticado, o al panel si no tiene permisos.
+    """
     def decorador(vista):
         @wraps(vista)
         def envoltura(request, *args, **kwargs):
