@@ -350,6 +350,7 @@ def panel_estudiante(request):
     evaluaciones = EvaluacionAcademica.objects.filter(
         estudiante=perfil_estudiante,
         periodo_de_nivelacion=periodo,
+        estado_revision="Formalizado",
     ).select_related("unidad_curricular").order_by("unidad_curricular__nombre") if periodo else EvaluacionAcademica.objects.none()
 
     # Obtener horarios
