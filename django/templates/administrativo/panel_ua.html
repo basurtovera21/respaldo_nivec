@@ -42,6 +42,7 @@
     {% endif %}
 
     {% if tiene_paralelos %}
+    {% if estado_periodo != "SOLO_CERRADOS" %}
     <div class="tarjeta">
         <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 4px;">Conformación académica</h2>
         <p style="color: #5c6b73; margin-bottom: 16px; font-size: 13px; font-weight: bold;">Distribución académica</p>
@@ -52,6 +53,8 @@
             {% endif %}
         </div>
     </div>
+    {% endif %}
+    {% endif %}
 
     {% if puede_ver_informe %}
     <div class="tarjeta">
