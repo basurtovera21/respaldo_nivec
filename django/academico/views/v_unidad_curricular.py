@@ -197,8 +197,8 @@ def registrar_unidad(request):
 
             if resultado["error"]:
                 messages.error(request, resultado["error"])
-            for adv in resultado["advertencias"]:
-                messages.warning(request, adv)
+                return redirect("registrar_unidad")
+
             if resultado["exitosos"] > 0:
                 for malla in MallaCurricular.objects.filter(
                     carrera__campus__universidad=universidad_usuario
@@ -208,6 +208,13 @@ def registrar_unidad(request):
                     request,
                     f"{resultado['exitosos']} Unidades curriculares registradas correctamente"
                 )
+
+            for adv in resultado["advertencias"]:
+                messages.warning(request, adv)
+
+            if resultado["exitosos"] == 0 and not resultado["advertencias"]:
+                messages.info(request, "El documento no contiene registros para procesar")
+
             return redirect("listar_unidades")
 
         else:

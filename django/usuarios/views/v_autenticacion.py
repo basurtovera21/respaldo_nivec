@@ -275,15 +275,20 @@ def panel_docente(request):
             horarios_list = list(horarios)
 
             if tiene_horarios:
-                # Determinar franja desde la jornada del primer paralelo
-                try:
-                    jornada_enum = Jornada(paralelos[0].jornada)
-                    franja = obtener_franja(jornada_enum)
-                except (ValueError, KeyError):
-                    franja = None
+                jornadas_docente = set(p.jornada for p in paralelos)
+                hora_inicio_min = 23
+                hora_fin_max = 0
+                for jornada_valor in jornadas_docente:
+                    try:
+                        franja = obtener_franja(Jornada(jornada_valor))
+                        if franja:
+                            hora_inicio_min = min(hora_inicio_min, franja[0].hour)
+                            hora_fin_max = max(hora_fin_max, franja[1].hour)
+                    except (ValueError, KeyError):
+                        pass
 
-                if franja:
-                    slots_hora = list(range(franja[0].hour, franja[1].hour))
+                if hora_inicio_min < hora_fin_max:
+                    slots_hora = list(range(hora_inicio_min, hora_fin_max))
                     _COLORES_UNIDAD = [
                         "#e8e8ed", "#d2e4ea", "#dce8d4", "#f0e6d2", "#e2d8ef",
                         "#d8eef0", "#f5e0d8", "#d4e8e0", "#ede4d0", "#dfe0f5",
@@ -360,6 +365,7 @@ def panel_estudiante(request):
     evaluaciones = EvaluacionAcademica.objects.filter(
         estudiante=perfil_estudiante,
         periodo_de_nivelacion=periodo,
+        estado_revision="Formalizado",
     ).select_related("unidad_curricular").order_by("unidad_curricular__nombre") if periodo else EvaluacionAcademica.objects.none()
 
     # Obtener horarios
