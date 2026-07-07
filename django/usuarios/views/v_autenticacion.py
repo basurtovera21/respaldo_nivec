@@ -61,6 +61,8 @@ def panel_director_dan(request):
         tiene_universidad = True
 
     from academico.models import Campus, Carrera, PeriodoDeNivelacion, MallaCurricular, UnidadCurricular, Paralelo, Horario, ConsolidadoAcademico
+    from academico.permisos import todas_calificaciones_formalizadas_por_carrera
+    from poo.clases.enums.estado_de_periodo import EstadoDePeriodo as EP
     tiene_campus = Campus.objects.filter(universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
     tiene_carreras = Carrera.objects.filter(campus__universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
     tiene_periodos = PeriodoDeNivelacion.objects.filter(universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
@@ -69,6 +71,8 @@ def panel_director_dan(request):
     tiene_paralelos = Paralelo.objects.filter(periodo_de_nivelacion__universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
     tiene_horarios = Horario.objects.filter(paralelo__periodo_de_nivelacion__universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
     tiene_consolidados = ConsolidadoAcademico.objects.filter(periodo_academico__universidad=perfil.universidad).exists() if perfil and perfil.universidad else False
+    periodo_en_evaluacion_o_cerrado = PeriodoDeNivelacion.objects.filter(universidad=perfil.universidad, estado__in=[EP.EVALUACION.value, EP.CERRADO.value]).exists() if perfil and perfil.universidad else False
+    puede_ver_informe = periodo_en_evaluacion_o_cerrado and todas_calificaciones_formalizadas_por_carrera(perfil.universidad) if perfil and perfil.universidad else False
 
     return render(request, "administrativo/panel_director_dan.html", {
         "tiene_universidad": tiene_universidad,
@@ -80,6 +84,7 @@ def panel_director_dan(request):
         "tiene_paralelos": tiene_paralelos,
         "tiene_horarios": tiene_horarios,
         "tiene_consolidados": tiene_consolidados,
+        "puede_ver_informe": puede_ver_informe,
     })
 
 @login_required
@@ -135,6 +140,8 @@ def panel_ua(request):
 
     from academico.models import PeriodoDeNivelacion, Carrera as CarreraModel, MallaCurricular, Paralelo, Horario
     from usuarios.models import PerfilEstudiante
+    from academico.permisos import todas_calificaciones_formalizadas_por_carrera
+    from poo.clases.enums.estado_de_periodo import EstadoDePeriodo as EP
 
     tiene_periodos = PeriodoDeNivelacion.objects.filter(universidad=universidad).exists() if universidad else False
     tiene_carreras = CarreraModel.objects.filter(campus__universidad=universidad).exists() if universidad else False
@@ -148,6 +155,8 @@ def panel_ua(request):
         paralelo__periodo_de_nivelacion__universidad=universidad,
         paralelo__unidad_curricular__malla_curricular__carrera=carrera,
     ).exists() if (universidad and carrera) else False
+    periodo_en_evaluacion_o_cerrado = PeriodoDeNivelacion.objects.filter(universidad=universidad, estado__in=[EP.EVALUACION.value, EP.CERRADO.value]).exists() if universidad else False
+    puede_ver_informe = periodo_en_evaluacion_o_cerrado and todas_calificaciones_formalizadas_por_carrera(universidad, carrera) if universidad else False
 
     return render(request, "administrativo/panel_ua.html", {
         "perfil": perfil,
@@ -158,6 +167,7 @@ def panel_ua(request):
         "tiene_mallas": tiene_mallas,
         "tiene_paralelos": tiene_paralelos,
         "tiene_horarios": tiene_horarios,
+        "puede_ver_informe": puede_ver_informe,
     })
 
 @login_required
