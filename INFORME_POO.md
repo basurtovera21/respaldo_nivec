@@ -236,11 +236,11 @@ del sistema: el ciclo de vida del **periodo de nivelación** y el resultado fina
 `TiempoDeDedicacion`, `TipoDeVinculacion`, `TipoDeComponente`, `TipoDeSesion`,
 `DiaDeSemana`) siguen el mismo patrón: una clase pequeña, inmutable, sin lógica.
 
-Nota técnica registrada en `PLAN_DE_TRABAJO.md`: en las clases que reciben una enumeración
-como parámetro opcional se usa `Optional[Tipo]` (de `typing`) en lugar del operador `Tipo |
-None`, porque el proyecto declara compatibilidad con Python 3.9, donde la sintaxis con `|`
-para *type hints* todavía no estaba disponible (se introdujo en 3.10). Esto se ve, por ejemplo,
-en `horario.py`:
+Nota técnica observada en el código: en las clases que reciben una enumeración como parámetro
+opcional se usa `Optional[Tipo]` (de `typing`) en lugar del operador `Tipo | None`, ya que esta
+sintaxis de unión con `|` para *type hints* solo está disponible desde Python 3.10, y el
+proyecto mantiene compatibilidad con versiones anteriores. Esto se ve, por ejemplo, en
+`horario.py`:
 
 ```python
 # poo/clases/horario.py (fragmento)
@@ -256,7 +256,7 @@ class Horario:
 
 ## 3.2 Paso 2 — Los contratos: interfaces abstractas (`interfaces/`)
 
-Con el vocabulario definido, el equipo declaró **9 interfaces** usando `abc.ABCMeta` y
+Con el vocabulario definido, se declararon **9 interfaces** usando `abc.ABCMeta` y
 `@abstractmethod`. En Python no existe la palabra reservada `interface` como en Java, por lo
 que el patrón estándar es crear una clase base abstracta que solo declara métodos sin
 implementación. Estas interfaces son la base de todos los patrones de diseño de la capa.
@@ -637,9 +637,10 @@ class PeriodoDeNivelacion:
         return self._estado == EstadoDePeriodo.PLANIFICACION
 ```
 
-Estos métodos `permite_*()` son el fundamento POO de la "Tabla de permisos por estado" descrita
-en `PLAN_DE_TRABAJO.md` (Sprint 3, Persona 5): Django construye ~40 permisos booleanos para la
-interfaz consultando directamente estas reglas, en lugar de reimplementarlas.
+Estos métodos `permite_*()` son el fundamento POO de la tabla de permisos por estado que usa
+la capa Django: `academico/permisos.py` construye los permisos booleanos que habilitan o
+restringen acciones en la interfaz consultando directamente estas reglas, en lugar de
+reimplementarlas.
 
 ### `Paralelo` — agregado de horarios y estudiantes, con validación cruzada
 
@@ -1127,15 +1128,14 @@ negocio de NIVEC es independiente de la infraestructura que lo sirve**.
    introducida en Python 3.10), el código fallaba en el entorno de despliegue configurado
    para 3.9.
    *Solución:* se estandarizó el uso de `typing.Optional[Tipo]` en toda la capa (ver
-   `horario.py`), documentado explícitamente como tarea de "Mejoras a la capa POO" en el
-   plan de trabajo del Sprint 1.
+   `horario.py`), garantizando que el código sea ejecutable en el rango de versiones de
+   Python soportado por el proyecto.
 
 2. **Ausencia de archivos `__init__.py` en `poo/` y `poo/clases/`.**
-   *Dificultad:* al mover la carpeta original `clases/` a `poo/clases/` (según el plan de
-   trabajo), todos los imports (`from clases.xxx import ...`) debían actualizarse a
-   `from poo.clases.xxx import ...` en decenas de archivos, con riesgo de romper referencias
-   cruzadas entre clases del propio dominio (por ejemplo, `Docente` importa `Horario`, que a
-   su vez importa una interfaz).
+   *Dificultad:* al organizar la capa de dominio bajo la ruta `poo/clases/`, todos los
+   imports internos (`from poo.clases.xxx import ...`) debían resolverse correctamente en
+   decenas de archivos, con riesgo de romper referencias cruzadas entre clases del propio
+   dominio (por ejemplo, `Docente` importa `Horario`, que a su vez importa una interfaz).
    *Solución:* se verificó la resolución de imports ejecutando pruebas puntuales de
    importación (`from poo.clases.universidad import Universidad`) confirmando que Python
    resuelve el paquete como *namespace package* implícito sin necesidad de `__init__.py`,
@@ -1202,8 +1202,7 @@ El propio código señala honestamente sus límites de alcance actual:
   exportación real se complete en la capa Django.
 
 Estos puntos no representan errores, sino el estado real y transparente del desarrollo a la
-fecha de este informe, consistente con un proyecto académico organizado en sprints
-incrementales (ver `PLAN_DE_TRABAJO.md`, Sprints 1 a 3).
+fecha de este informe, propio de un proyecto académico en desarrollo incremental.
 
 ## 4.6 Conclusión general
 
@@ -1220,13 +1219,33 @@ objetos concretos y comprobables.
 
 ---
 
-## Anexo — Metodología de trabajo en equipo aplicada al desarrollo de esta capa
+## Anexo — Trazabilidad entre el alcance normativo del proyecto y la capa POO
 
-Según `PLAN_DE_TRABAJO.md`, la capa POO fue tratada como un entregable propio dentro del
-Sprint 1 ("POO / Mejoras", Persona 4), con instrucciones explícitas de: mover `clases/` a
-`poo/clases/`, actualizar todos los imports, agregar propiedades y validaciones a las
-entidades base, crear `franja_horaria.py`, y corregir la compatibilidad con `Optional` en
-lugar de la sintaxis `| None`. Posteriormente, en el Sprint 3 ("Informes", Persona 4), la
-misma persona fue responsable de integrar `ProcesadorDeInforme`, `InformeGeneral` y el Facade
-`CentroDeOperacionAcademica` con las vistas Django de generación de informes, cerrando el
-ciclo entre el dominio puro y su consumo en la aplicación web.
+A modo de cierre, se presenta la correspondencia directa entre cada componente del **Alcance
+de solución propuesta** (secciones A–D de la definición del proyecto NIVEC) y las clases que
+lo materializan en código, reforzando que la capa POO no es un ejercicio académico aislado,
+sino la traducción literal de los requerimientos normativos descritos en el documento base
+del proyecto:
+
+- **A. Estructuración y configuración de la oferta académica** → `Universidad`, `Campus`,
+  `Carrera`, `MallaCurricular`, `UnidadCurricular`, `PeriodoDeNivelacion`, `Paralelo`,
+  `DepuradorDeSincronizacion` (transferencia y filtrado de la MTN) y
+  `DistribuidorDeEstudiantes` (clasificación e incorporación de partícipes a los paralelos).
+- **B. Administración de recursos y planta docente** → `Docente`, `Horario`,
+  `franja_horaria.py` (jornadas y franjas institucionales), `IncidenciaAcademica` (novedades
+  de ejecución docente) y `EvaluacionDeDesempeno` con `EstrategiaDeEvaluacionEstandar`
+  (seguimiento del desempeño docente).
+- **C. Consolidación de rendimiento e interoperabilidad** → `EvaluacionAcademica` junto con
+  `manejadores_de_aprobacion.py` (criterios de aprobación) y `observadores_de_evaluacion.py`
+  (notificación de resultados), además de `ConsolidadoAcademico` (integración de resultados
+  externos).
+- **D. Informe general y cumplimiento del marco legal** → `InformeGeneral`,
+  `MonitorNormativo` (control de plazos institucionales) y `ProcesadorDeInforme` (exportación
+  y archivo institucional), apoyados en `CohorteDeMatricula` para la trazabilidad de
+  matrícula.
+
+Esta correspondencia evidencia que el diseño orientado a objetos de `poo/` no se construyó de
+forma genérica, sino directamente a partir de los cuatro componentes de la solución descritos
+en la definición del proyecto NIVEC, lo que permite que cualquier ajuste futuro a la normativa
+de nivelación se traduzca en un cambio localizado en una clase o servicio específico, sin
+afectar al resto del sistema.
